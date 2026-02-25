@@ -189,7 +189,17 @@ The ProjectManager is its **logical owner** and is responsible for keeping it cu
   ],
   "known_issues": ["..."],
   "last_ci_result": "unknown | green | red",
-  "last_update": "ISO-8601"
+  "last_update": "ISO-8601",
+  "pending_steering": [
+    {
+      "id": "PS-1",
+      "input": "Original user text",
+      "target_state": "DESIGN",
+      "target_agent": "Architect",
+      "recorded_at": "ISO-8601",
+      "status": "pending | injected"
+    }
+  ]
 }
 ```
 
@@ -347,10 +357,23 @@ artifacts.
 
 The ProjectManager's direct file operations are limited to session artifacts inside
 `.agents-work/<session>/` (`status.json`, `tasks.json`, `report.md`, and in lean mode also
-`spec.md`, `acceptance.json`).
+`spec.md`, `acceptance.json` — only when Refiner was dispatched first and returned
+`status: BLOCKED` or is demonstrably unavailable).
+
+**Hard prohibitions — self-execution is never a valid shortcut:**
+- Do NOT write `spec.md` or `acceptance.json` without dispatching Refiner first.
+- Do NOT write `architecture.md`, ADRs, or design artefacts without dispatching
+  Architect / Designer.
+- Do NOT write application source code, tests, or build configuration for any reason.
+- Do NOT produce Planner-owned task entries in `tasks.json` without dispatching Planner.
+- Do NOT perform Reviewer, QA, or Security analysis yourself.
 
 If a subagent dispatch fails after retries, the ProjectManager MUST enter `BLOCKED` — never
 silently assume the agent's role.
+
+**Enforcement:** Any violation of role boundaries is a critical protocol error. The
+ProjectManager MUST stop immediately, record the violation in `status.json` under
+`known_issues`, and report it to the user before taking any further action.
 
 ---
 

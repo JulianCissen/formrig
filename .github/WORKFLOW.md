@@ -36,6 +36,106 @@ ASK_USER | BLOCKED
 
 ---
 
+## Followup Requests and Steering
+
+Every message the user sends in an existing chat is one of two categories. The ProjectManager
+MUST classify it **before doing anything else**.
+
+### Category A — New goal
+
+The user is describing a distinct feature, fix, or change that is **not** a correction or
+addition to work already in progress. Signals: new verb ("build", "add", "create", "fix"),
+new subject, or a goal unrelated to the active session.
+
+**Rule:** Treat it as a fresh engagement.
+
+1. Create a **new session folder** (`YYYY-MM-DD_<new-slug>`).
+2. Start from the **beginning of the workflow** — REFINE (full) or REFINE_LEAN (lean).
+3. Do NOT reuse, mutate, or reference the previous session's artefacts as input to the new
+   session (they may be read for context, but the previous session folder is read-only).
+4. The previous session remains untouched in `.agents-work/`.
+
+### Category B — Steering input
+
+The user is providing a correction, clarification, priority change, or additional detail that
+is **directly related to a session already underway**. The goal has not changed; the user is
+guiding how it is achieved.
+
+**Rule:** Resume in the active loop and route the input to the right agent.
+
+#### Step 1 — Read active state
+
+Read `status.json` from the most recent open session. Find `current_state` and the task with
+`status: in-progress` (if any). This tells you which loop and which agent is currently active.
+
+#### Step 2 — Route by relevance
+
+**If a Developer task is `in-progress`:**
+
+1. **Relevant to the current Developer task?**
+   - YES → Re-dispatch Developer for the **same task** with the steering input appended to
+     `task.goal` (label it clearly: `"Steering amendment: <paraphrased input>"`). Include all
+     `session_changed_files` accumulated so far so Developer reads existing work from disk and
+     continues rather than starting over. Developer context is preserved via files already
+     written; no work is lost.
+   - NO → Identify the state/agent the input belongs to (see table below) and record it as a
+     pending steering note in `status.json` under `pending_steering` (see schema note below).
+     The note will be injected into the relevant agent's dispatch when that state is next
+     entered.
+
+**If no Developer task is in-progress** (e.g., in APPROVE_SPEC, DESIGN, PLAN, REVIEW_STRATEGY,
+INTEGRATE, repair loops):
+
+- Apply the same relevance check: is the input meant for the **currently active agent / state**?
+  - YES → Incorporate it into the current dispatch or re-run the current state with the input
+    included.
+  - NO → Record it as a `pending_steering` note targeting the appropriate future state.
+
+#### Routing reference table
+
+| Input type | Target state / agent |
+|---|---|
+| Scope change or acceptance-criteria change | REFINE (re-run Refiner) |
+| Architecture concern or new constraint | Architect (re-run DESIGN or queue for next DESIGN entry) |
+| Task breakdown or sequencing change | Planner (re-run PLAN) |
+| Code-level correction or new requirement for active task | Developer (re-dispatch current task) |
+| Code-level correction for a **completed** task | FIX_REVIEW repair loop against that task |
+| Review or quality concern | Reviewer |
+| Test concern | QA |
+| Security concern | Security |
+
+#### Scope-change escalation
+
+If the steering input would change the spec, acceptance criteria, or architecture already
+approved by the user, the ProjectManager MUST enter `ASK_USER` before acting:
+
+1. Summarise what would change and why.
+2. Ask the user to confirm scope change vs. clarification.
+3. On confirmation, re-run REFINE / DESIGN / PLAN as needed, then continue.
+4. On denial, treat as a NO routing and record as a pending note for context only.
+
+#### `pending_steering` schema note
+
+When a steering input cannot be applied immediately, persist it in `status.json`:
+
+```json
+"pending_steering": [
+  {
+    "id": "PS-1",
+    "input": "Original user text",
+    "target_state": "DESIGN",
+    "target_agent": "Architect",
+    "recorded_at": "ISO-8601",
+    "status": "pending | injected"
+  }
+]
+```
+
+ProjectManager MUST inject all `status: pending` entries targeting a given state into the
+agent dispatch when that state is entered, then flip their `status` to `"injected"`.
+
+---
+
 ## States
 
 ### REFINE
@@ -64,8 +164,10 @@ ProjectManager dispatches Refiner with a `lean: true` flag to create **minimal**
 - Single-task `tasks.json`
 - Initial `status.json`
 
-If Refiner is unavailable in lean mode, ProjectManager MAY create these minimal artifacts
-directly as the **sole exception** to the no-edit rule.
+ProjectManager **MUST** dispatch Refiner first. Only if Refiner returns `status: BLOCKED`
+or is demonstrably unavailable after an explicit dispatch attempt may ProjectManager create
+these minimal artifacts directly. This direct creation is the **sole permitted exception**
+to the no-edit rule and **MUST NOT** be used as a shortcut to bypass Refiner.
 
 Gate: artifacts exist. If Developer discovers complexity, exit lean mode and restart from
 full REFINE.

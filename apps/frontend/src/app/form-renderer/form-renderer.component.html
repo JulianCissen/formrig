@@ -1,0 +1,21 @@
+@if (loading()) {
+  <div role="status" aria-label="Loading form\u2026" style="display:flex; justify-content:center; padding:2rem;">
+    <mat-progress-spinner mode="indeterminate" diameter="40" />
+  </div>
+} @else if (error()) {
+  <p role="alert" style="color: var(--mat-sys-error)">{{ error() }}</p>
+} @else {
+  @let form = formDef()!;
+  <form>
+    @for (field of form.fields; track field.id) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width:100%; margin-bottom:1rem;">
+        <mat-label>{{ field.label }}</mat-label>
+        <input matInput
+               id="field-{{ field.id }}"
+               [value]="field.value ?? ''"
+               [required]="field.required"
+               [attr.disabled]="field.disabled || null" />
+      </mat-form-field>
+    }
+  </form>
+}

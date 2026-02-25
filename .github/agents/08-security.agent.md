@@ -4,6 +4,7 @@ description: "Audits implementation for security vulnerabilities. Blocks on crit
 tools:
   - read     # all session-changed files + relevant existing source for context
   - search   # trace data flows, find usages of flagged patterns, check dependency files
+  - web      # look up CVE databases, security advisories, and package vulnerability records
 model: "Claude Sonnet 4.6 (copilot)"
 user-invokable: false
 ---
@@ -25,7 +26,7 @@ Your verdict determines the next state:
 
 ## Responsibilities
 
-- Read all files in `task.context.session_changed_files` relevant to the audit scope.
+- Read all files in `task.session_changed_files` relevant to the audit scope.
 - Apply the security checklist for the categories applicable to the changed code.
 - Classify every finding by severity.
 - Provide specific, actionable remediation guidance for every non-low finding.

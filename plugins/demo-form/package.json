@@ -1,0 +1,19 @@
+{
+  "name": "@formrig/demo-form",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "moduul-builder build",
+    "postinstall": "node postinstall.js"
+  },
+  "dependencies": {
+    "@formrig/sdk": "file:../../packages/sdk",
+    "@formrig/shared": "file:../../packages/shared"
+  },
+  "devDependencies": {
+    "@moduul/builder": "0.1.0",
+    "typescript": "^5.4.0"
+  }
+}

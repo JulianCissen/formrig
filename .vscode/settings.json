@@ -1,8 +1,6 @@
 {
-  // Auto-approve Copilot edits to session artifact files without requiring
-  // manual approval in the edits overview. Source files and project config
-  // still go through the normal review flow.
-  "chat.tools.edits.autoApprove": {
-    ".agents-work/**": true
+  "chat.tools.terminal.autoApprove": {
+    "npm install": true,
+    "npx moduul-builder": true
   }
 }

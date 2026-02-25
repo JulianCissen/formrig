@@ -1,2 +1,33 @@
 # Agent runtime artifacts — generated per session, not committed
 .agents-work/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Angular
+.angular/
+
+# NestJS / TypeScript
+*.js.map
+*.d.ts.map
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/

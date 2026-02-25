@@ -4,7 +4,7 @@ description: "Implements one batch of tasks from tasks.json, following existing 
 tools:
   - read     # spec, acceptance.json, architecture.md, tasks.json, status.json, existing source files
   - edit     # application code, tests, config — scoped to session + existing source tree
-  - execute  # run tests, linters, type-checkers locally to verify work before marking implemented
+  - execute  # run scaffolding commands, tests, linters, and type-checkers
   - search   # discover existing patterns, find relevant files, check for usages
 model: "Claude Sonnet 4.6 (copilot)"
 user-invokable: false
@@ -81,6 +81,31 @@ After all tasks in the batch are `implemented`, return the output JSON.
 
 ## Implementation Rules
 
+### Use scaffolding tools when appropriate
+
+For greenfield tasks where `solution-architecture.md` is present, use the stack's official
+scaffolding CLI before writing code by hand:
+
+| Stack | Command |
+|-------|---------|
+| NestJS | `npx @nestjs/cli new <name>` or `nest generate <schematic>` |
+| Next.js | `npx create-next-app@latest <name>` |
+| Vite | `npm create vite@latest <name>` |
+| Angular | `ng new <name>` / `ng generate <schematic>` |
+| Express / Fastify | initialise from `package.json` manually or via a starter |
+| Other | use the official `create-*` or `init` command for the detected stack |
+
+After scaffolding, record **all generated files** in `artifacts.files_created_or_updated`.
+If the scaffold produces files outside the task's declared `files_to_touch`, note the
+discrepancy in output `notes` — Planner's `files_to_touch` is a best estimate for greenfield
+tasks and does not need to be exhaustive.
+
+Do not scaffold when the target already exists as a codebase. Use scaffolding generators
+(e.g. `nest generate module`, `ng generate component`) freely within an existing project
+when they match the pattern already established in the codebase.
+
+---
+
 ### Follow existing patterns unconditionally
 
 Before writing a new file, search for the most similar existing file in the codebase and
@@ -112,6 +137,20 @@ output `notes` — do not fix it.
 - If the project has no tests yet, use the framework specified in `solution-architecture.md`
   or `architecture.md`. If neither specifies one, note it in output and use the most common
   framework for the detected language/runtime.
+
+### Maintain `.env.example`
+
+Whenever you introduce a new environment variable (in application code, configuration, or
+build scripts), add it to `.env.example` with a placeholder value and a brief comment
+explaining its purpose. Do not write the real value:
+
+```
+# Maximum size of the database connection pool
+DB_POOL_SIZE=10
+```
+
+If `.env.example` does not exist and the task requires env vars, create it. Record it in
+`artifacts.files_created_or_updated`.
 
 ### Handle errors explicitly
 

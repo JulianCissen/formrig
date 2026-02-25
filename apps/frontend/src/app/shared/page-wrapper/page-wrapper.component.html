@@ -1,0 +1,28 @@
+<div class="page-wrapper-outer">
+  <div class="page-content-inner">
+
+    <header class="page-header">
+      <!-- Back link / breadcrumb slot — rendered only when content is projected -->
+      <div class="page-back">
+        <ng-content select="[pageBack]" />
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title" tabindex="-1" #pageTitle>{{ title() }}</h1>
+        <div class="page-actions">
+          <ng-content select="[pageActions]" />
+        </div>
+      </div>
+
+      <!-- Subtitle slot -->
+      <div class="page-subtitle">
+        <ng-content select="[pageSubtitle]" />
+      </div>
+    </header>
+
+    <main id="main-content" class="page-body">
+      <ng-content />
+    </main>
+
+  </div>
+</div>

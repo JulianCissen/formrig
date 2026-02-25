@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@formrig/shared": ["packages/shared/src/index.ts"],
+      "@formrig/shared/*": ["packages/shared/src/*"],
+      "@formrig/sdk": ["packages/sdk/src/index.ts"],
+      "@formrig/sdk/*": ["packages/sdk/src/*"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "plugins"
+  ]
+}

@@ -1,0 +1,181 @@
+:host {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  grid-template-columns: 1fr; // toolbar spans full width; sidenav-container takes the rest
+  height: 100dvh;
+  overflow: hidden;
+}
+
+// ─── Toolbar ────────────────────────────────────────────────────────────────
+
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  border-bottom: none;
+}
+
+.app-wordmark {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--mat-sys-on-primary);
+  letter-spacing: -0.02em;
+}
+
+// Ensure icon button in toolbar uses on-primary color
+.app-toolbar button[mat-icon-button] mat-icon,
+.app-toolbar .mat-icon {
+  color: var(--mat-sys-on-primary);
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+// ─── Sidenav Container ───────────────────────────────────────────────────────
+
+.app-sidenav-container {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  // Override Material background on the container
+  --mat-sidenav-container-background-color: var(--mat-sys-surface);
+  --mat-sidenav-content-background-color: var(--mat-sys-surface);
+}
+
+// ─── Nav Rail (≥ 600px) ──────────────────────────────────────────────────────
+
+.app-nav-rail {
+  width: 80px;
+  background: var(--mat-sys-surface-container);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+
+  // Override Material sidenav styles
+  --mat-sidenav-container-width: 80px;
+}
+
+.nav-rail-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--space-5);
+  gap: var(--space-1);
+}
+
+.nav-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-xl);
+  color: var(--mat-sys-on-surface-variant);
+  text-decoration: none;
+  cursor: pointer;
+
+  &.active {
+    .nav-rail-icon-wrap {
+      background: var(--mat-sys-primary-container);
+      border-radius: var(--radius-xl);
+    }
+
+    .nav-rail-label {
+      color: var(--mat-sys-on-primary-container);
+    }
+
+    mat-icon {
+      color: var(--mat-sys-on-primary-container);
+    }
+  }
+
+  &:hover:not(.active) {
+    .nav-rail-icon-wrap {
+      background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+      border-radius: var(--radius-xl);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary) !important;
+    outline-offset: 2px !important;
+  }
+}
+
+.nav-rail-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--radius-xl);
+  transition: background var(--transition-interact);
+}
+
+.nav-rail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+  margin-top: var(--space-1);
+  line-height: 1;
+}
+
+// Material focus-indicator override for nav items
+.mat-mdc-list-item:focus-visible,
+.mat-mdc-icon-button:focus-visible {
+  outline: 2px solid var(--mat-sys-primary) !important;
+  outline-offset: 2px !important;
+}
+
+// ─── Content Area ────────────────────────────────────────────────────────────
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+
+  // On mobile: add bottom padding so content isn't hidden behind fixed bottom nav
+  @media (max-width: 599px) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+// ─── Route Transition Host ───────────────────────────────────────────────────
+
+.route-transition-host {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+// ─── Skip Link ───────────────────────────────────────────────────────────────
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: 9999;
+  color: var(--mat-sys-on-primary);
+  text-decoration: none;
+
+  &:focus-visible {
+    top: var(--space-2);
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    outline: 2px solid var(--mat-sys-on-primary);
+    outline-offset: 2px;
+    transition: top var(--transition-fast);
+  }
+}

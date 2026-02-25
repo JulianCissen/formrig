@@ -1,0 +1,25 @@
+{
+  "name": "formrig",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "build:sdk": "npm run build --workspace=packages/sdk",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:plugin": "cd plugins/demo-form && npm install && npm run build",
+    "start:backend": "npm run start --workspace=apps/backend",
+    "start:frontend": "npm run start --workspace=apps/frontend",
+    "dev": "npm run build:shared && npm run build:sdk && npm run build:plugin && concurrently --names backend,frontend --prefix-colors blue,green --kill-others-on-fail \"npm run start:dev --workspace=apps/backend\" \"npm run start --workspace=apps/frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.4.0"
+  }
+}

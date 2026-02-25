@@ -1,0 +1,112 @@
+@use '@angular/material' as mat;
+@use '@angular/cdk' as cdk;
+
+// Material 3 (M3) theme setup.
+// mat.theme() is the all-in-one M3 mixin: it emits component styles and
+// system-level color + density tokens. mat.system-level-typography() adds
+// the full typescale custom-property set (--mat-sys-*-font, --mat-sys-*-size, etc.).
+// Do NOT add mat.core() or mat.all-component-themes() — those are M2 patterns.
+
+// Define the theme as a variable so it can be forwarded to ancillary mixins.
+$formrig-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary:   mat.$violet-palette,
+  ),
+  typography: (
+    plain-family: 'Inter, system-ui, -apple-system, sans-serif',
+    brand-family: 'Inter, system-ui, -apple-system, sans-serif',
+  ),
+  density: (
+    scale: 0,
+  )
+));
+
+// Emit .cdk-visually-hidden styles so the CDK LiveAnnouncer element
+// is positioned off-screen and not visible to sighted users.
+@include cdk.a11y-visually-hidden();
+
+html {
+  @include mat.theme($formrig-theme);
+  @include mat.system-level-typography($formrig-theme);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--mat-sys-background);
+  color: var(--mat-sys-on-surface);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  // Spacing scale (base unit: 4px)
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  40px;
+  --space-8:  48px;
+  --space-9:  64px;
+  --space-10: 80px;
+
+  // Border radius scale
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  // Duration tokens
+  --duration-instant:   0ms;
+  --duration-fast:      100ms;
+  --duration-standard:  200ms;
+  --duration-moderate:  270ms;
+  --duration-slow:      400ms;
+
+  // Easing tokens
+  --ease-standard:       cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard-decel: cubic-bezier(0, 0, 0, 1);
+  --ease-standard-accel: cubic-bezier(0.3, 0, 1, 1);
+  --ease-in:             cubic-bezier(0.4, 0, 1, 1);
+
+  // Composite transition shorthands
+  --transition-interact:     var(--duration-fast) var(--ease-standard);
+  --transition-standard:     var(--duration-standard) var(--ease-standard);
+  --transition-route-leave:  180ms var(--ease-in);
+  --transition-route-enter:  220ms var(--ease-standard-decel);
+  --transition-fast:         var(--duration-fast) var(--ease-standard);
+}
+
+// Focus ring overrides
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// Route animation host placeholder (guard in place for T-005)
+.route-transition-host {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-transition-host * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

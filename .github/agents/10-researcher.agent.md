@@ -3,6 +3,7 @@ name: researcher
 description: "Investigates technology options, evaluates dependencies, analyses existing codebases, and produces structured findings for downstream agents."
 tools:
   - read     # spec.md, architecture context, existing source files and configs
+  - edit     # write research/*.md reports to .agents-work/<session>/research/
   - search   # codebase analysis — find patterns, usages, dependencies, entry points
   - web      # technology research, official documentation, changelog, CVE databases
 model: "Claude Sonnet 4.6 (copilot)"
