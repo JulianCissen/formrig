@@ -1,0 +1,14 @@
+<a
+  matRipple
+  [routerLink]="route()"
+  routerLinkActive="active"
+  #rla="routerLinkActive"
+  [routerLinkActiveOptions]="{ exact: exact() }"
+  [attr.aria-current]="rla.isActive ? 'page' : null"
+  [attr.aria-label]="label()"
+>
+  <span class="icon-wrap">
+    <mat-icon>{{ icon() }}</mat-icon>
+  </span>
+  <span class="label">{{ label() }}</span>
+</a>

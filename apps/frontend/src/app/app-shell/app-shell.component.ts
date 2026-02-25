@@ -9,22 +9,22 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AppBottomNavComponent } from './bottom-nav/app-bottom-nav.component';
+import { NavRailItemComponent } from '../shared/nav-rail-item/nav-rail-item.component';
 import { routeFadeAnimation } from './app-shell.animations';
+import { navItems } from './nav-items';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
   imports: [
     RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
     MatToolbarModule,
     MatSidenavModule,
     MatIconModule,
     MatButtonModule,
     AppBottomNavComponent,
+    NavRailItemComponent,
   ],
   animations: [routeFadeAnimation],
   templateUrl: './app-shell.component.html',
@@ -70,10 +70,6 @@ export class AppShellComponent {
       });
   }
 
-  /** Navigation items shared by rail and referenced by bottom nav */
-  readonly navItems = [
-    { icon: 'dashboard', label: 'Forms', route: '/', exact: true },
-    { icon: 'add_circle', label: 'New', route: '/form/new', exact: false },
-    { icon: 'preview', label: 'Preview', route: '/form/active', exact: false },
-  ] as const;
+  /** Navigation items shared by rail and bottom nav */
+  readonly navItems = navItems;
 }

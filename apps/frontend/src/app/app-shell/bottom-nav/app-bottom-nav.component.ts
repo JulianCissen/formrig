@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { BottomNavItemComponent } from '../../shared/bottom-nav-item/bottom-nav-item.component';
+import { navItems } from '../nav-items';
 
 /**
  * AppBottomNavComponent — Fixed bottom navigation bar for mobile viewports (< 600 px).
@@ -10,8 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-bottom-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, MatIconModule],
+  imports: [BottomNavItemComponent],
   templateUrl: './app-bottom-nav.component.html',
   styleUrl: './app-bottom-nav.component.scss',
 })
-export class AppBottomNavComponent {}
+export class AppBottomNavComponent {
+  readonly navItems = navItems;
+}

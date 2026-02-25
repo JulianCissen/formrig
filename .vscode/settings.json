@@ -1,6 +1,18 @@
 {
   "chat.tools.terminal.autoApprove": {
     "npm install": true,
-    "npx moduul-builder": true
+    "npx moduul-builder": true,
+    "/^cd c:/Users/julia/sources/formrig/apps/frontend && npx ng build 2>&1$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd /c/Users/julia/sources/formrig/apps/frontend && npx ng build 2>&1$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd c:\\\\Users\\\\julia\\\\sources\\\\formrig\\\\apps\\\\frontend && npx ng build 2>&1$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   }
 }

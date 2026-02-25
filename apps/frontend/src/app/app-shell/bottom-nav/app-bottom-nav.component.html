@@ -1,24 +1,10 @@
 <nav aria-label="Mobile navigation" class="bottom-nav">
-
-  <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-    <span class="nav-indicator" aria-hidden="true">
-      <mat-icon>dashboard</mat-icon>
-    </span>
-    <span class="nav-label">Forms</span>
-  </a>
-
-  <a class="nav-item" routerLink="/form/new" routerLinkActive="active">
-    <span class="nav-indicator" aria-hidden="true">
-      <mat-icon>add_circle</mat-icon>
-    </span>
-    <span class="nav-label">New</span>
-  </a>
-
-  <a class="nav-item" routerLink="/form/active" routerLinkActive="active">
-    <span class="nav-indicator" aria-hidden="true">
-      <mat-icon>preview</mat-icon>
-    </span>
-    <span class="nav-label">Preview</span>
-  </a>
-
+  @for (item of navItems; track item.route) {
+    <app-bottom-nav-item
+      [icon]="item.icon"
+      [label]="item.label"
+      [route]="item.route"
+      [exact]="item.exact ?? false"
+    />
+  }
 </nav>

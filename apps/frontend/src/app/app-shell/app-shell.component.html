@@ -19,17 +19,12 @@
     [disableClose]="true">
     <nav aria-label="Main navigation" class="nav-rail-list">
       @for (item of navItems; track item.route) {
-        <a
-          class="nav-rail-item"
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.exact }"
-          [attr.aria-current]="null">
-          <span class="nav-rail-icon-wrap">
-            <mat-icon>{{ item.icon }}</mat-icon>
-          </span>
-          <span class="nav-rail-label">{{ item.label }}</span>
-        </a>
+        <app-nav-rail-item
+          [icon]="item.icon"
+          [label]="item.label"
+          [route]="item.route"
+          [exact]="item.exact ?? false"
+        />
       }
     </nav>
   </mat-sidenav>
