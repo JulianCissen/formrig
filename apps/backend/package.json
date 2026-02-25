@@ -26,6 +26,6 @@
     "@types/node":    "^20.0.0",
     "cross-env":      "^7.0.3",
     "tsconfig-paths": "^4.2.0",
-    "typescript":     "*"
+    "typescript":     "~5.9.3"
   }
 }
