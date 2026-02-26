@@ -39,6 +39,15 @@ export const FieldDtoSchema = z.object({
 
   /** When true, the frontend renders a mat-autocomplete instead of mat-select. Present for SelectField. */
   autocomplete: z.boolean().optional(),
+
+  /** MIME-type filter string (e.g. '.pdf,image/*'). Present for FileUploadField. */
+  accept: z.string().optional(),
+
+  /** Maximum number of files selectable. Present for FileUploadField when set. */
+  maxFiles: z.number().optional(),
+
+  /** Maximum total size in bytes. Present for FileUploadField when set. */
+  maxSizeBytes: z.number().optional(),
 });
 
 export const FormDefinitionDtoSchema = z.object({

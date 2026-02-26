@@ -1,4 +1,4 @@
-import { TextField, RadioField, CheckboxField, SelectField, TextareaField } from '@formrig/shared';
+import { TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField } from '@formrig/shared';
 import type { FormTypePlugin, FormDefinition, FormEventContext } from '@formrig/sdk';
 
 class DemoForm implements FormTypePlugin {
@@ -27,6 +27,8 @@ class DemoForm implements FormTypePlugin {
       new TextareaField(
         'Comments',
       ),
+      new FileUploadField('Attach supporting documents', true, '.pdf,.docx'),
+      new FileUploadField('Upload your CV', false, '.pdf,.doc,.docx'),
     ],
   };
 

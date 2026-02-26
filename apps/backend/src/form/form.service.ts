@@ -58,6 +58,9 @@ export class FormService {
         ...('checked'      in f ? { checked:      (f as { checked: boolean }).checked }           : {}),
         ...('rows'         in f ? { rows:         (f as { rows: number }).rows }                  : {}),
         ...('autocomplete' in f ? { autocomplete: (f as { autocomplete: boolean }).autocomplete } : {}),
+        ...('accept'       in f ? { accept:       (f as { accept: string }).accept }                : {}),
+        ...('maxFiles'     in f ? { maxFiles:     (f as { maxFiles: number }).maxFiles }             : {}),
+        ...('maxSizeBytes' in f ? { maxSizeBytes: (f as { maxSizeBytes: number }).maxSizeBytes }     : {}),
       })),
     };
   }

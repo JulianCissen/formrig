@@ -13,6 +13,10 @@ export const FieldDtoSchema = z.object({
   checked: z.boolean().optional(),
   rows: z.number().optional(),
   autocomplete: z.boolean().optional(),
+  // file-upload — kept in sync with apps/backend/src/form/dto/form-definition.dto.ts
+  accept: z.string().optional(),
+  maxFiles: z.number().optional(),
+  maxSizeBytes: z.number().optional(),
 });
 
 export const FormDefinitionDtoSchema = z.object({

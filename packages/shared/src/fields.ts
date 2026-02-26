@@ -163,3 +163,38 @@ export class TextareaField extends BaseField {
     super(label, required, disabled);
   }
 }
+
+/**
+ * File upload drop-zone field.
+ *
+ * Renders as a custom drag-and-drop zone wrapping a hidden native
+ * `<input type="file">` in the Angular frontend.
+ * The `type` literal `'file-upload'` is used as the `@switch` discriminator
+ * in templates.
+ */
+export class FileUploadField extends BaseField {
+  /** Discriminator — always `'file-upload'`. */
+  readonly type = 'file-upload' as const;
+
+  /**
+   * @param label        Human-readable label (passed to BaseField).
+   * @param multiple     Whether the user may select more than one file at a time. Default: false.
+   * @param accept       Comma-separated MIME types or file extensions passed to the native
+   *                     `<input accept>` attribute. Default: `''` (all file types allowed).
+   * @param maxFiles     Maximum number of files the user may attach. Default: undefined (no limit).
+   * @param maxSizeBytes Maximum total upload size in bytes. Default: undefined (no limit).
+   * @param required     Inherited from BaseField. Default: false.
+   * @param disabled     Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public multiple: boolean = false,
+    public accept: string = '',
+    public maxFiles?: number,
+    public maxSizeBytes?: number,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}

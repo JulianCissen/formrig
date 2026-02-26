@@ -88,6 +88,51 @@
           </div>
         }
 
+        @case ('file-upload') {
+          <div class="form-field">
+            <label class="form-field__label" [for]="'field-' + field.id">{{ field.label }}</label>
+            <div
+              class="file-upload-zone"
+              [class.is-drag-over]="dragOverFieldId() === field.id"
+              [attr.aria-label]="'Upload file: ' + field.label"
+              role="button"
+              tabindex="0"
+              (click)="fileInput.click()"
+              (keydown.enter)="fileInput.click()"
+              (keydown.space)="fileInput.click()"
+              (dragover)="onDragOver($event, field.id)"
+              (dragleave)="onDragLeave($event, field.id)"
+              (drop)="onDrop($event, field.id)"
+            >
+              <mat-icon aria-hidden="true" class="file-upload-zone__icon">cloud_upload</mat-icon>
+              <span class="file-upload-zone__cta">
+                Drag &amp; drop files here or <span class="file-upload-zone__browse-link">click to browse</span>
+              </span>
+              <input
+                #fileInput
+                type="file"
+                [id]="'field-' + field.id"
+                [multiple]="field.multiple ?? false"
+                [accept]="field.accept ?? ''"
+                class="file-upload-zone__input"
+                (change)="onFileChange($event, field.id)"
+              />
+              <div aria-live="polite" class="file-upload-zone__live-region">
+                @if ((selectedFiles.get(field.id) ?? []).length > 0) {
+                  <ul class="file-upload-zone__file-list">
+                    @for (file of selectedFiles.get(field.id) ?? []; track file.name) {
+                      <li class="file-upload-zone__file-item">
+                        <mat-icon aria-hidden="true">description</mat-icon>
+                        {{ file.name }}
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
         @default {
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
             <mat-label>{{ field.label }}</mat-label>

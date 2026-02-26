@@ -1,1 +1,1 @@
-export { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField } from './fields.js';
+export { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField } from './fields.js';
