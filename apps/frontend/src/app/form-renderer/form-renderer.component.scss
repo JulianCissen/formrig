@@ -26,3 +26,28 @@
   justify-content: flex-end;
   margin-top: var(--space-4);
 }
+
+// ── Radio field ──────────────────────────────────────────────────────────────
+//
+// .form-field__label is a plain <label> rendered above <mat-radio-group>.
+// It uses M3 typography tokens to visually match a floating <mat-label>.
+//
+.form-field__label {
+  display: block;
+  color: var(--mat-sys-on-surface-variant);
+  font-family: var(--mat-sys-label-large-font);
+  font-size: var(--mat-sys-label-large-size);
+  font-weight: var(--mat-sys-label-large-weight);
+  letter-spacing: var(--mat-sys-label-large-tracking);
+  line-height: var(--mat-sys-label-large-line-height);
+  margin-bottom: var(--space-2);
+}
+
+// Stack radio buttons vertically with consistent gap.
+.form-field {
+  mat-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}

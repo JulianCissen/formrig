@@ -1,4 +1,4 @@
-import { TextField } from '@formrig/shared';
+import { TextField, RadioField, CheckboxField, SelectField, TextareaField } from '@formrig/shared';
 import type { FormTypePlugin, FormDefinition, FormEventContext } from '@formrig/sdk';
 
 class DemoForm implements FormTypePlugin {
@@ -7,6 +7,26 @@ class DemoForm implements FormTypePlugin {
     title: 'Demo Form',
     fields: [
       new TextField('Your name'),
+      new RadioField(
+        'Favourite colour',
+        ['Red', 'Green', 'Blue'],
+      ),
+      new CheckboxField(
+        'Accept terms and conditions',
+      ),
+      new SelectField(
+        'Country',
+        ['United Kingdom', 'United States', 'Germany', 'France', 'Japan'],
+      ),
+      new SelectField(
+        'Skills',
+        ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker'],
+        '',
+        true,
+      ),
+      new TextareaField(
+        'Comments',
+      ),
     ],
   };
 

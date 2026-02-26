@@ -53,6 +53,11 @@ export class FormService {
         disabled: f.disabled,
         // Only include `value` for field types that carry it
         ...('value' in f ? { value: String((f as { value: unknown }).value) } : {}),
+        ...('options'      in f ? { options:      (f as { options: string[] }).options }          : {}),
+        ...('multiple'     in f ? { multiple:     (f as { multiple: boolean }).multiple }         : {}),
+        ...('checked'      in f ? { checked:      (f as { checked: boolean }).checked }           : {}),
+        ...('rows'         in f ? { rows:         (f as { rows: number }).rows }                  : {}),
+        ...('autocomplete' in f ? { autocomplete: (f as { autocomplete: boolean }).autocomplete } : {}),
       })),
     };
   }

@@ -49,3 +49,117 @@ export class TextField extends BaseField {
     super(label, required, disabled);
   }
 }
+
+/**
+ * Radio button group field.
+ *
+ * Maps to `<mat-radio-group>` / `<mat-radio-button>` in the Angular frontend.
+ * The `type` literal `'radio'` is used as the `@switch` discriminator in templates.
+ */
+export class RadioField extends BaseField {
+  /** Discriminator — always `'radio'`. */
+  readonly type = 'radio' as const;
+
+  /**
+   * @param label    Human-readable label (passed to BaseField).
+   * @param options  Ordered list of option labels.
+   * @param value    Currently selected option label. Default: empty string.
+   * @param required Inherited from BaseField. Default: false.
+   * @param disabled Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public options: string[],
+    public value: string = '',
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}
+
+/**
+ * Single checkbox toggle field.
+ *
+ * Maps to `<mat-checkbox>` in the Angular frontend.
+ * The `type` literal `'checkbox'` is used as the `@switch` discriminator in templates.
+ */
+export class CheckboxField extends BaseField {
+  /** Discriminator — always `'checkbox'`. */
+  readonly type = 'checkbox' as const;
+
+  /**
+   * @param label    Human-readable label (passed to BaseField).
+   * @param checked  The boolean toggle state. Default: false.
+   * @param required Inherited from BaseField. Default: false.
+   * @param disabled Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public checked: boolean = false,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}
+
+/**
+ * Dropdown select field.
+ *
+ * Maps to `<mat-select>` (or `<input matInput [matAutocomplete]>`) in the Angular frontend.
+ * The `type` literal `'select'` is used as the `@switch` discriminator in templates.
+ */
+export class SelectField extends BaseField {
+  /** Discriminator — always `'select'`. */
+  readonly type = 'select' as const;
+
+  /**
+   * @param label        Human-readable label (passed to BaseField).
+   * @param options      Ordered list of selectable options.
+   * @param value        Selected value(s); `string[]` when `multiple` is true. Default: empty string.
+   * @param multiple     Whether multiple options may be selected simultaneously. Default: false.
+   * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select>`. Default: false.
+   * @param required     Inherited from BaseField. Default: false.
+   * @param disabled     Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public options: string[],
+    public value: string | string[] = '',
+    public multiple: boolean = false,
+    public autocomplete: boolean = false,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}
+
+/**
+ * Multi-line textarea field.
+ *
+ * Maps to `<textarea matInput>` in the Angular frontend.
+ * The `type` literal `'textarea'` is used as the `@switch` discriminator in templates.
+ */
+export class TextareaField extends BaseField {
+  /** Discriminator — always `'textarea'`. */
+  readonly type = 'textarea' as const;
+
+  /**
+   * @param label    Human-readable label (passed to BaseField).
+   * @param value    Current multi-line text content. Default: empty string.
+   * @param rows     Visible row count hint rendered via `[rows]` binding. Default: 4.
+   * @param required Inherited from BaseField. Default: false.
+   * @param disabled Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public value: string = '',
+    public rows: number = 4,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}

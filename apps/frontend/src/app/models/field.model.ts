@@ -1,13 +1,18 @@
 import { z } from 'zod';
 
+// This schema mirrors apps/backend/src/form/dto/form-definition.dto.ts — both must be kept in sync.
 export const FieldDtoSchema = z.object({
-  /** Stable unique identifier for this field within the form. */
   id: z.string(),
   type: z.string(),
   label: z.string(),
   required: z.boolean(),
   disabled: z.boolean(),
   value: z.string().optional(),
+  options: z.array(z.string()).optional(),
+  multiple: z.boolean().optional(),
+  checked: z.boolean().optional(),
+  rows: z.number().optional(),
+  autocomplete: z.boolean().optional(),
 });
 
 export const FormDefinitionDtoSchema = z.object({
