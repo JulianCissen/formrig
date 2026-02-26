@@ -75,9 +75,7 @@ Read `status.json` from the most recent open session. Find `current_state` and t
 1. **Relevant to the current Developer task?**
    - YES → Re-dispatch Developer for the **same task** with the steering input appended to
      `task.goal` (label it clearly: `"Steering amendment: <paraphrased input>"`). Include all
-     `session_changed_files` accumulated so far so Developer reads existing work from disk and
-     continues rather than starting over. Developer context is preserved via files already
-     written; no work is lost.
+     `session_changed_files` accumulated so far.
    - NO → Identify the state/agent the input belongs to (see table below) and record it as a
      pending steering note in `status.json` under `pending_steering` (see schema note below).
      The note will be injected into the relevant agent's dispatch when that state is next
@@ -144,12 +142,7 @@ agent dispatch when that state is entered, then flip their `status` to `"injecte
 **Produces:** `spec.md`, `acceptance.json`, `status.json` (initial creation)  
 **Gate:** All three files exist and pass content validation (see CONTRACT.md).
 
-Refiner interviews the user (via `ask_questions`) to establish:
-- What the user wants to achieve (goals)
-- What they explicitly do NOT want (out of scope)
-- Acceptance criteria (testable and unambiguous)
-- Definition of Done
-- Constraints and assumptions
+Refiner gathers goals, out-of-scope boundaries, testable acceptance criteria, Definition of Done, and constraints/assumptions via `ask_questions`.
 
 Refiner writes output to `.agents-work/<session>/` and returns JSON. ProjectManager moves
 to `APPROVE_SPEC` once the gate passes.
@@ -166,8 +159,7 @@ ProjectManager dispatches Refiner with a `lean: true` flag to create **minimal**
 
 ProjectManager **MUST** dispatch Refiner first. Only if Refiner returns `status: BLOCKED`
 or is demonstrably unavailable after an explicit dispatch attempt may ProjectManager create
-these minimal artifacts directly. This direct creation is the **sole permitted exception**
-to the no-edit rule and **MUST NOT** be used as a shortcut to bypass Refiner.
+these minimal artifacts directly — this is the **sole permitted exception** to the no-edit rule.
 
 Gate: artifacts exist. If Developer discovers complexity, exit lean mode and restart from
 full REFINE.
@@ -181,9 +173,7 @@ full REFINE.
 **`current_state`:** MUST be set to `APPROVE_SPEC` (not `ASK_USER`).  
 **Decision ID:** `UD-APPROVE-SPEC` (well-known, update in-place across correction cycles).
 
-ProjectManager presents a summary of `spec.md` and `acceptance.json` and asks the user to:
-1. Approve the specification as-is, OR
-2. Request changes with details.
+ProjectManager presents a summary of `spec.md` and `acceptance.json` and asks the user to approve as-is or request changes with details.
 
 **Gate:** `UD-APPROVE-SPEC` has `status: answered` AND `answer` starts with `"approved"`.  
 `"changes-requested: <detail>"` reopens the loop: ProjectManager routes corrections to
@@ -228,14 +218,9 @@ fixed constraints. Architect does not re-litigate tech stack choices.
 
 Same mechanism as `APPROVE_SPEC`. Decision ID: `UD-APPROVE-DESIGN`.
 
-ProjectManager presents:
-- `spec.md` — scope, acceptance criteria, assumptions
-- `architecture.md` — modules, data flows, key decisions / ADRs
-- `design-specs/` (if Designer was involved) — layouts, interactions, components
+ProjectManager presents `spec.md`, `architecture.md`, and `design-specs/` (if Designer was involved) and asks the user to approve or request changes.
 
-Gate passes when `UD-APPROVE-DESIGN` has `status: answered` AND `answer` starts with
-`"approved"`. Changes-requested routes back to Architect / Designer / Refiner as appropriate.
-Appends to `approve-design-history.jsonl` on each `changes-requested`.
+**Gate:** `UD-APPROVE-DESIGN` has `status: answered` AND `answer` starts with `"approved"`. Changes-requested routes back to Architect / Designer / Refiner as appropriate. Appends to `approve-design-history.jsonl` on each `changes-requested`.
 
 ---
 
@@ -382,6 +367,17 @@ After user responds, return to the `state_context` recorded in the decision entr
 | `FIX_SECURITY` | Security returns `BLOCKED` (high/critical) | Developer fixes → Security re-audits | Security `OK` |
 | `FIX_BUILD` | CI/build red in INTEGRATE | Integrator or Developer fixes → INTEGRATE reruns | CI green |
 
+### Developer Auto-Retry
+
+If Developer returns `status: BLOCKED` **or** the first Reviewer pass returns `BLOCKED` with findings indicating the implementation is _fundamentally off-track_ (misunderstood the task goal, not merely incremental quality issues), ProjectManager may automatically re-dispatch Developer **once** before entering the formal repair loop:
+
+1. Inject all blocking findings into `task.goal` as a `"Steering amendment: <summary of findings>"`.
+2. Include all `session_changed_files` accumulated so far so Developer continues from existing work on disk.
+3. Record this in `status.json` under `retry_counts.<task-id>.auto_retry` (cap: 1 per task).
+4. If the auto-retry still produces a `BLOCKED` result, enter the normal repair loop — do not auto-retry again.
+
+**Do not apply auto-retry for incremental quality issues** (style violations, test gaps, minor correctness) — those go directly to the formal repair loop. Apply only when the core implementation direction was wrong.
+
 ### Retry Budget
 
 Each repair loop has a maximum of **3 iterations** per loop type per task.
@@ -480,3 +476,8 @@ to read it before starting work.
 
 Conflicts MUST be resolved in favour of higher-priority sources, with the conflict noted in
 `artifacts.notes`.
+
+**Knowledge base:**
+At session start, scan `.agents-context/` for topic files relevant to the session goal. Persist
+their paths in `status.json` under `runtime_flags.context_topics`. Include relevant files in
+`context_files` for Refiner, Researcher, Architect, SolutionArchitect, and Developer dispatches.

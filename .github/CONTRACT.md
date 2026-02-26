@@ -54,9 +54,49 @@ kebab-case summary of the user goal (e.g. `add-dark-mode`, `fix-login-bug`).
 | `research/` | Researcher | When research required |
 | `approve-spec-history.jsonl` | ProjectManager | On first `changes-requested` at APPROVE_SPEC |
 | `approve-design-history.jsonl` | ProjectManager | On first `changes-requested` at APPROVE_DESIGN |
+| `.agents-context/<topic>.md` | Docs (writes), any agent (reads via `context_files`) | When knowledge worth persisting is produced |
 
 Previous sessions in `.agents-work/` are **read-only**. Agents may reference them for context
 but **MUST NOT** modify them.
+
+---
+
+## `.agents-context/` — Persistent Knowledge Base
+
+Topic files in `.agents-context/` accumulate project-specific patterns, decisions, and learnings **across sessions**. Unlike session artefacts, they persist indefinitely and are appended to over time.
+
+**Location:** `.agents-context/` at the repository root (alongside `.github/`).  
+**Naming:** kebab-case topic, e.g. `testing-patterns.md`, `auth.md`, `error-handling.md`.  
+**Owner:** Docs writes to these files at DONE. No other agent may create or edit them.  
+**Reading:** ProjectManager includes relevant topic files in `context_files` when dispatching Refiner, Researcher, Architect, SolutionArchitect, and Developer.
+
+### Topic file format
+
+Each file starts with a `# <Topic Title>` heading. Entries are appended in this format:
+
+```markdown
+## <Short entry title>
+**Session:** YYYY-MM-DD_slug | **Agent:** <source> | **Added:** YYYY-MM-DD
+
+<2–10 lines of actionable knowledge: patterns, decisions, gotchas, or constraints>
+```
+
+Existing entries are **never edited or deleted**.
+
+### What to persist
+
+Persist when something would benefit future sessions:
+- Established patterns the team has adopted (test structure, error handling, naming conventions)
+- Technology or library choices with rationale, especially when common alternatives were rejected
+- Non-obvious constraints or gotchas found during implementation
+- Security or performance decisions that apply project-wide
+- Anything from `assumptions` or `known_issues` in `status.json` with permanent relevance
+
+Do **not** persist: session-specific outcomes (those belong in `report.md`), information already in the project's own README or architecture docs, or temporary workarounds.
+
+### `knowledge_contributions` field
+
+Any agent that identifies knowledge worth persisting includes a `knowledge_contributions` array in its output JSON (see Universal Output JSON). ProjectManager accumulates these across the session and passes the full list to Docs at DONE.
 
 ---
 
@@ -121,7 +161,15 @@ Every agent returns **only** this structure:
     "manual_steps": [],
     "review_comments": [],
     "findings": [],
-    "notes": ["assumptions made, tradeoffs accepted, links to files"]
+    "notes": ["assumptions made, tradeoffs accepted, links to files"],
+    "knowledge_contributions": [
+      {
+        "topic": "testing-patterns",
+        "title": "Short descriptive title",
+        "content": "The actionable knowledge to persist — 2–10 lines.",
+        "source_agent": "Developer"
+      }
+    ]
   },
   "gates": {
     "meets_definition_of_done": true,
@@ -179,7 +227,8 @@ The ProjectManager is its **logical owner** and is responsible for keeping it cu
   },
   "runtime_flags": {
     "copilot_instructions_exists": true,
-    "copilot_checked_at": "ISO-8601"
+    "copilot_checked_at": "ISO-8601",
+    "context_topics": [".agents-context/testing-patterns.md"]
   },
   "retry_counts": {
     "T-001": { "FIX_REVIEW": 0, "FIX_TESTS": 0, "FIX_SECURITY": 0, "FIX_BUILD": 0 }
