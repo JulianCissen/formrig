@@ -1,34 +1,28 @@
 @use '@angular/material' as mat;
 @use '@angular/cdk' as cdk;
 
-// Material 3 (M3) theme setup.
-// mat.theme() is the all-in-one M3 mixin: it emits component styles and
-// system-level color + density tokens. mat.system-level-typography() adds
-// the full typescale custom-property set (--mat-sys-*-font, --mat-sys-*-size, etc.).
-// Do NOT add mat.core() or mat.all-component-themes() — those are M2 patterns.
-
-// Define the theme as a variable so it can be forwarded to ancillary mixins.
-$formrig-theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary:   mat.$violet-palette,
-  ),
-  typography: (
-    plain-family: 'Inter, system-ui, -apple-system, sans-serif',
-    brand-family: 'Inter, system-ui, -apple-system, sans-serif',
-  ),
-  density: (
-    scale: 0,
-  )
-));
+// Material 3 (M3) theme setup — v19+ API.
+// mat.theme() takes a direct configuration map (NOT the result of the
+// deprecated mat.define-theme()). Typography, color tokens, and density are
+// all emitted in one call. Do NOT use mat.define-theme(), mat.core(), or
+// mat.all-component-themes() — those are M2 / pre-v19 patterns.
 
 // Emit .cdk-visually-hidden styles so the CDK LiveAnnouncer element
 // is positioned off-screen and not visible to sighted users.
 @include cdk.a11y-visually-hidden();
 
 html {
-  @include mat.theme($formrig-theme);
-  @include mat.system-level-typography($formrig-theme);
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$violet-palette,
+    ),
+    typography: (
+      plain-family: 'Inter, system-ui, -apple-system, sans-serif',
+      brand-family: 'Inter, system-ui, -apple-system, sans-serif',
+    ),
+    density: 0,
+  ));
 }
 
 html, body {
