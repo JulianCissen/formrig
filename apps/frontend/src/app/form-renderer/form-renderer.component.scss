@@ -1,1 +1,28 @@
 // Host styles applied via component host binding
+
+.form-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-8);
+}
+
+.form-error {
+  color: var(--mat-sys-error);
+}
+
+.form-body {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.form-field {
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}

@@ -104,3 +104,7 @@ html, body {
     transition-duration: 0.01ms !important;
   }
 }
+
+html {
+  @include mat.sidenav-overrides((container-shape: 0));
+}

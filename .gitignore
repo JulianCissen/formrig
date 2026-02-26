@@ -1,5 +1,6 @@
 # Agent runtime artifacts — generated per session, not committed
 .agents-work/
+.agents-context/
 
 # Dependencies
 node_modules/

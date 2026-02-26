@@ -20,9 +20,9 @@ import { CommonModule } from '@angular/common';
  * ## Usage
  * ```html
  * <app-page-wrapper title="Forms">
- *   <a pageBack mat-button routerLink="/">← Back</a>
+ *   <a pageBack matButton routerLink="/">← Back</a>
  *   <p pageSubtitle>Manage your forms here.</p>
- *   <button pageActions mat-flat-button>New Form</button>
+ *   <button pageActions matButton="filled">New Form</button>
  *   <!-- page body goes here as default content -->
  * </app-page-wrapper>
  * ```

@@ -1,14 +1,14 @@
 @if (loading()) {
-  <div role="status" aria-label="Loading form\u2026" style="display:flex; justify-content:center; padding:2rem;">
+  <div role="status" aria-label="Loading form…" class="form-loading">
     <mat-progress-spinner mode="indeterminate" diameter="40" />
   </div>
 } @else if (error()) {
-  <p role="alert" style="color: var(--mat-sys-error)">{{ error() }}</p>
+  <p role="alert" class="form-error">{{ error() }}</p>
 } @else {
   @let form = formDef()!;
-  <form>
+  <form class="form-body">
     @for (field of form.fields; track field.id) {
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width:100%; margin-bottom:1rem;">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
         <mat-label>{{ field.label }}</mat-label>
         <input matInput
                id="field-{{ field.id }}"
@@ -17,7 +17,7 @@
                [attr.disabled]="field.disabled || null" />
       </mat-form-field>
     }
-    <div style="margin-top: 1rem;">
+    <div class="form-actions">
       <button matButton="tonal" type="button">Submit</button>
     </div>
   </form>

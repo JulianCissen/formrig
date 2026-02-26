@@ -3,6 +3,7 @@
     "npm install": true,
     "npx moduul-builder": true,
     "npx tsc --noEmit": true,
-    "npx ng build": true
+    "npx ng build": true,
+    "npx ng lint": true
   }
 }
