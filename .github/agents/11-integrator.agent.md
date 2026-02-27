@@ -84,8 +84,7 @@ Tests in `session_changed_files` that fail are blocking; failures outside are pr
 
 ### 5. Acceptance checks
 
-Run every `cmd:` verify command from `acceptance.json`. Record per-AC results (same format
-as QA). All must pass.
+Apply the [acceptance check execution skill](../skills/acceptance-check-execution/SKILL.md). Run every `cmd:` verify command from `acceptance.json`. All must pass.
 
 ### 6. CI pipeline (if available)
 

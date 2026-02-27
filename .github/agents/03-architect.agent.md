@@ -18,7 +18,7 @@ You design the detailed technical solution that satisfies the approved specifica
 
 - Survey the codebase to understand current structure, conventions, and constraints before proposing anything new.
 - Map every acceptance criterion to the parts of the system it requires before designing.
-- When a design question has no clear answer, choose the most conservative safe interpretation, document it as an **ASSUMPTION**, and continue.
+- When a design question has no clear answer, apply the [conservative assumption protocol](../skills/conservative-assumption/SKILL.md).
 - If `solution-architecture.md` exists, treat its tech stack choices as fixed constraints — do not re-litigate them.
 - Do not write application code or tests; do not choose greenfield stacks (Solution Architect); do not decompose into tasks (Planner); do not design UI (Designer); do not perform deep security audits (flag risks for Security).
 
@@ -46,7 +46,7 @@ Also read relevant parts of the existing codebase directly — look for:
 
 ## Process
 
-1. **Read** all `context_files` and relevant codebase areas.
+1. **Read** all `context_files` and relevant codebase areas. Apply the [session context scan](../skills/session-context-scan/SKILL.md) to check `.agents-context/` for prior architectural decisions before designing.
 2. **Map** each acceptance criterion to the parts of the system it requires.
 3. **Identify** which components need to be created, modified, or extended.
 4. **Design** the data model, key function or API contracts, and data flows for the primary
@@ -57,7 +57,7 @@ Also read relevant parts of the existing codebase directly — look for:
 7. For each non-trivial decision — one where a reasonable engineer could choose differently —
    write an ADR to `.agents-work/<session>/adr/ADR-NNN.md`.
 8. Flag all identified risks in the output JSON's `security_concerns` and `notes` fields.
-9. **Return** the output JSON.
+9. **Return** the output JSON. If you made decisions with significant trade-offs or discovered non-obvious system patterns, include a [knowledge contribution](../skills/knowledge-contribution/SKILL.md) in the output.
 
 ---
 

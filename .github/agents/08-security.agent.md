@@ -191,45 +191,9 @@ categories you are applying and which you are skipping.
 
 ---
 
-## Severity Classification
-
-| Severity | Meaning | Pipeline effect |
-|----------|---------|----------------|
-| **Critical** | Exploitable with no preconditions; direct data loss, account takeover, or RCE risk | `BLOCKED` — must fix |
-| **High** | Exploitable under realistic conditions; significant data or system risk | `BLOCKED` — must fix |
-| **Medium** | Real risk but requires specific preconditions, attacker privilege, or depends on deployment context; a reasonable trade-off exists | `NEEDS_DECISION` — user decides |
-| **Low** | Best-practice improvement with minimal immediate risk | `OK` with note |
-| **Info** | Observation with no direct security impact; recorded for awareness | `OK` with note |
-
-### Severity decision rules
-
-- Any critical or high finding → `BLOCKED`. All such findings must be listed.
-- Any medium finding (and no critical/high) → `NEEDS_DECISION`. All medium findings must be
-  listed together so the user can decide in one pass.
-- Low and info findings only → `OK`. List them in `notes`; they do not block.
-- Mixed critical/high + medium → `BLOCKED`. Fix the blocking items first; medium items can
-  be re-evaluated in the next Security pass.
-
----
-
 ## Findings Format
 
-Each finding MUST include:
-
-```json
-{
-  "severity": "critical | high | medium | low | info",
-  "category": "injection | auth | authorisation | input-validation | secrets | dependency | cryptography | other",
-  "file": "src/auth/auth.controller.ts",
-  "location": "login handler, line 34",
-  "description": "One sentence describing the vulnerability precisely.",
-  "remediation": "One to three sentences on how to fix or mitigate it."
-}
-```
-
-Do not write vague findings. Write: "JWT signature is not verified — `jsonwebtoken.decode()`
-is called instead of `jsonwebtoken.verify()`, allowing any token to be accepted without
-validation." Not: "JWT handling could be improved."
+Apply the [structured findings skill](../skills/structured-findings/SKILL.md) for severity vocabulary, verdict determination rules, and completeness requirements. Use the extended finding schema with `category` and `remediation` fields for security findings.
 
 ---
 

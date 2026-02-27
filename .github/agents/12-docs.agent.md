@@ -116,7 +116,7 @@ add documentation in the style already present in the codebase.
 
 ## `.agents-context/` Updates
 
-After writing `report.md`, write knowledge contributions to `.agents-context/`.
+After writing `report.md`, write knowledge contributions to `.agents-context/`. See the [knowledge contribution skill](../skills/knowledge-contribution/SKILL.md) for the contribution format and field definitions expected in `knowledge_contributions` entries.
 
 1. Collect all `knowledge_contributions` entries passed by ProjectManager in the dispatch.
 2. Group by `topic`. For each topic, target `.agents-context/<topic>.md`.

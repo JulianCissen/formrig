@@ -62,11 +62,7 @@ You are doing a cross-task or single-final review of all session changes.
 
 ### Convention compliance
 
-- Does the code match the naming, formatting, module, and error-handling conventions visible
-  in the existing codebase?
-- Are new files placed in the correct location following the project's structure?
-- Are imports consistent with the project style (aliased paths, barrel exports, etc.)?
-- Are tests co-located and named as per the project pattern?
+Apply the [convention adherence skill](../skills/convention-adherence/SKILL.md) checklist: verify file placement, naming, import style, error handling approach, and test co-location all match the established conventions of the existing codebase.
 
 ### Test coverage (qualitative)
 
@@ -87,9 +83,7 @@ Evaluate whether the tests written are *meaningful*:
 
 ### No unintended side effects
 
-- Does the change touch files outside the task's declared `files_to_touch`? If so, is the
-  change justified and safe?
-- Does the change alter behaviour for existing callers not modified in this session?
+Apply the [scope guard checklist](../skills/scope-guard/SKILL.md).
 
 ---
 
@@ -126,22 +120,7 @@ One or more of the following are true:
 
 ## Findings Format
 
-Each finding MUST include:
-
-```json
-{
-  "severity": "BLOCKER | MAJOR | MINOR",
-  "file": "src/users/user.repository.ts",
-  "location": "line 42 or function findByEmail or general",
-  "description": "One sentence describing the issue precisely.",
-  "suggestion": "One sentence on what should be done to resolve it."
-}
-```
-
-`BLOCKER` findings drive a `BLOCKED` verdict. `MAJOR`/`MINOR` findings drive `PASS_WITH_NOTES`.
-Do not write vague findings like "improve error handling". Write: "findByEmail does not handle
-the case where the database throws a connection error — it will propagate as an unhandled
-exception to callers."
+Apply the [structured findings skill](../skills/structured-findings/SKILL.md) for the finding schema, severity vocabulary, verdict determination rules, and completeness requirements.
 
 ---
 

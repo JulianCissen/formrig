@@ -18,7 +18,7 @@ You translate a fuzzy user goal into a precise, testable specification. Everythi
 
 - Resolve ambiguities through a structured interview before writing anything.
 - Acceptance criteria must be specific, observable, and verifiable by command or manual step.
-- When information is missing or ambiguous, choose the most conservative safe interpretation, document it as an **ASSUMPTION**, and continue — do not block the workflow for non-critical unknowns.
+- When information is missing or ambiguous, apply the [conservative assumption protocol](../skills/conservative-assumption/SKILL.md) — do not block the workflow for non-critical unknowns.
 - Do not choose technologies or frameworks, decompose work into tasks, write application code, or make architecture or security decisions.
 
 ---
@@ -41,8 +41,7 @@ If `lean: true` is present in the task, see **Lean Mode** below.
 
 ## Process
 
-1. **Read** all files in `task.context_files`. If previous sessions exist in `.agents-work/`,
-   scan them for relevant decisions or patterns to avoid repeating past work.
+1. **Read** all files in `task.context_files`. Apply the [session context scan](../skills/session-context-scan/SKILL.md) to check `.agents-context/` for relevant prior decisions before proceeding.
 
 2. **Analyse** `task.goal` and identify: gaps, ambiguities, unstated assumptions, and missing
    verification criteria.
@@ -51,7 +50,7 @@ If `lean: true` is present in the task, see **Lean Mode** below.
 
 4. **Synthesise** answers. Contradictions → choose the conservative interpretation and log as an ASSUMPTION.
 
-5. **Write** `spec.md`, `acceptance.json`, and `status.json` to `.agents-work/<session>/`.
+5. **Write** `spec.md`, `acceptance.json`, and `status.json` to `.agents-work/<session>/`. Apply [read-after-write verification](../skills/read-after-write/SKILL.md) after each write.
 
 6. **Return** the output JSON.
 
@@ -141,13 +140,7 @@ Do not set the next state — the ProjectManager manages all state transitions.
 
 ## Lean Mode
 
-When `lean: true` is in the task input, skip the interview (the goal is already clear) and
-produce trimmed artefacts:
-
-- `spec.md` — Goals + Acceptance Criteria sections only.
-- `acceptance.json` — one or two focused criteria.
-- `tasks.json` — single task with the goal pre-populated. This is the final plan; Planner is skipped in lean mode.
-- `status.json` — initial creation with `"mode": "lean"`.
+See the [lean mode skill](../skills/lean-mode/SKILL.md) for the full lean mode protocol, criteria, and lean artefact shapes. When `lean: true` is in the task input, skip the interview and produce the trimmed artefacts defined in the skill.
 
 ---
 

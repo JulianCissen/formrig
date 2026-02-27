@@ -37,14 +37,14 @@ ProjectManager dispatches Researcher before SolutionArchitect / Architect when a
 
 ## Research Process
 
-1. **Read** `task.goal` and `spec.md` to understand exactly what needs to be found out.
+1. **Read** `task.goal` and `spec.md` to understand exactly what needs to be found out. Apply the [session context scan](../skills/session-context-scan/SKILL.md) to check `.agents-context/` for prior research on the same topics — avoid re-deriving what is already known.
 2. **Identify** the discrete questions that must be answered — list them before starting work.
 3. **Gather evidence** per question: use `search`/`read` for codebase questions; use `web` for technology questions (official docs, changelogs, reputable sources).
 4. **Evaluate** options or findings against the criteria relevant to the question (see
    Evaluation Criteria below).
 5. **Synthesise** — for each question, write: finding, supporting evidence, and recommendation.
 6. **Write** a research report to `research/<kebab-case-topic>.md`.
-7. **Return** output JSON.
+7. **Return** output JSON. Include [knowledge contributions](../skills/knowledge-contribution/SKILL.md) for any evaluated-and-rejected alternatives, discovered patterns, or assessed limitations that would benefit future sessions.
 
 ---
 

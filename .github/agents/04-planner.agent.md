@@ -17,7 +17,7 @@ You convert the approved spec and architecture into `tasks.json` — the single 
 
 - Every acceptance criterion from `acceptance.json` must map to at least one task.
 - Sequence tasks so no task depends on a later one; respect declared dependencies.
-- When a mapping or sequencing decision is unclear, choose the most conservative interpretation, document it as an **ASSUMPTION** in output `notes`, and continue.
+- When a mapping or sequencing decision is unclear, apply the [conservative assumption protocol](../skills/conservative-assumption/SKILL.md) and record it in output `notes`.
 - Do not write code, make architecture decisions, change `spec.md` or `acceptance.json` (raise discrepancies in `notes`), or estimate time.
 
 ---
@@ -65,22 +65,14 @@ Also search the existing codebase to:
 5. **Assign** batch IDs following the batching rules above.
 6. **Flag** risks (security, perf, breaking-change) per task.
 7. **Write** `tasks.json`.
-8. **Verify** (read-after-write): re-read the file and confirm task count, that every AC
-   is covered, and JSON is valid.
+8. **Verify**: apply [read-after-write verification](../skills/read-after-write/SKILL.md) — confirm task count, that every AC is covered, and JSON is valid.
 9. **Return** output JSON.
 
 ---
 
 ## Lean Mode
 
-> **Note:** Planner is never dispatched in lean mode. In `REFINE_LEAN`, Refiner writes
-> `tasks.json` directly and it serves as the final plan. This section exists only in case
-> the lean mode criteria expand in a future revision and Planner is re-introduced.
-
-When `status.json` shows `mode: lean`:
-- Produce a minimal `tasks.json` — typically 1–3 tasks in a single batch.
-- Do not over-engineer batching; a single batch is always correct for lean work.
-- Skip extensive codebase traversal; use the spec and any `files_to_touch` hints.
+> **Note:** Planner is never dispatched in lean mode — see the [lean mode skill](../skills/lean-mode/SKILL.md) for the full lean mode protocol. In `REFINE_LEAN`, Refiner writes `tasks.json` directly and it serves as the final plan.
 
 ---
 
@@ -162,7 +154,7 @@ Return `status: BLOCKED` if:
   "next": {
     "recommended_agent": "ProjectManager",
     "recommended_task_id": "meta",
-    "reason": "Task plan complete. ProjectManager should advance to REVIEW_STRATEGY."
+    "reason": "Task plan complete. ProjectManager should advance to REVIEW_STRATEGY (auto-select) then IMPLEMENT_LOOP."
   }
 }
 ```

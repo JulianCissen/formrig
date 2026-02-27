@@ -18,6 +18,7 @@ and repair loops. The ProjectManager implements this state machine.
 REFINE → APPROVE_SPEC → DESIGN → APPROVE_DESIGN → PLAN → REVIEW_STRATEGY
        → IMPLEMENT_LOOP → INTEGRATE → DOCUMENT → DONE
 ```
+_(REVIEW_STRATEGY is an automatic step — no user input required.)_
 
 **Lean workflow (trivial, low-risk tasks):**
 ```
@@ -81,7 +82,7 @@ Read `status.json` from the most recent open session. Find `current_state` and t
      The note will be injected into the relevant agent's dispatch when that state is next
      entered.
 
-**If no Developer task is in-progress** (e.g., in APPROVE_SPEC, DESIGN, PLAN, REVIEW_STRATEGY,
+**If no Developer task is in-progress** (e.g., in APPROVE_SPEC, DESIGN, PLAN,
 INTEGRATE, repair loops):
 
 - Apply the same relevance check: is the input meant for the **currently active agent / state**?
@@ -234,22 +235,22 @@ Tasks have realistic dependencies and each has a clear `done_when` condition enc
 
 ---
 
-### REVIEW_STRATEGY _(mandatory user gate, full mode only)_
+### REVIEW_STRATEGY _(automatic, full mode only)_
 
 **Trigger:** Automatically after PLAN completes.  
-**Mechanism:** ProjectManager uses `ask_questions` directly.  
-**`current_state`:** `REVIEW_STRATEGY`.  
-**Decision ID:** `UD-REVIEW-STRATEGY`.
+**Mechanism:** ProjectManager applies the selection rule autonomously — no user input required.  
+**`current_state`:** `REVIEW_STRATEGY`.
 
-ProjectManager presents:
-1. Total number of planned tasks and a brief scope summary.
-2. The two strategies:
-   - **Per-batch:** Reviewer + QA + Security after each task. More thorough; catches issues early.
-   - **Single-final:** All tasks coded first; one combined review pass at the end. Faster but
-     late-discovered issues may require more rework.
-3. Recommendation: per-batch for ≥ 5 tasks or high risk; single-final for < 5 tasks, low risk.
+**Auto-selection rule:**
+- **per-batch** — if the plan has ≥ 5 tasks, OR any task has `risk_flags` containing
+  `security`, `perf`, or `breaking-change`.
+- **single-final** — if the plan has < 5 tasks AND all tasks have only `none` risk flags.
 
-Gate: `UD-REVIEW-STRATEGY` has canonical `answer`: `per-batch | single-final`.
+ProjectManager records the chosen strategy in `status.json` under
+`runtime_flags.review_strategy` (`"per-batch" | "single-final"`) and immediately advances
+to `IMPLEMENT_LOOP` without pausing for user input.
+
+Gate: `runtime_flags.review_strategy` is set to `"per-batch"` or `"single-final"`.
 
 ---
 
@@ -418,7 +419,7 @@ single-line bug fix, version bump).
 REFINE_LEAN → IMPLEMENT_LOOP → INTEGRATE → DONE
 ```
 
-- `APPROVE_SPEC`, `APPROVE_DESIGN`, `REVIEW_STRATEGY`, DESIGN, DOCUMENT are **skipped**.
+- `APPROVE_SPEC`, `APPROVE_DESIGN`, DESIGN, DOCUMENT are **skipped**. `REVIEW_STRATEGY` auto-selects `single-final` (lean tasks are always ≤ 3 files, low risk).
 - Reviewer is **never skipped**, even in lean mode.
 - Security is called if the change touches auth / input / network.
 - Integrator is **not dispatched**; ProjectManager runs acceptance checks directly.
@@ -439,7 +440,7 @@ In a full run, the ProjectManager MUST dispatch every core agent at least once:
 `SolutionArchitect` (greenfield, undecided stack), `Designer` (UI/UX changes), `Researcher` (research needed)
 
 **Mandatory user checkpoints (full mode):**
-`APPROVE_SPEC` (after REFINE), `APPROVE_DESIGN` (after DESIGN), `REVIEW_STRATEGY` (after PLAN)
+`APPROVE_SPEC` (after REFINE), `APPROVE_DESIGN` (after DESIGN)
 
 Note: Security CAN return `OK` with no findings — it must still be dispatched.
 

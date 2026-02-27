@@ -200,12 +200,13 @@ The ProjectManager is its **logical owner** and is responsible for keeping it cu
 ```json
 {
   "current_state": "REFINE | APPROVE_SPEC | DESIGN | APPROVE_DESIGN | PLAN | REVIEW_STRATEGY | IMPLEMENT_LOOP | INTEGRATE | DOCUMENT | DONE | ASK_USER | FIX_REVIEW | FIX_TESTS | FIX_SECURITY | FIX_BUILD | BLOCKED",
+  // NOTE: REVIEW_STRATEGY is an automatic step — it sets runtime_flags.review_strategy and advances immediately.
   "session": "YYYY-MM-DD_short-slug",
   "mode": "full | lean",
   "assumptions": ["..."],
   "user_decisions": [
     {
-      "decision_id": "UD-1 | UD-APPROVE-SPEC | UD-APPROVE-DESIGN | UD-REVIEW-STRATEGY",
+      "decision_id": "UD-1 | UD-APPROVE-SPEC | UD-APPROVE-DESIGN",
       "question": "Question asked to the user",
       "status": "pending | answered | cancelled | skipped",
       "answer": "user answer or null",
@@ -228,7 +229,8 @@ The ProjectManager is its **logical owner** and is responsible for keeping it cu
   "runtime_flags": {
     "copilot_instructions_exists": true,
     "copilot_checked_at": "ISO-8601",
-    "context_topics": [".agents-context/testing-patterns.md"]
+    "context_topics": [".agents-context/testing-patterns.md"],
+    "review_strategy": "per-batch | single-final"
   },
   "retry_counts": {
     "T-001": { "FIX_REVIEW": 0, "FIX_TESTS": 0, "FIX_SECURITY": 0, "FIX_BUILD": 0 }
@@ -343,7 +345,7 @@ An agent **MUST** return `status: BLOCKED` if:
 - Acceptance criteria are not met and cannot be resolved autonomously.
 
 The ProjectManager **MUST NOT** leave any user-decision state (`ASK_USER`, `APPROVE_SPEC`,
-`APPROVE_DESIGN`, `REVIEW_STRATEGY`) until all `user_decisions` created during that state have
+`APPROVE_DESIGN`) until all `user_decisions` created during that state have
 `status: answered | cancelled | skipped` — never `pending`.
 
 ---
@@ -365,8 +367,8 @@ with the specific validation failure.
 
 ## ASK_USER Protocol
 
-This protocol applies identically in `ASK_USER`, `APPROVE_SPEC`, `APPROVE_DESIGN`, and
-`REVIEW_STRATEGY` states. Only the `current_state` value and `decision_id` format differ.
+This protocol applies identically in `ASK_USER`, `APPROVE_SPEC`, and `APPROVE_DESIGN`
+states. Only the `current_state` value and `decision_id` format differ.
 
 1. **Before** calling the `ask_questions` tool, write a `user_decisions[]` entry with
    `status: pending`, `answer: null`, and a stable `decision_id`.
@@ -379,17 +381,16 @@ This protocol applies identically in `ASK_USER`, `APPROVE_SPEC`, `APPROVE_DESIGN
 
 **Decision ID formats:**
 - Ad-hoc: `UD-<N>` (sequential integer, unique per session).
-- Well-known gate IDs: `UD-APPROVE-SPEC`, `UD-APPROVE-DESIGN`, `UD-REVIEW-STRATEGY`.
+- Well-known gate IDs: `UD-APPROVE-SPEC`, `UD-APPROVE-DESIGN`.
   These are reused across correction cycles (update in-place, never duplicate).
 
 **Gate-specific semantics:**
 - `UD-APPROVE-SPEC` — passes only when `answer` starts with `"approved"`.
   `"changes-requested: <detail>"` reopens the correction loop.
 - `UD-APPROVE-DESIGN` — same semantics as above.
-- `UD-REVIEW-STRATEGY` — passes only when canonical `answer` is `per-batch | single-final`.
 
-**Mandatory gate retry rule:** For `UD-APPROVE-SPEC`, `UD-APPROVE-DESIGN`, and
-`UD-REVIEW-STRATEGY`, invalid / missing responses are NOT terminal. Re-ask up to 3 times (in
+**Mandatory gate retry rule:** For `UD-APPROVE-SPEC` and `UD-APPROVE-DESIGN`,
+invalid / missing responses are NOT terminal. Re-ask up to 3 times (in
 memory, not persisted). If still unresolved, enter `BLOCKED` with
 `blocker: "mandatory_user_decision_missing"`.
 

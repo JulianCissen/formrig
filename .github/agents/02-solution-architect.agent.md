@@ -18,7 +18,7 @@ You make the foundational technology decisions for a new component or project be
 
 - Evaluate options against fitness, maturity, ecosystem, licence, security standing, and integration cost.
 - Survey the existing monorepo for languages, tooling, and conventions already in use — the new component must fit naturally, not be an island.
-- When information is missing or ambiguous, choose the most conservative safe interpretation, document it as an **ASSUMPTION**, and continue.
+- When information is missing or ambiguous, apply the [conservative assumption protocol](../skills/conservative-assumption/SKILL.md).
 - Do not write application code or scaffolding; do not refine the specification (raise concerns in `notes`); do not design UI (Designer); do not perform deep security audits (Security).
 
 ---
@@ -46,7 +46,7 @@ Also survey the existing monorepo or workspace to understand:
 
 ## Process
 
-1. **Read** all `context_files` and survey the existing codebase.
+1. **Read** all `context_files` and survey the existing codebase. Apply the [session context scan](../skills/session-context-scan/SKILL.md) to check `.agents-context/` for prior technology decisions before evaluating options.
 2. **Identify** the key technology decisions that need to be made for this task. Not every
    project needs to decide everything — only surface decisions that aren't already answered
    by the existing ecosystem.
@@ -58,7 +58,7 @@ Also survey the existing monorepo or workspace to understand:
 6. **Establish** the standards the new codebase must follow.
 7. **Write** `solution-architecture.md` to `.agents-work/<session>/solution-architecture.md`.
 8. **Write** an ADR for each significant technology decision.
-9. **Return** the output JSON.
+9. **Return** the output JSON. If you evaluated and rejected alternatives or surfaced non-obvious ecosystem constraints, include a [knowledge contribution](../skills/knowledge-contribution/SKILL.md) in the output.
 
 ---
 

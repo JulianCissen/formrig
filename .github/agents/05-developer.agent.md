@@ -49,11 +49,10 @@ For each task in the batch:
 
 1. **Read** — re-read the task goal, `files_to_touch`, `acceptance_checks`, and `risk_flags`.
    Read the relevant existing source files.
-2. **Set `in-progress`** — update that task's `status` in `tasks.json` to `in-progress`.
-   Read the file back to confirm the write (read-after-write).
+2. **Set `in-progress`** — update that task's `status` in `tasks.json` to `in-progress`. Apply [read-after-write verification](../skills/read-after-write/SKILL.md).
 3. **Implement** — write or modify the code. Follow the rules in the section below.
 4. **Verify** — run the project's verification commands (see Verification section).
-5. **Set `implemented`** — update `status` to `implemented`. Read the file back to confirm.
+5. **Set `implemented`** — update `status` to `implemented`. Apply [read-after-write verification](../skills/read-after-write/SKILL.md).
 6. Proceed to the next task in the batch.
 
 After all tasks in the batch are `implemented`, return the output JSON.
@@ -80,21 +79,13 @@ Record all generated files in `artifacts.files_created_or_updated`; note any fil
 
 ---
 
-### Follow existing patterns unconditionally
+### Follow existing conventions
 
-Search for the most similar existing file and match its:
-- Import style and module organisation
-- Naming conventions (files, classes, functions, variables)
-- Error handling and logging approach
-- Export pattern
-- Test file location and naming (co-located, `__tests__/`, `*.spec.ts`, etc.)
-
-If no comparable file exists, fall back to the conventions described in `architecture.md`
-or `solution-architecture.md`.
+Apply the [convention adherence skill](../skills/convention-adherence/SKILL.md) before writing any new code.
 
 ### Keep changes minimal and targeted
 
-Only touch files required for the task. Do not refactor unrelated code, "clean up" files you happen to read, or add features not in the task goal. Record out-of-scope observations in output `notes`.
+Only touch files required for the task. Do not refactor unrelated code, "clean up" files you happen to read, or add features not in the task goal. Apply the [scope guard protocol](../skills/scope-guard/SKILL.md).
 
 ### Write tests alongside the code
 
@@ -152,10 +143,13 @@ Verification must pass for all tasks in the batch before you return. If verifica
 
 ## Lean Mode
 
-When `status.json` shows `mode: lean`:
-- There is one batch with 1–3 tasks.
-- Prefer small, targeted changes. Avoid expanding scope.
-- Still run verification before marking implemented.
+See the [lean mode skill](../skills/lean-mode/SKILL.md) for the full lean mode protocol.
+
+---
+
+## Knowledge Contributions
+
+If you discovered non-obvious codebase patterns, encountered unexpected limitations, or made significant implementation decisions, include [knowledge contributions](../skills/knowledge-contribution/SKILL.md) in your output JSON.
 
 ---
 
