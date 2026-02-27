@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService }                    from '@nestjs/config';
 import { PluginHost, LoadedPlugin }         from '@moduul/core';
-import { FormTypePlugin, isFormTypePlugin } from '@formrig/sdk';
+import { FormTypePlugin, FormTypePluginSchema } from '@formrig/sdk';
 import * as path                            from 'path';
 
 @Injectable()
@@ -12,14 +12,22 @@ export class PluginService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {
     // Resolve plugin folder: prefer PLUGIN_FOLDER env var, fall back to
     // ../../plugins relative to the CWD (which is apps/backend/ when nest start runs).
-    const folderRaw = this.config.get<string>('PLUGIN_FOLDER') ?? '../../plugins';
+    const folderRaw = this.config.get<string>('PLUGIN_FOLDER') ?? '../../plugins/form';
     const folder    = path.resolve(process.cwd(), folderRaw);
 
     this.logger.log(`Plugin folder resolved to: ${folder}`);
 
     this.host = new PluginHost<FormTypePlugin>({
       folder,
-      validator: isFormTypePlugin,
+      validator: (p: unknown): p is FormTypePlugin => {
+        const result = FormTypePluginSchema.safeParse(p);
+        if (!result.success) {
+          this.logger.error(
+            `Plugin at this path failed validation:\n${JSON.stringify(result.error.flatten(), null, 2)}`,
+          );
+        }
+        return result.success;
+      },
     });
   }
 
@@ -34,8 +42,8 @@ export class PluginService implements OnModuleInit {
     const loaded = this.host.getAll();
     if (loaded.length === 0) {
       this.logger.warn(
-        'No plugins were loaded. Ensure plugins/demo-form/dist/index.js exists. ' +
-        'Run: cd plugins/demo-form && npm install && npx moduul-builder build',
+        'No plugins were loaded. Ensure plugins/form/demo-form/dist/index.js exists. ' +
+        'Run: cd plugins/form/demo-form && npm install && npx moduul-builder build',
       );
     } else {
       this.logger.log(`Loaded ${loaded.length} plugin(s): ${loaded.map(p => p.manifest.name).join(', ')}`);

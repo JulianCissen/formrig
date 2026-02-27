@@ -1,9 +1,11 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { Logger }      from '@nestjs/common';
 import { AppModule }   from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Bootstrap');
 
   // Enable CORS for Angular dev server
   app.enableCors({ origin: 'http://localhost:4200' });
@@ -12,7 +14,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api');
 
   await app.listen(3000);
-  console.log('Backend listening on http://localhost:3000');
+  logger.log('Backend listening on http://localhost:3000');
 }
 
 bootstrap();

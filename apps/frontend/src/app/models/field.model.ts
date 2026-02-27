@@ -19,10 +19,26 @@ export const FieldDtoSchema = z.object({
   maxSizeBytes: z.number().optional(),
 });
 
-export const FormDefinitionDtoSchema = z.object({
-  id: z.string(),
-  title: z.string().optional(),
+export const StepDtoSchema = z.object({
+  /** Human-readable step label displayed in the stepper header. */
+  label: z.string(),
+  /** Optional description shown below the step label. */
+  description: z.string().optional(),
+  /** Ordered list of fields in this step. */
   fields: z.array(FieldDtoSchema),
+});
+
+export type StepDto = z.infer<typeof StepDtoSchema>;
+
+export const FormDefinitionDtoSchema = z.object({
+  /** Unique form identifier. */
+  id: z.string(),
+  /** Optional human-readable form title. */
+  title: z.string().optional(),
+  /** Ordered list of serialised fields (always present — merged flat list). */
+  fields: z.array(FieldDtoSchema),
+  /** Optional step groupings. Present when the form uses steps. */
+  steps: z.array(StepDtoSchema).optional(),
 });
 
 export type FieldDto = z.infer<typeof FieldDtoSchema>;
