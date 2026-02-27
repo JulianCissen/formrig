@@ -5,7 +5,11 @@
 export type { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField } from '@formrig/shared';
 
 // SDK-own types
-export type { FormDefinition, FormEventContext, FormTypePlugin } from './types.js';
+export type { FormDefinition, FormEventContext, FormTypePlugin, FileMeta, AVScanResult } from './types.js';
 
 // Runtime export (not type-only — needed at runtime for PluginHost validator)
 export { isFormTypePlugin, FormTypePluginSchema } from './validator.js';
+
+export { IFileStoragePlugin } from './file-storage-plugin.js';
+export { IAntivirusPlugin } from './antivirus-plugin.js';
+export { FileStoragePluginSchema, isFileStoragePlugin, isAntivirusPlugin } from './validator.js';

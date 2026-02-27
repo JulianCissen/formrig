@@ -1,4 +1,4 @@
-import type { BaseField } from '@formrig/shared';
+import type { BaseField, FormStep } from '@formrig/shared';
 
 /**
  * The JSON-serialisable descriptor of a form.
@@ -14,10 +14,32 @@ export interface FormDefinition {
   title?: string;
 
   /**
-   * Ordered list of fields that make up the form.
-   * Uses the `BaseField` class hierarchy so `type` discriminators are always present.
+   * Flat list of fields. Used when the form is NOT divided into steps.
+   *
+   * **At least one of `fields` or `steps` must be provided.** A `FormDefinition`
+   * with neither `fields` nor `steps` is invalid and the backend will throw.
+   *
+   * When `steps` is also present, `fields` is ignored in favour of deriving
+   * the flat list from `steps`.
    */
-  fields: BaseField[];
+  fields?: BaseField[];
+
+  /**
+   * Ordered list of form steps. When present and non-empty, the form renderer
+   * displays a `MatStepper` with one panel per step.
+   *
+   * **At least one of `fields` or `steps` must be provided.** Providing `steps`
+   * alone (without `fields`) is the recommended pattern for multi-step forms.
+   * The backend service derives `FormEventContext.fields` by flattening all
+   * step fields in order — event handlers always receive a complete flat list
+   * regardless of whether the plugin used `fields` or `steps`.
+   *
+   * **Constraint on event handlers:** handlers MUST NOT add or remove elements
+   * from `ctx.fields`. Only mutating field _values_ is supported. Adding/removing
+   * fields would corrupt the step-boundary slicing used when serialising the
+   * response.
+   */
+  steps?: FormStep[];
 }
 
 /**
@@ -29,7 +51,13 @@ export interface FormDefinition {
  * and returned as the HTTP response.
  */
 export interface FormEventContext {
-  /** Shallow-cloned, per-request copy of the form's fields. Mutable. */
+  /**
+   * Shallow-cloned, per-request copy of the form's fields. Mutable.
+   *
+   * When the plugin definition uses `steps`, this array is the merged flat
+   * list of all step fields (in step order, preserving intra-step order).
+   * Handlers MUST NOT add or remove elements — only mutate field values.
+   */
   fields: BaseField[];
 }
 
@@ -69,3 +97,25 @@ export interface FormTypePlugin {
     submitted(ctx: FormEventContext): Promise<void>;
   };
 }
+
+/**
+ * Metadata attached to every file traversing the upload pipeline.
+ * `size` is -1 when the Content-Length header is absent; consumers must tolerate -1.
+ */
+export interface FileMeta {
+  mimeType: string;
+  /** File size in bytes. -1 when unknown (Content-Length header absent). */
+  size: number;
+  originalName: string;
+}
+
+/**
+ * Result returned by an {@link IAntivirusPlugin} scan.
+ */
+export interface AVScanResult {
+  clean: boolean;
+  /** Human-readable threat name when clean === false. */
+  threat?: string;
+}
+
+

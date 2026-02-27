@@ -183,6 +183,9 @@ export class FileUploadField extends BaseField {
    *                     `<input accept>` attribute. Default: `''` (all file types allowed).
    * @param maxFiles     Maximum number of files the user may attach. Default: undefined (no limit).
    * @param maxSizeBytes Maximum total upload size in bytes. Default: undefined (no limit).
+   * @param rename       Optional base name for stored files. When set, the backend uses this
+   *                     value instead of a random UUID as the filename base (a `_${index}` suffix
+   *                     and the original file extension are always appended). Default: undefined.
    * @param required     Inherited from BaseField. Default: false.
    * @param disabled     Inherited from BaseField. Default: false.
    */
@@ -192,9 +195,38 @@ export class FileUploadField extends BaseField {
     public accept: string = '',
     public maxFiles?: number,
     public maxSizeBytes?: number,
+    public rename?: string,
     required: boolean = false,
     disabled: boolean = false,
   ) {
     super(label, required, disabled);
   }
+}
+
+/**
+ * A named group of fields representing one step in a multi-step form.
+ *
+ * Plugin authors populate `FormDefinition.steps` with an ordered array of
+ * `FormStep` objects. The form renderer walks through them in order,
+ * presenting one step at a time, and only allows the user to proceed to the
+ * next step once all required fields in the current step are valid.
+ *
+ * @example
+ * ```ts
+ * const definition: FormDefinition = {
+ *   id: 'onboarding',
+ *   steps: [
+ *     { label: 'Personal Details', fields: [new TextField('Full name', '', true)] },
+ *     { label: 'Preferences',      fields: [new SelectField('Country', ['UK', 'US'])] },
+ *   ],
+ * };
+ * ```
+ */
+export interface FormStep {
+  /** Human-readable step label displayed in the stepper header. */
+  label: string;
+  /** Optional description displayed below the label in the stepper header. */
+  description?: string;
+  /** Ordered list of fields rendered inside this step's panel. */
+  fields: BaseField[];
 }

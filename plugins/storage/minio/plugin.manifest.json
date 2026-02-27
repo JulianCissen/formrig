@@ -1,0 +1,6 @@
+{
+  "name": "minio-storage",
+  "version": "0.1.0",
+  "entryPoint": "./dist/index.js",
+  "description": "MinIO file storage plugin for FormRig"
+}

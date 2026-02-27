@@ -13,7 +13,8 @@ export const FormTypePluginSchema = z.object({
   definition: z.object({
     id: z.string(),
     title: z.string().optional(),
-    fields: z.array(z.unknown()),
+    fields: z.array(z.unknown()).optional(),
+    steps: z.array(z.unknown()).optional(),
   }),
   events: z.object({
     created: z.function(),
@@ -32,4 +33,41 @@ export const FormTypePluginSchema = z.object({
  */
 export function isFormTypePlugin(p: unknown): p is FormTypePlugin {
   return FormTypePluginSchema.safeParse(p).success;
+}
+
+import { IFileStoragePlugin } from './file-storage-plugin.js';
+import { IAntivirusPlugin } from './antivirus-plugin.js';
+
+/**
+ * Zod schema that validates the structural contract of a storage plugin.
+ * The plugin's default export must be an object with upload, getUrl, and delete methods.
+ */
+export const FileStoragePluginSchema = z.object({
+  upload:                 z.function(),
+  uploadToQuarantine:     z.function(),
+  promoteFromQuarantine:  z.function(),
+  deleteFromQuarantine:   z.function(),
+  getUrl:                 z.function(),
+  delete:                 z.function(),
+  init:                   z.function().optional(),
+  requiredConfigKeys:     z.function().optional(),
+}).passthrough();
+
+/**
+ * Runtime type-guard used as the `validator` option of `PluginHost<IFileStoragePlugin>`.
+ */
+export function isFileStoragePlugin(p: unknown): p is IFileStoragePlugin {
+  return FileStoragePluginSchema.safeParse(p).success;
+}
+
+/**
+ * Duck-type validator for antivirus scanner plugins.
+ * Returns true if `obj` has a callable `scan` method.
+ */
+export function isAntivirusPlugin(obj: unknown): obj is IAntivirusPlugin {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof (obj as IAntivirusPlugin).scan === 'function'
+  );
 }
