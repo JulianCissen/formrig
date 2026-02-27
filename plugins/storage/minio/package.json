@@ -1,0 +1,18 @@
+{
+  "name": "@formrig/storage-minio",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "moduul-builder build --format cjs",
+    "postinstall": "node postinstall.js"
+  },
+  "dependencies": {
+    "@formrig/sdk": "file:../../../packages/sdk",
+    "minio": "^8.0.0"
+  },
+  "devDependencies": {
+    "@moduul/builder": "0.1.2",
+    "typescript": "^5.4.0"
+  }
+}
