@@ -27,7 +27,7 @@ export class StoragePluginService implements IFileStoragePlugin, OnModuleInit {
       validator: (p): p is IFileStoragePlugin => {
         const result = isFileStoragePlugin(p);
         if (!result) {
-          this.logger.error('Storage plugin failed validation: must implement upload, getUrl, and delete.');
+          this.logger.error('Storage plugin failed validation: must implement upload, getStream, and delete.');
         }
         return result;
       },
@@ -50,8 +50,8 @@ export class StoragePluginService implements IFileStoragePlugin, OnModuleInit {
     return this.plugin.upload(key, stream, meta);
   }
 
-  async getUrl(key: string): Promise<string> {
-    return this.plugin.getUrl(key);
+  async getStream(key: string): Promise<Readable> {
+    return this.plugin.getStream(key);
   }
 
   async delete(key: string): Promise<void> {

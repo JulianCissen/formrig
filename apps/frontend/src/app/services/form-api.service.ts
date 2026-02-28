@@ -47,11 +47,6 @@ export class FormApiService {
     return this.http.post<FileRecordResponse>(`${API}/forms/${id}/files?fieldId=${encodeURIComponent(fieldId)}`, formData);
   }
 
-  /** GET /forms/:id/files/:fileId — resolve download URL */
-  getFileUrl(id: string, fileId: string): Observable<{ url: string }> {
-    return this.http.get<{ url: string }>(`${API}/forms/${id}/files/${fileId}`);
-  }
-
   /** GET /forms/types — list all loaded form-type plugins */
   getFormTypes(): Observable<FormTypeSummary[]> {
     return this.http.get<FormTypeSummary[]>(`${API}/forms/types`);

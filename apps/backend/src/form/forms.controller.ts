@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, UploadedFile,
   UseInterceptors, Query, HttpCode, HttpStatus, ParseUUIDPipe, BadRequestException,
+  StreamableFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FormService }         from './form.service';
@@ -96,13 +97,17 @@ export class FormsController {
     return this.formService.createFileRecord(id, fieldId, storageKey, meta);
   }
 
-  /** GET /forms/:id/files/:fileId — get a pre-signed URL for a file */
-  @Get(':id/files/:fileId')
-  async getFileUrl(
+  /** GET /forms/:id/files/:fileId/download — proxy-stream a file through the backend */
+  @Get(':id/files/:fileId/download')
+  async downloadFile(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('fileId', ParseUUIDPipe) fileId: string,
-  ) {
-    return this.formService.getFileUrl(id, fileId);
+  ): Promise<StreamableFile> {
+    const { stream, mimeType, filename } = await this.formService.getFileStream(id, fileId);
+    return new StreamableFile(stream, {
+      type: mimeType,
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   /** DELETE /forms/:id/files/:fileId — delete a file record and its stored object */

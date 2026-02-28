@@ -38,9 +38,17 @@ export abstract class IFileStoragePlugin {
   abstract upload(key: string, stream: Readable, meta: FileMeta): Promise<void>;
 
   /**
-   * Resolve a publicly accessible or pre-signed URL for the given key.
+   * Return a Readable byte stream for the stored file identified by `key`.
+   *
+   * Called by the backend proxy download endpoint. Implementations MUST
+   * return a standard Node.js `Readable` stream that emits the raw file
+   * bytes. The caller is responsible for piping the stream to the HTTP
+   * response (via NestJS `StreamableFile`).
+   *
+   * @param key  The storage key passed to `upload()` when the file was stored.
+   * @returns    A `Readable` stream of the file's raw bytes.
    */
-  abstract getUrl(key: string): Promise<string>;
+  abstract getStream(key: string): Promise<Readable>;
 
   /**
    * Delete the stored file for the given key.

@@ -56,8 +56,8 @@ class MinioStoragePlugin implements IFileStoragePlugin {
     );
   }
 
-  async getUrl(key: string): Promise<string> {
-    return this.client.presignedGetObject(this.bucket, key, 60 * 60);
+  async getStream(key: string): Promise<Readable> {
+    return this.client.getObject(this.bucket, key);
   }
 
   async delete(key: string): Promise<void> {

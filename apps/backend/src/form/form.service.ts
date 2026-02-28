@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import type { Readable } from 'stream';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { PluginService }           from '../plugin/plugin.service';
@@ -188,7 +189,7 @@ export class FormService {
     this.em.persist(record);
     await this.em.flush();
 
-    const url = await this.fileStorage.getUrl(record.storageKey);
+    const url = `/api/forms/${formId}/files/${record.id}/download`;
     return {
       id:       record.id,
       fieldId:  record.fieldId,
@@ -199,12 +200,12 @@ export class FormService {
     };
   }
 
-  async getFileUrl(formId: string, fileId: string): Promise<{ url: string }> {
+  async getFileStream(formId: string, fileId: string): Promise<{ stream: Readable; mimeType: string; filename: string }> {
     const record = await this.fileRepo.findOne({ id: fileId, form: { id: formId } });
     if (!record) throw new NotFoundException(`File "${fileId}" not found`);
 
-    const url = await this.fileStorage.getUrl(record.storageKey);
-    return { url };
+    const stream = await this.fileStorage.getStream(record.storageKey);
+    return { stream, mimeType: record.mimeType, filename: record.filename };
   }
 
   async deleteFileRecord(formId: string, fileId: string): Promise<void> {

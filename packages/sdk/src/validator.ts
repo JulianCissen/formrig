@@ -40,11 +40,11 @@ import { IAntivirusPlugin } from './antivirus-plugin.js';
 
 /**
  * Zod schema that validates the structural contract of a storage plugin.
- * The plugin's default export must be an object with upload, getUrl, and delete methods.
+ * The plugin's default export must be an object with upload, getStream, and delete methods.
  */
 export const FileStoragePluginSchema = z.object({
   upload:             z.function(),
-  getUrl:             z.function(),
+  getStream:          z.function(),
   delete:             z.function(),
   init:               z.function().optional(),
   requiredConfigKeys: z.function().optional(),
