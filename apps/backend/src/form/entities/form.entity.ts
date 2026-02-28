@@ -8,10 +8,6 @@ export class Form extends BaseEntity {
   @Property({ columnType: 'text', nullable: false })
   pluginId!: string;
 
-  /** Human-readable name for this form instance. */
-  @Property({ columnType: 'text' })
-  title!: string;
-
   /**
    * User-entered field values, keyed by fieldId.
    * Schema: Record<string, unknown>

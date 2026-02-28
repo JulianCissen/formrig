@@ -38,45 +38,6 @@ export abstract class IFileStoragePlugin {
   abstract upload(key: string, stream: Readable, meta: FileMeta): Promise<void>;
 
   /**
-   * Stream a file to a quarantine zone (key prefix: "quarantine/<...>").
-   * The quarantine zone must NOT be user-accessible.
-   */
-  abstract uploadToQuarantine(
-    quarantineKey: string,
-    stream: Readable,
-    meta: FileMeta,
-  ): Promise<void>;
-
-  /**
-   * Atomically move a file from quarantine to active storage.
-   * Must delete the quarantine entry on completion.
-   * MinIO implementation: copyObject(src → dst) then removeObject(src).
-   */
-  abstract promoteFromQuarantine(
-    quarantineKey: string,
-    activeKey: string,
-  ): Promise<void>;
-
-  /**
-   * Delete a quarantine entry (called when AV scan returns infected).
-   */
-  abstract deleteFromQuarantine(quarantineKey: string): Promise<void>;
-
-  /**
-   * Delete all quarantine objects whose storage timestamp is older than `olderThanMs`
-   * milliseconds ago. Returns the number of objects deleted.
-   *
-   * Called periodically by QuarantineCleanupService to evict orphaned entries left
-   * by AV scan crashes or network partitions.
-   *
-   * Optional — plugins that do not implement this method will cause the cleanup job
-   * to log a warning and skip the run.
-   *
-   * @param olderThanMs  Objects modified more than this many ms ago are eligible.
-   */
-  purgeExpiredQuarantine?(olderThanMs: number): Promise<number>;
-
-  /**
    * Resolve a publicly accessible or pre-signed URL for the given key.
    */
   abstract getUrl(key: string): Promise<string>;

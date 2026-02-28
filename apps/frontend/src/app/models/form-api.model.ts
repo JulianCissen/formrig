@@ -19,7 +19,6 @@ export interface FormDetail extends FormSummary {
 
 export interface CreateFormPayload {
   pluginId: string;
-  title:    string;
 }
 
 export interface PatchFormPayload {
@@ -35,4 +34,10 @@ export interface FileRecordResponse {
   mimeType: string;
   size:     number;
   url:      string;
+}
+
+export interface FormTypeSummary {
+  name:        string;
+  description: string;
+  version:     string;
 }

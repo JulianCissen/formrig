@@ -56,51 +56,6 @@ class MinioStoragePlugin implements IFileStoragePlugin {
     );
   }
 
-  async uploadToQuarantine(quarantineKey: string, stream: Readable, meta: FileMeta): Promise<void> {
-    await this.upload(quarantineKey, stream, meta);
-  }
-
-  async promoteFromQuarantine(quarantineKey: string, activeKey: string): Promise<void> {
-    await this.client.copyObject(
-      this.bucket,
-      activeKey,
-      `/${this.bucket}/${quarantineKey}`,
-    );
-    await this.client.removeObject(this.bucket, quarantineKey);
-  }
-
-  async deleteFromQuarantine(quarantineKey: string): Promise<void> {
-    await this.client.removeObject(this.bucket, quarantineKey);
-  }
-
-  /**
-   * Lists all objects under the `quarantine/` prefix and removes those whose
-   * `lastModified` timestamp is older than `olderThanMs` milliseconds ago.
-   * Uses server-side batch removal (`removeObjects`) to minimise round-trips.
-   *
-   * @returns Number of objects deleted.
-   */
-  async purgeExpiredQuarantine(olderThanMs: number): Promise<number> {
-    const cutoff = new Date(Date.now() - olderThanMs);
-    const keysToDelete: string[] = [];
-
-    await new Promise<void>((resolve, reject) => {
-      const stream = this.client.listObjectsV2(this.bucket, 'quarantine/', true);
-      stream.on('data', (obj: Minio.BucketItem) => {
-        if (obj.name && obj.lastModified && obj.lastModified < cutoff) {
-          keysToDelete.push(obj.name);
-        }
-      });
-      stream.on('error', reject);
-      stream.on('end', resolve);
-    });
-
-    if (keysToDelete.length === 0) return 0;
-
-    await this.client.removeObjects(this.bucket, keysToDelete);
-    return keysToDelete.length;
-  }
-
   async getUrl(key: string): Promise<string> {
     return this.client.presignedGetObject(this.bucket, key, 60 * 60);
   }

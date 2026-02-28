@@ -6,6 +6,7 @@ import {
   FormDetail,
   CreateFormPayload,
   FileRecordResponse,
+  FormTypeSummary,
 } from '../models/form-api.model';
 
 const API = '/api';
@@ -49,5 +50,15 @@ export class FormApiService {
   /** GET /forms/:id/files/:fileId — resolve download URL */
   getFileUrl(id: string, fileId: string): Observable<{ url: string }> {
     return this.http.get<{ url: string }>(`${API}/forms/${id}/files/${fileId}`);
+  }
+
+  /** GET /forms/types — list all loaded form-type plugins */
+  getFormTypes(): Observable<FormTypeSummary[]> {
+    return this.http.get<FormTypeSummary[]>(`${API}/forms/types`);
+  }
+
+  /** DELETE /forms/:id/files/:fileId — delete an uploaded file */
+  deleteFile(formId: string, fileId: string): Observable<void> {
+    return this.http.delete<void>(`${API}/forms/${formId}/files/${encodeURIComponent(fileId)}`);
   }
 }

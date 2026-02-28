@@ -43,14 +43,11 @@ import { IAntivirusPlugin } from './antivirus-plugin.js';
  * The plugin's default export must be an object with upload, getUrl, and delete methods.
  */
 export const FileStoragePluginSchema = z.object({
-  upload:                 z.function(),
-  uploadToQuarantine:     z.function(),
-  promoteFromQuarantine:  z.function(),
-  deleteFromQuarantine:   z.function(),
-  getUrl:                 z.function(),
-  delete:                 z.function(),
-  init:                   z.function().optional(),
-  requiredConfigKeys:     z.function().optional(),
+  upload:             z.function(),
+  getUrl:             z.function(),
+  delete:             z.function(),
+  init:               z.function().optional(),
+  requiredConfigKeys: z.function().optional(),
 }).passthrough();
 
 /**

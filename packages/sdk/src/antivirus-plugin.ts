@@ -1,4 +1,5 @@
 // packages/sdk/src/antivirus-plugin.ts
+import type { Readable } from 'stream';
 import type { AVScanResult, FileMeta } from './types.js';
 
 /**
@@ -26,9 +27,9 @@ export abstract class IAntivirusPlugin {
   init?(config: Record<string, string>): Promise<void>;
 
   /**
-   * Scan a file that has already been written to quarantine storage.
-   * @param storageKey  The quarantine key under which the file is stored.
-   * @param meta        File metadata.
+   * Scan a file stream for viruses or malware.
+   * @param stream  A readable stream of the file to scan.
+   * @param meta    File metadata.
    */
-  abstract scan(storageKey: string, meta: FileMeta): Promise<AVScanResult>;
+  abstract scan(stream: Readable, meta: FileMeta): Promise<AVScanResult>;
 }
