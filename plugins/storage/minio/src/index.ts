@@ -17,7 +17,7 @@ class MinioStoragePlugin implements IFileStoragePlugin {
     const accessKey = config['MINIO_ACCESS_KEY'];
     const secretKey = config['MINIO_SECRET_KEY'];
     if (!accessKey || !secretKey) {
-      throw new Error('MinIO storage plugin requires MINIO_ACCESS_KEY and MINIO_SECRET_KEY env vars');
+      throw new Error('MinIO storage plugin requires MINIO_ACCESS_KEY and MINIO_SECRET_KEY config keys');
     }
 
     this.client = new Minio.Client({
