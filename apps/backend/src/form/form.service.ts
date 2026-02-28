@@ -61,7 +61,7 @@ export class FormService {
   }
 
   async listForms(): Promise<FormSummaryDto[]> {
-    const forms = await this.formRepo.findAll();
+    const forms = await this.formRepo.findAll({ orderBy: { createdAt: 'DESC' } });
     return forms.map((f) => this.toSummary(f));
   }
 
