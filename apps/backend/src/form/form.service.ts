@@ -62,7 +62,9 @@ export class FormService {
 
   async listForms(): Promise<FormSummaryDto[]> {
     const forms = await this.formRepo.findAll({ orderBy: { createdAt: 'DESC' } });
-    return forms.map((f) => this.toSummary(f));
+    return forms
+      .filter(f => this.pluginSvc.find(f.pluginId) !== undefined)
+      .map(f => this.toSummary(f));
   }
 
   async deleteForm(id: string): Promise<void> {
