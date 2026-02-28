@@ -6,6 +6,8 @@ import { Title }                              from '@angular/platform-browser';
 import { MatProgressSpinnerModule }           from '@angular/material/progress-spinner';
 import { MatCardModule }                      from '@angular/material/card';
 import { MatButtonModule }                    from '@angular/material/button';
+import { MatIconModule }                      from '@angular/material/icon';
+import { MatSnackBarModule, MatSnackBar }     from '@angular/material/snack-bar';
 import { PageWrapperComponent }               from '../../shared/page-wrapper/page-wrapper.component';
 import { FormApiService }                     from '../../services/form-api.service';
 import { FormSummary }                        from '../../models/form-api.model';
@@ -20,6 +22,8 @@ import { FormSummary }                        from '../../models/form-api.model'
     MatProgressSpinnerModule,
     MatCardModule,
     MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
   ],
   template: `
     <app-page-wrapper title="Forms">
@@ -60,6 +64,18 @@ import { FormSummary }                        from '../../models/form-api.model'
               <mat-card-content>
                 <p class="date">Created {{ form.createdAt | date:'mediumDate' }}</p>
               </mat-card-content>
+              <mat-card-actions class="card-actions">
+                @if (confirmDeleteId() === form.id) {
+                  <span class="delete-confirm-label">Delete this form?</span>
+                  <button matButton (click)="onCancelDelete($event)">Cancel</button>
+                  <button matButton (click)="onConfirmDelete($event, form.id)">Delete</button>
+                } @else {
+                  <button matIconButton aria-label="Delete form"
+                          (click)="onDeleteClick($event, form.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </mat-card-actions>
             </mat-card>
           }
         </div>
@@ -75,16 +91,20 @@ import { FormSummary }                        from '../../models/form-api.model'
     .form-card    { cursor: pointer; transition: box-shadow 0.15s; }
     .form-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
     .date         { font-size: 0.8rem; color: var(--mat-secondary-text-color, #666); margin: 0; }
+    .card-actions { display: flex; align-items: center; padding: 0 0.5rem; }
+    .delete-confirm-label { flex: 1; font-size: 0.875rem; color: var(--mat-sys-error, #b00020); }
   `],
 })
 export class FormOverviewPage implements OnInit {
   private readonly api          = inject(FormApiService);
   private readonly router       = inject(Router);
   private readonly titleService = inject(Title);
+  private readonly snackBar     = inject(MatSnackBar);
 
-  forms   = signal<FormSummary[]>([]);
-  loading = signal(true);
-  error   = signal<string | null>(null);
+  forms           = signal<FormSummary[]>([]);
+  loading         = signal(true);
+  error           = signal<string | null>(null);
+  confirmDeleteId = signal<string | null>(null);
 
   ngOnInit(): void {
     this.titleService.setTitle('Forms – FormRig');
@@ -96,5 +116,29 @@ export class FormOverviewPage implements OnInit {
 
   navigateToForm(id: string): void {
     this.router.navigate(['/form', id]);
+  }
+
+  onDeleteClick(event: Event, id: string): void {
+    event.stopPropagation();
+    this.confirmDeleteId.set(id);
+  }
+
+  onCancelDelete(event: Event): void {
+    event.stopPropagation();
+    this.confirmDeleteId.set(null);
+  }
+
+  onConfirmDelete(event: Event, id: string): void {
+    event.stopPropagation();
+    this.api.deleteForm(id).subscribe({
+      next: () => {
+        this.forms.update(fs => fs.filter(f => f.id !== id));
+        this.confirmDeleteId.set(null);
+      },
+      error: () => {
+        this.snackBar.open('Failed to delete form.', 'Dismiss', { duration: 4000 });
+        this.confirmDeleteId.set(null);
+      },
+    });
   }
 }

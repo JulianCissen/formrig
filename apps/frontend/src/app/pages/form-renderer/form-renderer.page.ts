@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router }             from '@angular/router';
 import { Title }                              from '@angular/platform-browser';
 import { PageWrapperComponent }               from '../../shared/page-wrapper/page-wrapper.component';
@@ -26,6 +26,12 @@ export class FormRendererPage implements OnInit {
 
   readonly pageTitle = signal('Form');
   readonly formId    = signal<string | null>(null);
+
+  @ViewChild(FormRendererComponent) private renderer?: FormRendererComponent;
+
+  isDirty(): boolean {
+    return this.renderer?.isDirty() ?? false;
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {

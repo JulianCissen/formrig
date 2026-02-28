@@ -56,4 +56,9 @@ export class FormApiService {
   deleteFile(formId: string, fileId: string): Observable<void> {
     return this.http.delete<void>(`${API}/forms/${formId}/files/${encodeURIComponent(fileId)}`);
   }
+
+  /** DELETE /forms/:id — delete a form and all its files */
+  deleteForm(id: string): Observable<void> {
+    return this.http.delete<void>(`${API}/forms/${id}`);
+  }
 }

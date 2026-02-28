@@ -65,6 +65,20 @@ export class FormService {
     return forms.map((f) => this.toSummary(f));
   }
 
+  async deleteForm(id: string): Promise<void> {
+    const form = await this.formRepo.findOne(id);
+    if (!form) throw new NotFoundException(`Form "${id}" not found`);
+
+    // Clean up stored files from object storage (best-effort; DB cascade removes the rows)
+    const fileRecords = await this.fileRepo.find({ form: { id } });
+    for (const record of fileRecords) {
+      await this.fileStorage.delete(record.storageKey).catch(() => {/* best-effort */});
+    }
+
+    this.em.remove(form);
+    await this.em.flush();
+  }
+
   async getForm(id: string): Promise<FormDetailDto> {
     const form = await this.formRepo.findOne(id);
     if (!form) throw new NotFoundException(`Form "${id}" not found`);

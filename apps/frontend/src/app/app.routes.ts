@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { formLeaveGuard } from './guards/form-leave.guard';
 
 export const routes: Routes = [
   {
@@ -18,6 +19,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/form-renderer/form-renderer.page').then(m => m.FormRendererPage),
     title: 'Form — FormRig',
+    canDeactivate: [formLeaveGuard],
   },
   {
     path: '**',

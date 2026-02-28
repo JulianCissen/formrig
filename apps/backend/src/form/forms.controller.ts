@@ -52,6 +52,13 @@ export class FormsController {
     return this.formService.patchForm(id, body);
   }
 
+  /** DELETE /forms/:id — delete a form and all its associated data */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteForm(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.formService.deleteForm(id);
+  }
+
   /** POST /forms/:id/files — upload a file field */
   @Post(':id/files')
   @HttpCode(HttpStatus.CREATED)

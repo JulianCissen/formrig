@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject, signal, WritableSignal, computed, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, inject, signal, WritableSignal, computed, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -78,6 +78,8 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   private readonly autosave$ = new Subject<{ fieldId: string; value: unknown }>();
   private autosaveSub?: Subscription;
   autosaveStatus = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  readonly isDirty = signal(false);
+  pendingSave: { fieldId: string; value: unknown } | null = null;
   flatGroup: FormGroup | null = null;
 
   onDragOver(event: DragEvent, fieldId: string): void {
@@ -246,11 +248,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
     // Autosave pipeline
     this.autosaveSub = this.autosave$.pipe(
+      tap(p => { this.pendingSave = p; }),
       debounceTime(this.autosaveDelay),
-      tap(() => this.autosaveStatus.set('saving')),
+      tap(() => { this.pendingSave = null; this.autosaveStatus.set('saving'); }),
       switchMap(({ fieldId, value }) =>
         this.api.patchFormField(this.formId, fieldId, value).pipe(
           tap(() => {
+            this.isDirty.set(false);
             this.autosaveStatus.set('saved');
             setTimeout(() => { if (this.autosaveStatus() === 'saved') this.autosaveStatus.set('idle'); }, 2000);
           }),
@@ -272,6 +276,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     for (const group of this.stepGroups) {
       for (const [fieldId, control] of Object.entries(group.controls)) {
         this.autosaveSub!.add(control.valueChanges.subscribe((value) => {
+          this.isDirty.set(true);
           this.autosave$.next({ fieldId, value });
         }));
       }
@@ -282,6 +287,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     if (!this.flatGroup) return;
     for (const [fieldId, control] of Object.entries(this.flatGroup.controls)) {
       this.autosaveSub!.add(control.valueChanges.subscribe((value) => {
+        this.isDirty.set(true);
         this.autosave$.next({ fieldId, value });
       }));
     }
@@ -362,5 +368,12 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
   markStepTouched(stepIndex: number): void {
     this.stepGroups[stepIndex]?.markAllAsTouched();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.isDirty()) {
+      event.preventDefault();
+    }
   }
 }
