@@ -62,7 +62,7 @@ import { FormSummary }                        from '../../models/form-api.model'
                 <mat-card-subtitle>{{ form.pluginId }}</mat-card-subtitle>
               </mat-card-header>
               <mat-card-content>
-                <p class="date">Created {{ form.createdAt | date:'mediumDate' }}</p>
+                <p class="date">Created {{ form.createdAt | date:'MMM d, y, h:mm a' }}</p>
               </mat-card-content>
               <mat-card-actions class="card-actions">
                 @if (confirmDeleteId() === form.id) {
