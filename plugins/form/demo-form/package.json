@@ -5,15 +5,14 @@
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
-    "build": "moduul-builder build",
-    "postinstall": "node postinstall.js"
+    "build": "moduul build"
   },
   "dependencies": {
     "@formrig/sdk": "file:../../packages/sdk",
     "@formrig/shared": "file:../../packages/shared"
   },
   "devDependencies": {
-    "@moduul/builder": "0.1.0",
+    "@moduul/builder": "^0.1.4",
     "typescript": "^5.4.0"
   }
 }

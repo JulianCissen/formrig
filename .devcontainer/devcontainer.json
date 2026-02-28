@@ -1,0 +1,49 @@
+{
+  "name": "formrig dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+
+  "forwardPorts": [3000, 4200, 5432, 9000, 9001],
+  "portsAttributes": {
+    "3000": { "label": "Backend API", "onAutoForward": "notify" },
+    "4200": { "label": "Frontend", "onAutoForward": "openBrowser" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "9000": { "label": "MinIO S3", "onAutoForward": "silent" },
+    "9001": { "label": "MinIO Console", "onAutoForward": "notify" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "angular.ng-template",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "EditorConfig.EditorConfig",
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "eslint.workingDirectories": [
+          "apps/backend",
+          "apps/frontend",
+          "packages/shared",
+          "packages/sdk"
+        ],
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/dist/**": true,
+          "**/.git/**": true
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "echo 'Dev container ready. node_modules are pre-installed from the container image layer.'",
+  "postStartCommand": "cd /app/apps/backend && npx mikro-orm migration:up || echo 'Migration warning — postgres may not be ready yet, run manually if needed.'"
+}

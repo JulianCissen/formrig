@@ -4,6 +4,7 @@
     "npx moduul-builder": true,
     "npx tsc --noEmit": true,
     "npx ng build": true,
-    "npx ng lint": true
+    "npx ng lint": true,
+    "docker buildx bake": true
   }
 }

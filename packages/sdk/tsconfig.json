@@ -2,15 +2,24 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "module": "CommonJS",
     "moduleResolution": "node",
-    "target": "ES2022"
+    "target": "ES2022",
+    "paths": {}
   },
+  "references": [{ "path": "../shared" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../shared" }]
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "fixedInterval",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules"]
+  }
 }

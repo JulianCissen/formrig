@@ -4,15 +4,14 @@
   "private": true,
   "main": "./dist/index.js",
   "scripts": {
-    "build": "moduul-builder build --format cjs",
-    "postinstall": "node postinstall.js"
+    "build": "moduul build --format cjs"
   },
   "dependencies": {
     "@formrig/sdk": "file:../../../packages/sdk",
     "minio": "^8.0.0"
   },
   "devDependencies": {
-    "@moduul/builder": "0.1.2",
+    "@moduul/builder": "^0.1.4",
     "typescript": "^5.4.0"
   }
 }

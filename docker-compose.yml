@@ -38,6 +38,84 @@ services:
       timeout: 5s
       retries: 5
 
+  watcher:
+    image: formrig-packages-watcher:dev
+    container_name: formrig_watcher
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - nm_root:/app/node_modules
+      - nm_plugin_demo:/app/plugins/form/demo-form/node_modules
+      - nm_plugin_minio:/app/plugins/storage/minio/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "1"
+      CHOKIDAR_INTERVAL: "1000"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "test -f /app/packages/shared/dist/index.js && test -f /app/packages/sdk/dist/index.js"
+      interval: 3s
+      timeout: 2s
+      retries: 40
+      start_period: 15s
+
+  backend:
+    image: formrig-backend:dev
+    container_name: formrig_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      watcher:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - nm_root_be:/app/node_modules
+      - nm_be_app:/app/apps/backend/node_modules
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "1"
+      CHOKIDAR_INTERVAL: "1000"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-formrig}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-formrig}
+      POSTGRES_DB: ${POSTGRES_DB:-formrig}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      PLUGIN_FOLDER: /app/plugins/form
+
+  frontend:
+    image: formrig-frontend:dev
+    container_name: formrig_frontend
+    restart: unless-stopped
+    depends_on:
+      watcher:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - .:/app
+      - nm_root_fe:/app/node_modules
+      - nm_fe_app:/app/apps/frontend/node_modules
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "1"
+      CHOKIDAR_INTERVAL: "1000"
+
 volumes:
   postgres_data:
   minio_data:
+  nm_root:
+  nm_root_be:
+  nm_root_fe:
+  nm_be_app:
+  nm_fe_app:
+  nm_plugin_demo:
+  nm_plugin_minio:
