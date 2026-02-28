@@ -7,10 +7,9 @@ export const FieldDtoSchema = z.object({
   label: z.string(),
   required: z.boolean(),
   disabled: z.boolean(),
-  value: z.string().optional(),
+  value: z.union([z.string(), z.boolean()]).optional(),
   options: z.array(z.string()).optional(),
   multiple: z.boolean().optional(),
-  checked: z.boolean().optional(),
   rows: z.number().optional(),
   autocomplete: z.boolean().optional(),
   // file-upload — kept in sync with apps/backend/src/form/dto/form-definition.dto.ts

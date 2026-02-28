@@ -22,17 +22,14 @@ export const FieldDtoSchema = z.object({
   /** Whether the field is disabled. */
   disabled: z.boolean(),
 
-  /** Current string value. Present only for value-bearing fields (e.g. TextField). */
-  value: z.string().optional(),
+  /** Current value. String for text-like fields; boolean for checkbox. */
+  value: z.union([z.string(), z.boolean()]).optional(),
 
   /** Ordered list of option labels. Present for RadioField and SelectField. */
   options: z.array(z.string()).optional(),
 
   /** Whether multiple options may be selected. Present for SelectField when multiple is true. */
   multiple: z.boolean().optional(),
-
-  /** Boolean toggle state. Present for CheckboxField. */
-  checked: z.boolean().optional(),
 
   /** Visible row count for multi-line text. Present for TextareaField. */
   rows: z.number().optional(),

@@ -314,7 +314,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     switch (field.type) {
       case 'checkbox':
         return new FormControl(
-          { value: (field as { checked?: boolean }).checked ?? false, disabled: field.disabled },
+          { value: (field.value as boolean | undefined) ?? false, disabled: field.disabled },
           field.required ? Validators.requiredTrue : []
         );
       case 'select': {

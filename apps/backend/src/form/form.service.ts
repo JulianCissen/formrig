@@ -239,7 +239,6 @@ export class FormService {
       ...('value'        in f ? { value:        String((f as Record<string, unknown>)['value']) }            : {}),
       ...('options'      in f ? { options:      (f as Record<string, unknown>)['options'] as string[] }      : {}),
       ...('multiple'     in f ? { multiple:     (f as Record<string, unknown>)['multiple'] as boolean }      : {}),
-      ...('checked'      in f ? { checked:      (f as Record<string, unknown>)['checked'] as boolean }       : {}),
       ...('rows'         in f ? { rows:         (f as Record<string, unknown>)['rows'] as number }           : {}),
       ...('autocomplete' in f ? { autocomplete: (f as Record<string, unknown>)['autocomplete'] as boolean }  : {}),
       ...('accept'       in f ? { accept:       (f as Record<string, unknown>)['accept'] as string }         : {}),
