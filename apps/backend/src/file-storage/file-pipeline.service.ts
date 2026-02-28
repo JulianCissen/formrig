@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, UnprocessableEntityException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, UnprocessableEntityException, InternalServerErrorException, Logger, RequestTimeoutException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import type { Readable } from 'stream';
@@ -9,6 +9,7 @@ import { StoragePluginService }   from './storage-plugin.service';
 @Injectable()
 export class FilePipelineService implements OnModuleInit {
   private readonly logger = new Logger(FilePipelineService.name);
+  private pipelineTimeoutMs!: number;
 
   constructor(
     private readonly storage: StoragePluginService,
@@ -20,9 +21,34 @@ export class FilePipelineService implements OnModuleInit {
     const dir = this.config.get<string>('QUARANTINE_DIR') ?? './quarantine';
     await fs.promises.mkdir(dir, { recursive: true });
     this.logger.log(`Quarantine directory ensured: ${dir}`);
+
+    this.pipelineTimeoutMs = Number(this.config.get<string>('FILE_PIPELINE_TIMEOUT_MS') ?? 30_000);
+    this.logger.log(`File pipeline timeout: ${this.pipelineTimeoutMs} ms`);
   }
 
   async process(
+    localPath: string,
+    meta: FileMeta,
+    storageKey: string,
+  ): Promise<void> {
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeout$ = new Promise<never>((_resolve, reject) => {
+      timeoutHandle = setTimeout(
+        () => reject(new RequestTimeoutException(
+          `File pipeline exceeded ${this.pipelineTimeoutMs} ms timeout`,
+        )),
+        this.pipelineTimeoutMs,
+      );
+    });
+
+    try {
+      await Promise.race([this.runPipeline(localPath, meta, storageKey), timeout$]);
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async runPipeline(
     localPath: string,
     meta: FileMeta,
     storageKey: string,
