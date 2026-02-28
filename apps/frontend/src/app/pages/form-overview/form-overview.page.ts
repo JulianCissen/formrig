@@ -59,7 +59,6 @@ import { FormSummary }                        from '../../models/form-api.model'
             >
               <mat-card-header>
                 <mat-card-title>{{ form.title }}</mat-card-title>
-                <mat-card-subtitle>{{ form.pluginId }}</mat-card-subtitle>
               </mat-card-header>
               <mat-card-content>
                 <p class="date">Created {{ form.createdAt | date:'MMM d, y, h:mm a' }}</p>
