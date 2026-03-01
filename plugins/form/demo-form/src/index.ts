@@ -1,4 +1,4 @@
-import { TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField } from '@formrig/shared';
+import { TextField, RadioField, CheckboxField, SelectField, MultiSelectField, TextareaField, FileUploadField } from '@formrig/shared';
 import type { FormStep } from '@formrig/shared';
 import type { FormTypePlugin, FormDefinition, FormEventContext } from '@formrig/sdk';
 
@@ -21,7 +21,7 @@ class DemoForm implements FormTypePlugin {
         description: 'Customise your experience.',
         fields: [
           new SelectField('Country', ['United Kingdom', 'United States', 'Germany', 'France', 'Japan']),
-          new SelectField('Skills', ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker'], '', true),
+          new MultiSelectField('Skills', ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker']),
           new TextareaField('Comments'),
         ],
       } satisfies FormStep,

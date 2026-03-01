@@ -22,22 +22,14 @@ import { debounceTime, map, switchMap, tap, catchError, concatMap } from 'rxjs/o
 import { Router }                                                  from '@angular/router';
 import { FormApiService }                                          from '../services/form-api.service';
 import { AUTOSAVE_DELAY_MS }                                        from '../tokens/autosave.token';
-import { FieldDto, FormDefinitionDto, FormDefinitionDtoSchema, StepDto } from '../models/field.model';
-
-interface FileUploadEntry {
-  clientId: string;
-  file: File;
-  status: 'pending' | 'uploading' | 'done' | 'error';
-  filename?: string;      // server-returned filename
-  fileId?: string;        // server-returned file record id
-  url?: string;           // server-returned download URL
-  errorMessage?: string;
-}
+import { FieldDto, FormDefinitionDto, FormDefinitionDtoSchema, StepDto } from '@formrig/shared';
+import { FileUploadEntry } from './file-upload-entry.model';
+import { FormFieldComponent } from './form-field/form-field.component';
 
 @Component({
   selector: 'app-form-renderer',
   standalone: true,
-  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, ReactiveFormsModule],
+  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, ReactiveFormsModule, FormFieldComponent],
   templateUrl: './form-renderer.component.html',
   styleUrl: './form-renderer.component.scss',
   host: { style: 'display:block; padding:2rem; width:100%' }
@@ -66,6 +58,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   @Output() readonly titleLoaded = new EventEmitter<string>();
 
   formDef = signal<FormDefinitionDto | null>(null);
+
   loading = signal(true);
   error = signal<string | null>(null);
   dragOverFieldId: WritableSignal<string | null> = signal<string | null>(null);
@@ -324,11 +317,17 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           field.required ? Validators.requiredTrue : []
         );
       case 'select': {
-        const raw = (field as { value?: string | string[] }).value;
-        const initial = (field as { multiple?: boolean }).multiple
-          ? (Array.isArray(raw) ? raw : raw != null && raw !== '' ? [raw] : [])
-          : (raw ?? '');
-        return new FormControl({ value: initial, disabled: field.disabled }, validators);
+        return new FormControl(
+          { value: (field as { value?: string }).value ?? '', disabled: field.disabled },
+          validators
+        );
+      }
+      case 'multi-select': {
+        const raw = (field as { value?: string[] }).value;
+        return new FormControl(
+          { value: Array.isArray(raw) ? raw : [], disabled: field.disabled },
+          validators
+        );
       }
       default:
         return new FormControl(

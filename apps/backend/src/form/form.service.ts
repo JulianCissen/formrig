@@ -4,8 +4,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { PluginService }           from '../plugin/plugin.service';
 import { FormEventContext, FileMeta } from '@formrig/sdk';
-import { BaseField }               from '@formrig/shared';
-import { FieldDto, StepDto } from './dto/form-definition.dto';
+import { BaseField, FieldDto, StepDto } from '@formrig/shared';
 import { Form }       from './entities/form.entity';
 import { FileRecord } from './entities/file-record.entity';
 import { StoragePluginService } from '../file-storage/storage-plugin.service';
@@ -246,13 +245,13 @@ export class FormService {
   }
 
   private serialiseField(f: BaseField, index: number): FieldDto {
-    return {
+    return ({  // cast needed: spread-built object does not narrow to discriminated union member
       id:       FormService.fieldSlug(f.label, index),
       type:     f.type,
       label:    f.label,
       required: f.required,
       disabled: f.disabled,
-      ...('value'        in f ? { value:        (f as Record<string, unknown>)['value'] as string | boolean } : {}),
+      ...('value'        in f ? { value:        (f as Record<string, unknown>)['value'] as string | boolean | string[] } : {}),
       ...('options'      in f ? { options:      (f as Record<string, unknown>)['options'] as string[] }      : {}),
       ...('multiple'     in f ? { multiple:     (f as Record<string, unknown>)['multiple'] as boolean }      : {}),
       ...('rows'         in f ? { rows:         (f as Record<string, unknown>)['rows'] as number }           : {}),
@@ -260,6 +259,6 @@ export class FormService {
       ...('accept'       in f ? { accept:       (f as Record<string, unknown>)['accept'] as string }         : {}),
       ...('maxFiles'     in f ? { maxFiles:     (f as Record<string, unknown>)['maxFiles'] as number }       : {}),
       ...('maxSizeBytes' in f ? { maxSizeBytes: (f as Record<string, unknown>)['maxSizeBytes'] as number }   : {}),
-    };
+    }) as FieldDto;
   }
 }

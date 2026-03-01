@@ -117,8 +117,7 @@ export class SelectField extends BaseField {
   /**
    * @param label        Human-readable label (passed to BaseField).
    * @param options      Ordered list of selectable options.
-   * @param value        Selected value(s); `string[]` when `multiple` is true. Default: empty string.
-   * @param multiple     Whether multiple options may be selected simultaneously. Default: false.
+   * @param value        Currently selected value. Default: empty string.
    * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select>`. Default: false.
    * @param required     Inherited from BaseField. Default: false.
    * @param disabled     Inherited from BaseField. Default: false.
@@ -126,9 +125,36 @@ export class SelectField extends BaseField {
   constructor(
     label: string,
     public options: string[],
-    public value: string | string[] = '',
-    public multiple: boolean = false,
+    public value: string = '',
     public autocomplete: boolean = false,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}
+
+/**
+ * Multi-select dropdown field.
+ *
+ * Maps to `<mat-select [multiple]="true">` in the Angular frontend.
+ * The `type` literal `'multi-select'` is used as the `@switch` discriminator in templates.
+ */
+export class MultiSelectField extends BaseField {
+  /** Discriminator — always `'multi-select'`. */
+  readonly type = 'multi-select' as const;
+
+  /**
+   * @param label    Human-readable label (passed to BaseField).
+   * @param options  Ordered list of selectable options.
+   * @param value    Currently selected values. Default: empty array.
+   * @param required Inherited from BaseField. Default: false.
+   * @param disabled Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public options: string[],
+    public value: string[] = [],
     required: boolean = false,
     disabled: boolean = false,
   ) {

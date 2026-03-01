@@ -1,4 +1,4 @@
-import type { FormDefinitionDto } from './form-definition.dto';
+import type { FormDefinitionDto } from '@formrig/shared';
 
 export interface FormDetailDto extends FormDefinitionDto {
   formId:    string;

@@ -1,4 +1,4 @@
-import type { FieldDto, StepDto } from './field.model';
+import type { FieldDto, StepDto } from '@formrig/shared';
 
 export interface FormSummary {
   id:        string;
