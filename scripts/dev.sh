@@ -38,9 +38,11 @@ case "$COMMAND" in
 
   fresh)
     echo "==> Rebuilding images and recreating all containers..."
-    echo "    Use this after adding or removing npm packages."
+    echo "    Removing node_modules volumes so they are repopulated from the new image."
     docker buildx bake
-    docker compose up -d --force-recreate
+    docker compose down
+    docker volume rm formrig_nm_root formrig_nm_root_be formrig_nm_root_fe formrig_nm_be_app formrig_nm_fe_app formrig_nm_plugin_demo formrig_nm_plugin_minio 2>/dev/null || true
+    docker compose up -d
     ;;
 
   down)
@@ -86,7 +88,7 @@ case "$COMMAND" in
     echo "Commands:"
     echo "  build          Build all Docker images (no containers started)"
     echo "  up             Build + start all services in detached mode"
-    echo "  fresh          Build + recreate all containers  (use after npm install)"
+    echo "  fresh          Build + recreate all containers + wipe node_modules volumes (use after npm install)"
     echo "  down           Stop containers, keep all data"
     echo "  down:clean     Stop containers AND remove all volumes  [DESTRUCTIVE]"
     echo "  logs [svc]     Tail logs (all services, or specify: backend/frontend/watcher)"

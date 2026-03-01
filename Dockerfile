@@ -31,10 +31,10 @@ CMD ["/usr/local/bin/watcher-entrypoint.sh"]
 FROM base AS backend-dev
 WORKDIR /app/apps/backend
 EXPOSE 3000
-CMD ["/app/node_modules/.bin/nest", "start", "--watch"]
+CMD ["npm", "run", "start:dev"]
 
 # ─── frontend-dev ───
 FROM base AS frontend-dev
 WORKDIR /app/apps/frontend
 EXPOSE 4200
-CMD ["/app/node_modules/.bin/ng", "serve", "--host", "0.0.0.0", "--poll", "500"]
+CMD ["npm", "run", "start"]
