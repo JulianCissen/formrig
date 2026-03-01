@@ -30,7 +30,8 @@ import { FileUploadEntry } from '../file-upload-entry.model';
     ReactiveFormsModule,
   ],
   templateUrl: './form-field.component.html',
-  viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer) }],
+  styleUrl: './form-field.component.scss',
+  viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
 export class FormFieldComponent {
   readonly field = input.required<FieldDto>();
