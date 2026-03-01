@@ -252,7 +252,7 @@ export class FormService {
       label:    f.label,
       required: f.required,
       disabled: f.disabled,
-      ...('value'        in f ? { value:        String((f as Record<string, unknown>)['value']) }            : {}),
+      ...('value'        in f ? { value:        (f as Record<string, unknown>)['value'] as string | boolean } : {}),
       ...('options'      in f ? { options:      (f as Record<string, unknown>)['options'] as string[] }      : {}),
       ...('multiple'     in f ? { multiple:     (f as Record<string, unknown>)['multiple'] as boolean }      : {}),
       ...('rows'         in f ? { rows:         (f as Record<string, unknown>)['rows'] as number }           : {}),

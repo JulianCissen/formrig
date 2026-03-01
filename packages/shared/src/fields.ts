@@ -90,13 +90,13 @@ export class CheckboxField extends BaseField {
 
   /**
    * @param label    Human-readable label (passed to BaseField).
-   * @param checked  The boolean toggle state. Default: false.
+   * @param value    The boolean toggle state. Default: false.
    * @param required Inherited from BaseField. Default: false.
    * @param disabled Inherited from BaseField. Default: false.
    */
   constructor(
     label: string,
-    public checked: boolean = false,
+    public value: boolean = false,
     required: boolean = false,
     disabled: boolean = false,
   ) {
