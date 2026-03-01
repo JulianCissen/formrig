@@ -15,6 +15,8 @@ export interface FormDetail extends FormSummary {
   steps?: StepDto[];
   /** Plugin definition id (e.g. "demo-form") */
   formId?: string;
+  /** File records persisted for this form (wire format: fileId = record UUID). */
+  fileRecords?: { fileId: string; fieldId: string; filename: string; mimeType: string; size: number; url: string }[];
 }
 
 export interface CreateFormPayload {

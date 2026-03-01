@@ -1,6 +1,7 @@
 // apps/backend/src/form/entities/form.entity.ts
-import { Entity, Property } from '@mikro-orm/core';
+import { Entity, Property, OneToMany, Collection } from '@mikro-orm/core';
 import { BaseEntity } from '../../common/base.entity';
+import { FileRecord } from './file-record.entity';
 
 @Entity({ tableName: 'forms' })
 export class Form extends BaseEntity {
@@ -15,4 +16,7 @@ export class Form extends BaseEntity {
    */
   @Property({ type: 'jsonb', default: '{}' })
   values: Record<string, unknown> = {};
+
+  @OneToMany(() => FileRecord, r => r.form)
+  fileRecords = new Collection<FileRecord>(this);
 }

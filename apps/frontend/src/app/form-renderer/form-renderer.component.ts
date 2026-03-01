@@ -111,6 +111,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     const fileArray = Array.from(files);
     const newEntries: FileUploadEntry[] = fileArray.map(file => ({
       clientId: crypto.randomUUID(),
+      source: 'new' as const,
       file,
       status: 'pending',
     }));
@@ -141,7 +142,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
   private processUpload(fieldId: string, entry: FileUploadEntry): Observable<void> {
     this.updateEntry(fieldId, entry.clientId, { status: 'uploading' });
-    return this.api.uploadFile(this.formId, fieldId, entry.file).pipe(
+    return this.api.uploadFile(this.formId, fieldId, entry.file!).pipe(
       tap(response => {
         this.updateEntry(fieldId, entry.clientId, {
           status: 'done',
@@ -154,7 +155,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
       catchError((err: HttpErrorResponse) => {
         const msg = err?.status === 422 ? 'File rejected by the server.' : 'Upload failed.';
         this.updateEntry(fieldId, entry.clientId, { status: 'error', errorMessage: msg });
-        void this.liveAnnouncer.announce('Upload failed: ' + entry.file.name, 'assertive');
+        void this.liveAnnouncer.announce('Upload failed: ' + entry.file!.name, 'assertive');
         return EMPTY;
       }),
       map(() => void 0),
@@ -218,6 +219,29 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           this.setupFlatAutosave();
         }
         this.titleLoaded.emit(result.data.title ?? 'Form');
+
+        // Hydrate upload entries from server-persisted file records
+        const rawFileRecords = raw['fileRecords'] as Array<{
+          fileId: string; fieldId: string; filename: string;
+          mimeType: string; size: number; url: string;
+        }> | undefined;
+        if (Array.isArray(rawFileRecords) && rawFileRecords.length > 0) {
+          const hydrated = new Map(this.uploadEntries());
+          for (const rec of rawFileRecords) {
+            const entry: FileUploadEntry = {
+              clientId: rec.fileId,
+              source:   'server',
+              status:   'done',
+              filename: rec.filename,
+              fileId:   rec.fileId,
+              url:      rec.url,
+            };
+            const existing = hydrated.get(rec.fieldId) ?? [];
+            hydrated.set(rec.fieldId, [...existing, entry]);
+          }
+          this.uploadEntries.set(hydrated);
+        }
+
         this.loading.set(false);
         void this.liveAnnouncer.announce(
           result.data.title ? 'Form loaded: ' + result.data.title : 'Form loaded.',

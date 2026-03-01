@@ -13,6 +13,7 @@ import { CreateFormDto }      from './dto/create-form.dto';
 import { UpdateFormValuesSchema, STRUCTURAL_FIELDS } from './dto/update-form-values.dto';
 import { FormSummaryDto }     from './dto/form-summary.dto';
 import { FormDetailDto }      from './dto/form-detail.dto';
+import { FileRecordDto }      from './dto/file-record.dto';
 import { FormTypeDto }        from './dto/form-type.dto';
 
 @Injectable()
@@ -81,7 +82,7 @@ export class FormService {
   }
 
   async getForm(id: string): Promise<FormDetailDto> {
-    const form = await this.formRepo.findOne(id);
+    const form = await this.formRepo.findOne(id, { populate: ['fileRecords'] });
     if (!form) throw new NotFoundException(`Form "${id}" not found`);
 
     const loaded = this.pluginSvc.find(form.pluginId);
@@ -131,14 +132,24 @@ export class FormService {
       });
     }
 
+    const fileRecordDtos: FileRecordDto[] = form.fileRecords.getItems().map(record => ({
+      fileId:   record.id,
+      fieldId:  record.fieldId,
+      filename: record.filename,
+      mimeType: record.mimeType,
+      size:     record.size,
+      url:      `/api/forms/${id}/files/${record.id}/download`,
+    }));
+
     return {
-      formId:    form.id,
-      pluginId:  form.pluginId,
-      title:     loaded.manifest.name,
-      createdAt: form.createdAt.toISOString(),
-      updatedAt: form.updatedAt.toISOString(),
-      id:        definition.id,
-      fields:    flatFieldDtos,
+      formId:      form.id,
+      pluginId:    form.pluginId,
+      title:       loaded.manifest.name,
+      createdAt:   form.createdAt.toISOString(),
+      updatedAt:   form.updatedAt.toISOString(),
+      id:          definition.id,
+      fields:      flatFieldDtos,
+      fileRecords: fileRecordDtos,
       ...(stepDtos !== undefined ? { steps: stepDtos } : {}),
     };
   }

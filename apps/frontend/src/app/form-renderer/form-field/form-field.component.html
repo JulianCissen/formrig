@@ -147,11 +147,11 @@
               @if (entry.status === 'done') {
                 {{ entry.filename }}
               } @else if (entry.status === 'uploading') {
-                {{ entry.file.name }}
+                {{ entry.file?.name }}
               } @else if (entry.status === 'error') {
-                {{ entry.file.name }}
+                {{ entry.file?.name }}
               } @else {
-                {{ entry.file.name }}
+                {{ entry.file?.name }}
               }
             </span>
 
@@ -159,7 +159,7 @@
               @if (entry.status === 'uploading') {
                 <mat-progress-bar
                   mode="indeterminate"
-                  [attr.aria-label]="'Uploading ' + entry.file.name"
+                  [attr.aria-label]="'Uploading ' + entry.file?.name"
                   class="file-entry__progress-bar">
                 </mat-progress-bar>
               }
@@ -168,7 +168,7 @@
                         type="button"
                         [attr.aria-label]="'Open ' + entry.filename"
                         (click)="openFile(entry)">
-                  <mat-icon>open_in_new</mat-icon>
+                  <mat-icon>file_download</mat-icon>
                 </button>
                 <button mat-icon-button
                         type="button"
