@@ -8,6 +8,7 @@ import { FormModule }         from './form/form.module';
 import { BaseEntity }         from './common/base.entity';
 import { Form }               from './form/entities/form.entity';
 import { FileRecord }         from './form/entities/file-record.entity';
+import { MikroOrmLogger }     from './common/mikro-orm-logger';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { FileRecord }         from './form/entities/file-record.entity';
           glob:          '!(*.d).{js,ts}',
           transactional: true,
         },
-        debug:       cfg.get('NODE_ENV') !== 'production',
+        debug:         cfg.get('NODE_ENV') !== 'production',
+        loggerFactory: () => new MikroOrmLogger(),
         autoMigrate: true,   // Run pending migrations automatically on startup
       }),
       inject: [ConfigService],
