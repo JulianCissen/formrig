@@ -1,5 +1,5 @@
 import {
-  TextField, RadioField, CheckboxField, SelectField, MultiSelectField, TextareaField,
+  TextField, RadioField, CheckboxField, MultiSelectField, TextareaField, SelectField,
   EqualsRule, IsTrueRule, MatchesPatternRule,
 } from '@formrig/shared';
 import type { FormStep } from '@formrig/shared';
@@ -43,12 +43,12 @@ contactEmail.hint = 'Enter a valid email address, e.g. name@example.com';
 
 // ── Step 2 fields (flat indices 4–8) ────────────────────────────────────────
 
-// Index 4: multi-select — minSelected + maxSelected soft validation
+// Index 4: multi-select with autocomplete — minSelected + maxSelected soft validation
 const skills = new MultiSelectField(
   'Technical skills',
   ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker', 'Python', 'React', 'Go'],
   [],
-  false,
+  true,   // autocomplete
 );
 skills.minSelected = 1;
 skills.maxSelected = 3;
@@ -63,7 +63,7 @@ const country = new SelectField(
 );
 country.info = 'If you select USA, you will be asked to provide a state.';
 
-// Index 6: text — only visible when United States is selected (conditional rendering)
+// Index 6: text — visible only when USA is selected
 const stateOrTerritory = new TextField('State or territory', '', false);
 stateOrTerritory.visibleWhen = {
   fieldId: fieldSlug('Country', 5),
@@ -92,7 +92,7 @@ class DemoValidationsForm implements FormTypePlugin {
       {
         label: 'Skills & Details',
         description:
-          'Demonstrates: minSelected+maxSelected on multi-select (pick 1–3 skills), conditional rendering (select United States to reveal State), maxCharacters on textarea, and IsTrueRule (terms checkbox must be checked to submit).',
+          'Demonstrates: autocomplete chip-based multi-select (Technical skills, pick 1–3), single-select with conditional rendering (Country — select USA to reveal State field), maxCharacters on textarea, and IsTrueRule (terms checkbox must be checked to submit).',
         fields: [skills, country, stateOrTerritory, bio, terms],
       } satisfies FormStep,
     ],

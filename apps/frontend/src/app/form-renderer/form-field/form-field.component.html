@@ -148,36 +148,94 @@
   }
 
   @case ('multi-select') {
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
-      <mat-label>{{ f.label }}</mat-label>
-      <mat-select [formControlName]="f.id"
-                  [id]="'field-' + f.id"
-                  [multiple]="true"
-                  [required]="f.required"
-                  (blur)="onBlur(f.id)">
-        @for (opt of f.options; track opt) {
-          <mat-option [value]="opt">{{ opt }}</mat-option>
+    @if (f.autocomplete) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
+        <mat-label>{{ f.label }}</mat-label>
+        <mat-chip-grid #chipGrid
+                       [formControlName]="f.id"
+                       [attr.aria-label]="f.label"
+                       [attr.aria-required]="f.required"
+                       [attr.aria-describedby]="f.hint ? f.id + '-hint' : null">
+          @for (val of ($any(currentValues()[f.id]) ?? []); track val) {
+            <mat-chip-row [value]="val">
+              {{ val }}
+              <button matChipRemove type="button"
+                      [attr.aria-label]="'Remove ' + val"
+                      (click)="removeChip(f.id, val, currentFormGroup)">
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+          }
+          <input #chipInput
+                 #chipTrigger="matAutocompleteTrigger"
+                 [id]="'field-' + f.id + '-input'"
+                 [matChipInputFor]="chipGrid"
+                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                 [matChipInputAddOnBlur]="false"
+                 [matAutocomplete]="chipAuto"
+                 [required]="f.required && (($any(currentValues()[f.id]) ?? []).length === 0)"
+                 [attr.aria-autocomplete]="'list'"
+                 (input)="onChipInputChange(f.id, $any($event.target).value)"
+                 (blur)="onBlur(f.id)" />
+        </mat-chip-grid>
+        <mat-autocomplete #chipAuto="matAutocomplete"
+                          (optionSelected)="selectChipOption(f.id, $event, chipInput, chipTrigger, currentFormGroup)">
+          <!-- filteredChipOptions is a plain method: runs on each CD cycle; acceptable for short option lists with OnPush -->
+          @for (opt of filteredChipOptions(f.id, f.options); track opt) {
+            <mat-option [value]="opt">{{ opt }}</mat-option>
+          }
+        </mat-autocomplete>
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
         }
-      </mat-select>
-      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
-        <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
-      }
-      @if (f.info) {
-        <button type="button" matIconButton matSuffix
-                [matTooltip]="f.info"
-                matTooltipPosition="above"
-                [attr.aria-label]="'More information about ' + f.label"
-                class="field-info-btn">
-          <mat-icon aria-hidden="true">info_outline</mat-icon>
-        </button>
-      }
-      @if (f.hint) {
-        <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
-      }
-      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
-        <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
-      }
-    </mat-form-field>
+        @if (f.info) {
+          <button type="button" matIconButton matSuffix
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+        @if (f.hint) {
+          <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+        }
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+        }
+      </mat-form-field>
+    } @else {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
+        <mat-label>{{ f.label }}</mat-label>
+        <mat-select [formControlName]="f.id"
+                    [id]="'field-' + f.id"
+                    [multiple]="true"
+                    [required]="f.required"
+                    (blur)="onBlur(f.id)">
+          @for (opt of f.options; track opt) {
+            <mat-option [value]="opt">{{ opt }}</mat-option>
+          }
+        </mat-select>
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+        }
+        @if (f.info) {
+          <button type="button" matIconButton matSuffix
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+        @if (f.hint) {
+          <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+        }
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+        }
+      </mat-form-field>
+    }
   }
 
   @case ('radio') {

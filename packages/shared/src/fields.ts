@@ -185,16 +185,18 @@ export class MultiSelectField extends BaseField {
   maxSelected?: number;
 
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param options  Ordered list of selectable options.
-   * @param value    Currently selected values. Default: empty array.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label        Human-readable label (passed to BaseField).
+   * @param options      Ordered list of selectable options.
+   * @param value        Currently selected values. Default: empty array.
+   * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select [multiple]>`. Default: false.
+   * @param required     Inherited from BaseField. Default: false.
+   * @param disabled     Inherited from BaseField. Default: false.
    */
   constructor(
     label: string,
     public options: string[],
     public value: string[] = [],
+    public autocomplete: boolean = false,
     required: boolean = false,
     disabled: boolean = false,
   ) {

@@ -38,11 +38,12 @@ const SelectFieldDtoSchema = BaseFieldDtoSchema.extend({
 });
 
 const MultiSelectFieldDtoSchema = BaseFieldDtoSchema.extend({
-  type:        z.literal('multi-select'),
-  value:       z.array(z.string()).optional(),
-  options:     z.array(z.string()),
-  minSelected: z.number().int().positive().optional(),
-  maxSelected: z.number().int().positive().optional(),
+  type:         z.literal('multi-select'),
+  value:        z.array(z.string()).optional(),
+  options:      z.array(z.string()),
+  autocomplete: z.boolean().optional(),
+  minSelected:  z.number().int().positive().optional(),
+  maxSelected:  z.number().int().positive().optional(),
 });
 
 const RadioFieldDtoSchema = BaseFieldDtoSchema.extend({
