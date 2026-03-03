@@ -40,6 +40,13 @@ export class FormsController {
     return this.formService.getFormTypes();
   }
 
+  /** POST /forms/:id/submit — validate and submit a form */
+  @Post(':id/submit')
+  @HttpCode(HttpStatus.OK)
+  submitForm(@Param('id', ParseUUIDPipe) id: string) {
+    return this.formService.submitForm(id);
+  }
+
   /** GET /forms/:id — get merged form detail */
   @Get(':id')
   async getOne(@Param('id', ParseUUIDPipe) id: string) {

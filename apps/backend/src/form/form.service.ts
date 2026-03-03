@@ -1,16 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnprocessableEntityException, ConflictException } from '@nestjs/common';
 import type { Readable } from 'stream';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { PluginService }           from '../plugin/plugin.service';
 import { FormEventContext, FileMeta } from '@formrig/sdk';
-import { BaseField, FieldDto, StepDto } from '@formrig/shared';
+import { BaseField, FieldDto, StepDto, getEffectiveRules } from '@formrig/shared';
 import { Form }       from './entities/form.entity';
 import { FileRecord } from './entities/file-record.entity';
 import { StoragePluginService } from '../file-storage/storage-plugin.service';
 import { generateFilename }   from '../common/filename.util';
 import { CreateFormDto }      from './dto/create-form.dto';
 import { UpdateFormValuesSchema, STRUCTURAL_FIELDS } from './dto/update-form-values.dto';
+import { hardValidate }        from './hard-validate.util';
 import { FormSummaryDto }     from './dto/form-summary.dto';
 import { FormDetailDto }      from './dto/form-detail.dto';
 import { FileRecordDto }      from './dto/file-record.dto';
@@ -177,18 +178,84 @@ export class FormService {
       }
     }
 
-    const form = await this.formRepo.findOne(id);
-    if (!form) throw new NotFoundException(`Form "${id}" not found`);
+    // Hard validation — resolve live field definitions and enforce type/constraint caps.
+    // buildFlatFieldDtos throws NotFoundException if the form or plugin is missing.
+    const { fieldMap, form } = await this.buildFlatFieldDtos(id);
 
-    // Shallow-merge values
     if ('fieldId' in dto) {
+      const fieldDto = fieldMap.get(dto.fieldId);
+      if (!fieldDto) {
+        throw new BadRequestException(`Field "${dto.fieldId}" does not exist on this form`);
+      }
+      if (fieldDto.type === 'file-upload') {
+        // File-upload values are managed exclusively via the upload endpoint — silently ignore.
+        return this.toSummary(form);
+      }
+      hardValidate(fieldDto, dto.value);
+    } else {
+      for (const [slug, value] of Object.entries(dto.values)) {
+        const fieldDto = fieldMap.get(slug);
+        if (!fieldDto) {
+          throw new BadRequestException(`Field "${slug}" does not exist on this form`);
+        }
+        if (fieldDto.type === 'file-upload') continue; // silently skip
+        hardValidate(fieldDto, value);
+      }
+    }
+
+    // Shallow-merge values (skip file-upload fields — managed via upload endpoint)
+    if ('fieldId' in dto) {
+      // single-field: file-upload case already returned early above
       form.values = { ...form.values, [dto.fieldId]: dto.value };
     } else {
-      form.values = { ...form.values, ...dto.values };
+      const filteredValues = Object.fromEntries(
+        Object.entries(dto.values).filter(([slug]) => fieldMap.get(slug)?.type !== 'file-upload'),
+      );
+      form.values = { ...form.values, ...filteredValues };
     }
 
     await this.em.flush();
     return this.toSummary(form);
+  }
+
+  async submitForm(id: string): Promise<{ submittedAt: string }> {
+    const { fieldMap, form } = await this.buildFlatFieldDtos(id);
+
+    if (form.submittedAt !== null) {
+      throw new ConflictException('Form already submitted');
+    }
+
+    // Build allValues map: slug → current value (used for cross-field rule evaluation)
+    const allValues: Record<string, unknown> = {};
+    for (const [slug, fieldDto] of fieldMap.entries()) {
+      allValues[slug] = (fieldDto as Record<string, unknown>)['value'];
+    }
+
+    const violationsMap = new Map<string, string[]>();
+
+    for (const [, fieldDto] of fieldMap.entries()) {
+      if (fieldDto.type === 'file-upload') continue;
+
+      const rules = getEffectiveRules(fieldDto, allValues);
+      for (const rule of rules) {
+        const fieldValue = (fieldDto as Record<string, unknown>)['value'];
+        if (!rule.matches(fieldValue, allValues)) {
+          const existing = violationsMap.get(fieldDto.id) ?? [];
+          existing.push(rule.errorMessage());
+          violationsMap.set(fieldDto.id, existing);
+        }
+      }
+    }
+
+    const errors = [...violationsMap.entries()].map(([fieldId, violations]) => ({ fieldId, violations }));
+    if (errors.length > 0) {
+      throw new UnprocessableEntityException({ message: 'Soft validation failed', errors });
+    }
+
+    form.submittedAt = new Date();
+    await this.em.flush();
+
+    return { submittedAt: form.submittedAt.toISOString() };
   }
 
   async createFileRecord(
@@ -245,6 +312,54 @@ export class FormService {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
+  /**
+   * Loads the form and its plugin definition, fires the `created` event, merges
+   * stored values into each field, then returns a slug → FieldDto map together
+   * with the already-loaded Form entity so callers avoid a second DB round-trip.
+   *
+   * Used by `patchForm` (hard validation) and will be used by `submitForm` (T-005).
+   */
+  async buildFlatFieldDtos(formId: string): Promise<{ fieldMap: Map<string, FieldDto>; form: Form }> {
+    const form = await this.formRepo.findOne(formId);
+    if (!form) throw new NotFoundException(`Form "${formId}" not found`);
+
+    const loaded = this.pluginSvc.find(form.pluginId);
+    if (!loaded) throw new NotFoundException(`Plugin "${form.pluginId}" is not loaded`);
+
+    const { plugin } = loaded;
+    const definition = plugin.definition;
+
+    const sourceFields =
+      (definition.steps?.length ?? 0) > 0
+        ? definition.steps!.flatMap((s) => s.fields)
+        : (definition.fields ?? []);
+
+    const clonedFields = sourceFields.map(
+      (f) => Object.assign(Object.create(Object.getPrototypeOf(f)), f),
+    );
+
+    const ctx: FormEventContext = { fields: clonedFields };
+    await plugin.events.created(ctx);
+
+    // Merge stored values into cloned fields
+    ctx.fields.forEach((field, index) => {
+      const slug = FormService.fieldSlug(field.label, index);
+      const stored = form.values[slug];
+      if (stored !== undefined && 'value' in field) {
+        (field as Record<string, unknown>)['value'] = stored;
+      }
+    });
+
+    // Build slug → FieldDto map
+    const fieldMap = new Map<string, FieldDto>();
+    ctx.fields.forEach((f, index) => {
+      const slug = FormService.fieldSlug(f.label, index);
+      fieldMap.set(slug, this.serialiseField(f, index));
+    });
+
+    return { fieldMap, form };
+  }
+
   private toSummary(form: Form): FormSummaryDto {
     return {
       id:        form.id,
@@ -270,6 +385,16 @@ export class FormService {
       ...('accept'       in f ? { accept:       (f as Record<string, unknown>)['accept'] as string }         : {}),
       ...('maxFiles'     in f ? { maxFiles:     (f as Record<string, unknown>)['maxFiles'] as number }       : {}),
       ...('maxSizeBytes' in f ? { maxSizeBytes: (f as Record<string, unknown>)['maxSizeBytes'] as number }   : {}),
+      ...('placeholder'   in f ? { placeholder:   (f as Record<string, unknown>)['placeholder'] as string }    : {}),
+      ...('rules'         in f ? { rules:         (f as unknown as Record<string, unknown>)['rules'] }         : {}),
+      ...('visibleWhen'   in f ? { visibleWhen:   (f as unknown as Record<string, unknown>)['visibleWhen'] }   : {}),
+      ...('maxCharacters' in f ? { maxCharacters: (f as Record<string, unknown>)['maxCharacters'] as number }   : {}),
+      ...('minCharacters' in f ? { minCharacters: (f as Record<string, unknown>)['minCharacters'] as number }   : {}),
+      ...('pattern'       in f ? { pattern:       (f as Record<string, unknown>)['pattern'] as string }         : {}),
+      ...('minSelected'   in f ? { minSelected:   (f as Record<string, unknown>)['minSelected'] as number }     : {}),
+      ...('maxSelected'   in f ? { maxSelected:   (f as Record<string, unknown>)['maxSelected'] as number }     : {}),
+      ...('hint'          in f ? { hint:          (f as unknown as Record<string, unknown>)['hint'] as string }             : {}),
+      ...('info'          in f ? { info:          (f as unknown as Record<string, unknown>)['info'] as string }             : {}),
     }) as FieldDto;
   }
 }

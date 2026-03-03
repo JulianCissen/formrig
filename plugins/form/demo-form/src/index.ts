@@ -44,7 +44,7 @@ class DemoForm implements FormTypePlugin {
         (first as TextField).value = 'Hello, formrig!';
       }
     },
-    async submitted(ctx: FormEventContext): Promise<void> {
+    async submitted(_ctx: FormEventContext): Promise<void> {
       // no-op for MVP
     },
   };

@@ -5,6 +5,7 @@
     "npx tsc": true,
     "npx ng build": true,
     "npx ng lint": true,
-    "docker buildx bake": true
+    "docker buildx bake": true,
+    "npx jest": true
   }
 }

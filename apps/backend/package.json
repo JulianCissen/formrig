@@ -8,7 +8,8 @@
     "start:dev": "cross-env PLUGIN_FOLDER=../../plugins/form nodemon --watch src --watch ../../plugins/form --ext ts,js,json --ignore dist --delay 1 --exec 'nest start'",
     "migration:create": "mikro-orm migration:create",
     "migration:run": "mikro-orm migration:up",
-    "migration:down": "mikro-orm migration:down"
+    "migration:down": "mikro-orm migration:down",
+    "test": "jest"
   },
   "mikro-orm": {
     "useTsNode": true,
@@ -38,10 +39,13 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@types/express": "^4.17.0",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^20.0.0",
     "cross-env": "^7.0.3",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.0",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.9.3"

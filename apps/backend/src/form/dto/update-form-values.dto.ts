@@ -8,6 +8,7 @@ export const STRUCTURAL_FIELDS = new Set([
   'pluginId', 'id', 'createdAt', 'updatedAt',
   'definition', 'fields', 'steps', 'type',
   'label', 'options', 'required', 'disabled',
+  '__proto__', 'constructor', 'prototype',
 ]);
 
 /** Single-field autosave payload */

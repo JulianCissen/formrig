@@ -1,3 +1,6 @@
+import type { Rule } from './rule';
+import type { ConditionTree } from './condition-tree';
+
 /**
  * Abstract base for all field types.
  *
@@ -11,6 +14,24 @@
 export abstract class BaseField {
   /** Discriminator string. Each subclass sets this to a unique lowercase literal. */
   abstract readonly type: string;
+
+  /** Optional list of soft-validation rules evaluated in the frontend and at submit time. */
+  rules?: Rule[];
+
+  /** Optional visibility condition. When absent or undefined, the field is always visible. */
+  visibleWhen?: ConditionTree;
+
+  /**
+   * Optional persistent hint text displayed below the field input.
+   * Rendered via `mat-hint` (mat-form-field fields) or a `<p class="field-hint">` element.
+   */
+  hint?: string;
+
+  /**
+   * Optional contextual information string. When set, an info icon button is rendered
+   * next to the field; hovering or focusing the button shows this text as a tooltip.
+   */
+  info?: string;
 
   /**
    * @param label    Human-readable label displayed in the form UI.
@@ -33,6 +54,15 @@ export abstract class BaseField {
 export class TextField extends BaseField {
   /** Discriminator — always `'text'`. */
   readonly type = 'text' as const;
+
+  /** Soft validation: max allowed characters. Generates a MaxLengthRule and a character counter UI affordance. */
+  maxCharacters?: number;
+
+  /** Soft validation: min required characters. Generates a MinLengthRule. */
+  minCharacters?: number;
+
+  /** Soft validation: regex pattern string. Generates a MatchesPatternRule. */
+  pattern?: string;
 
   /**
    * @param label    Human-readable label (passed to BaseField).
@@ -63,14 +93,14 @@ export class RadioField extends BaseField {
   /**
    * @param label    Human-readable label (passed to BaseField).
    * @param options  Ordered list of option labels.
-   * @param value    Currently selected option label. Default: empty string.
+   * @param value    Currently selected option label. Default: null.
    * @param required Inherited from BaseField. Default: false.
    * @param disabled Inherited from BaseField. Default: false.
    */
   constructor(
     label: string,
     public options: string[],
-    public value: string = '',
+    public value: string | null = null,
     required: boolean = false,
     disabled: boolean = false,
   ) {
@@ -83,6 +113,10 @@ export class RadioField extends BaseField {
  *
  * Maps to `<mat-checkbox>` in the Angular frontend.
  * The `type` literal `'checkbox'` is used as the `@switch` discriminator in templates.
+ *
+ * Note: the `required` property is always ignored for checkboxes — a checkbox cannot be
+ * made required via the `required` flag. Use `IsTrueRule` explicitly if the checkbox
+ * must be checked.
  */
 export class CheckboxField extends BaseField {
   /** Discriminator — always `'checkbox'`. */
@@ -117,7 +151,7 @@ export class SelectField extends BaseField {
   /**
    * @param label        Human-readable label (passed to BaseField).
    * @param options      Ordered list of selectable options.
-   * @param value        Currently selected value. Default: empty string.
+   * @param value        Currently selected value. Default: null.
    * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select>`. Default: false.
    * @param required     Inherited from BaseField. Default: false.
    * @param disabled     Inherited from BaseField. Default: false.
@@ -125,7 +159,7 @@ export class SelectField extends BaseField {
   constructor(
     label: string,
     public options: string[],
-    public value: string = '',
+    public value: string | null = null,
     public autocomplete: boolean = false,
     required: boolean = false,
     disabled: boolean = false,
@@ -143,6 +177,12 @@ export class SelectField extends BaseField {
 export class MultiSelectField extends BaseField {
   /** Discriminator — always `'multi-select'`. */
   readonly type = 'multi-select' as const;
+
+  /** Soft validation: minimum number of items that must be selected. Generates a MinCountRule. */
+  minSelected?: number;
+
+  /** Soft validation: maximum number of items that may be selected. Generates a MaxCountRule. */
+  maxSelected?: number;
 
   /**
    * @param label    Human-readable label (passed to BaseField).
@@ -171,6 +211,12 @@ export class MultiSelectField extends BaseField {
 export class TextareaField extends BaseField {
   /** Discriminator — always `'textarea'`. */
   readonly type = 'textarea' as const;
+
+  /** Soft validation: max allowed characters. Generates a MaxLengthRule and a character counter UI affordance. */
+  maxCharacters?: number;
+
+  /** Soft validation: min required characters. Generates a MinLengthRule. */
+  minCharacters?: number;
 
   /**
    * @param label    Human-readable label (passed to BaseField).

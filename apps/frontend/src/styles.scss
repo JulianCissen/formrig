@@ -108,3 +108,7 @@ html, body {
 html {
   @include mat.sidenav-overrides((container-shape: 0));
 }
+
+.multiline-tooltip {
+  white-space: pre-line;
+}

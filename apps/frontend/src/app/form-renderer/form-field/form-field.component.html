@@ -8,7 +8,36 @@
       <input matInput
              [formControlName]="f.id"
              [id]="'field-' + f.id"
-             [required]="f.required" />
+             [required]="f.required"
+             [attr.aria-describedby]="f.maxCharacters ? f.id + '-char-count' : null"
+             (blur)="onBlur(f.id)" />
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+      }
+      @if (f.info) {
+        <button type="button" matIconButton matSuffix
+                [matTooltip]="f.info"
+                matTooltipPosition="above"
+                [attr.aria-label]="'More information about ' + f.label"
+                class="field-info-btn">
+          <mat-icon aria-hidden="true">info_outline</mat-icon>
+        </button>
+      }
+      @if (f.hint) {
+        <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+      }
+      @if (f.maxCharacters) {
+        <mat-hint
+          align="end"
+          [class.mat-error]="(currentValues()[f.id]?.toString() ?? '').length > f.maxCharacters!"
+          aria-live="polite"
+          [id]="f.id + '-char-count'">
+          {{ (currentValues()[f.id]?.toString() ?? '').length }} / {{ f.maxCharacters! }}
+        </mat-hint>
+      }
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+      }
     </mat-form-field>
   }
 
@@ -19,7 +48,36 @@
                 [formControlName]="f.id"
                 [id]="'field-' + f.id"
                 [rows]="f.rows"
-                [required]="f.required"></textarea>
+                [required]="f.required"
+                [attr.aria-describedby]="f.maxCharacters ? f.id + '-char-count' : null"
+                (blur)="onBlur(f.id)"></textarea>
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+      }
+      @if (f.info) {
+        <button type="button" matIconButton matSuffix
+                [matTooltip]="f.info"
+                matTooltipPosition="above"
+                [attr.aria-label]="'More information about ' + f.label"
+                class="field-info-btn">
+          <mat-icon aria-hidden="true">info_outline</mat-icon>
+        </button>
+      }
+      @if (f.hint) {
+        <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+      }
+      @if (f.maxCharacters) {
+        <mat-hint
+          align="end"
+          [class.mat-error]="(currentValues()[f.id]?.toString() ?? '').length > f.maxCharacters!"
+          aria-live="polite"
+          [id]="f.id + '-char-count'">
+          {{ (currentValues()[f.id]?.toString() ?? '').length }} / {{ f.maxCharacters! }}
+        </mat-hint>
+      }
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+      }
     </mat-form-field>
   }
 
@@ -31,86 +89,182 @@
                [formControlName]="f.id"
                [id]="'field-' + f.id"
                [matAutocomplete]="auto"
-               [required]="f.required" />
+               [required]="f.required"
+               (blur)="onBlur(f.id)" />
         <mat-autocomplete #auto="matAutocomplete">
           @for (opt of f.options; track opt) {
             <mat-option [value]="opt">{{ opt }}</mat-option>
           }
         </mat-autocomplete>
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+        }
+        @if (f.info) {
+          <button type="button" matIconButton matSuffix
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+        @if (f.hint) {
+          <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+        }
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+        }
       </mat-form-field>
     } @else {
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
         <mat-label>{{ f.label }}</mat-label>
         <mat-select [formControlName]="f.id"
-                    [required]="f.required">
+                    [required]="f.required"
+                    (blur)="onBlur(f.id)">
           @for (opt of f.options; track opt) {
             <mat-option [value]="opt">{{ opt }}</mat-option>
           }
         </mat-select>
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+        }
+        @if (f.info) {
+          <button type="button" matIconButton matSuffix
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+        @if (f.hint) {
+          <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+        }
+        @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+          <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+        }
       </mat-form-field>
     }
   }
 
   @case ('multi-select') {
-    @if (f.autocomplete) {
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
-        <mat-label>{{ f.label }}</mat-label>
-        <input matInput
-               [formControlName]="f.id"
-               [id]="'field-' + f.id"
-               [matAutocomplete]="autoMulti"
-               [required]="f.required" />
-        <mat-autocomplete #autoMulti="matAutocomplete">
-          @for (opt of f.options; track opt) {
-            <mat-option [value]="opt">{{ opt }}</mat-option>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
-    } @else {
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
-        <mat-label>{{ f.label }}</mat-label>
-        <mat-select [formControlName]="f.id"
-                    [id]="'field-' + f.id"
-                    [multiple]="true"
-                    [required]="f.required">
-          @for (opt of f.options; track opt) {
-            <mat-option [value]="opt">{{ opt }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="form-field">
+      <mat-label>{{ f.label }}</mat-label>
+      <mat-select [formControlName]="f.id"
+                  [id]="'field-' + f.id"
+                  [multiple]="true"
+                  [required]="f.required"
+                  (blur)="onBlur(f.id)">
+        @for (opt of f.options; track opt) {
+          <mat-option [value]="opt">{{ opt }}</mat-option>
+        }
+      </mat-select>
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+      }
+      @if (f.info) {
+        <button type="button" matIconButton matSuffix
+                [matTooltip]="f.info"
+                matTooltipPosition="above"
+                [attr.aria-label]="'More information about ' + f.label"
+                class="field-info-btn">
+          <mat-icon aria-hidden="true">info_outline</mat-icon>
+        </button>
+      }
+      @if (f.hint) {
+        <mat-hint [id]="f.id + '-hint'">{{ f.hint }}</mat-hint>
+      }
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <mat-error>{{ (validationState().get(f.id) ?? []).join(' · ') }}</mat-error>
+      }
+    </mat-form-field>
   }
 
   @case ('radio') {
     <div class="form-field">
-      <label class="form-field__label" [for]="'field-' + f.id">{{ f.label }}</label>
+      <div class="field-label-row">
+        <label class="form-field__label" [for]="'field-' + f.id">{{ f.label }}</label>
+        @if (f.info) {
+          <button type="button" matIconButton
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+      </div>
       <mat-radio-group [formControlName]="f.id"
                        [id]="'field-' + f.id"
-                       [attr.aria-label]="f.label">
+                       [attr.aria-label]="f.label"
+                       [attr.aria-describedby]="((f.hint ? (f.id + '-hint') : '') + ((dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0 ? ' ' + f.id + '-errors' : ''))).trim() || null">
         @for (opt of f.options; track opt) {
-          <mat-radio-button [value]="opt">{{ opt }}</mat-radio-button>
+          <mat-radio-button [value]="opt" (blur)="onBlur(f.id)">{{ opt }}</mat-radio-button>
         }
       </mat-radio-group>
+      @if (f.hint) {
+        <p class="field-hint" [id]="f.id + '-hint'">{{ f.hint }}</p>
+      }
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <div class="field-validation-error" role="alert" aria-live="assertive" [id]="f.id + '-errors'">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ (validationState().get(f.id) ?? []).join(' · ') }}</span>
+        </div>
+      }
     </div>
   }
 
   @case ('checkbox') {
     <div class="form-field">
-      <mat-checkbox [formControlName]="f.id"
-                    [id]="'field-' + f.id"
-                    [required]="f.required">
-        {{ f.label }}
-      </mat-checkbox>
+      <div class="field-label-row">
+        <mat-checkbox [formControlName]="f.id"
+                      [id]="'field-' + f.id"
+                      [required]="f.required"
+                      [attr.aria-describedby]="((f.hint ? (f.id + '-hint') : '') + ((dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0 ? ' ' + f.id + '-errors' : ''))).trim() || null"
+                      (blur)="onBlur(f.id)">
+          {{ f.label }}
+        </mat-checkbox>
+        @if (f.info) {
+          <button type="button" matIconButton
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+      </div>
+      @if (f.hint) {
+        <p class="field-hint" [id]="f.id + '-hint'">{{ f.hint }}</p>
+      }
+      @if (dirtyFieldIds().has(f.id) && (validationState().get(f.id)?.length ?? 0) > 0) {
+        <div class="field-validation-error" role="alert" aria-live="assertive" [id]="f.id + '-errors'">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ (validationState().get(f.id) ?? []).join(' · ') }}</span>
+        </div>
+      }
     </div>
   }
 
   @case ('file-upload') {
     <div class="form-field">
-      <label class="form-field__label" [for]="'field-' + f.id">{{ f.label }}</label>
+      <div class="field-label-row">
+        <label class="form-field__label" [for]="'field-' + f.id">{{ f.label }}</label>
+        @if (f.info) {
+          <button type="button" matIconButton
+                  [matTooltip]="f.info"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'More information about ' + f.label"
+                  class="field-info-btn">
+            <mat-icon aria-hidden="true">info_outline</mat-icon>
+          </button>
+        }
+      </div>
       <div
         class="file-upload-zone"
         [class.is-drag-over]="dragOverFieldId() === f.id"
         [attr.aria-label]="'Upload file: ' + f.label"
+        [attr.aria-describedby]="f.hint ? f.id + '-hint' : null"
         role="button"
         tabindex="0"
         (click)="fileInput.click()"
@@ -134,6 +288,9 @@
           (change)="onFileChange($event, f.id)"
         />
       </div>
+      @if (f.hint) {
+        <p class="field-hint" [id]="f.id + '-hint'">{{ f.hint }}</p>
+      }
       <!-- always-present aria-live region (screen readers require this to be in the DOM before announcements) -->
       <div aria-live="polite" aria-atomic="false" class="visually-hidden"></div>
       <ul class="file-list" aria-label="Uploaded files">

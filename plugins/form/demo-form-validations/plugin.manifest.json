@@ -1,0 +1,6 @@
+{
+  "name": "demo-form-validations",
+  "version": "0.1.0",
+  "entryPoint": "./dist/index.js",
+  "description": "Demo form showcasing soft validations and conditional rendering"
+}

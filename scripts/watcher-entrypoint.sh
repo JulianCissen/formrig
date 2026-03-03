@@ -16,8 +16,9 @@ rm -rf /app/packages/shared/dist /app/packages/sdk/dist
 # Plugins are not npm workspace members; each needs its own npm install so that
 # file: path references (e.g. "file:../../packages/sdk") resolve correctly at build time.
 echo "[watcher] Installing plugin dependencies..."
-(cd /app/plugins/form/demo-form    && npm install)
-(cd /app/plugins/storage/minio     && npm install)
+(cd /app/plugins/form/demo-form             && npm install)
+(cd /app/plugins/form/demo-form-validations && npm install)
+(cd /app/plugins/storage/minio              && npm install)
 
 # Phase 3: synchronous initial builds.
 # Must complete before concurrently is exec'd so that healthcheck target files exist
@@ -26,7 +27,10 @@ echo "[watcher] Initial build: packages/shared + sdk..."
 npx tsc --build /app/packages/sdk/tsconfig.json
 
 echo "[watcher] Initial build: demo-form plugin..."
-(cd /app/plugins/form/demo-form    && node_modules/.bin/moduul build) || true
+(cd /app/plugins/form/demo-form             && node_modules/.bin/moduul build) || true
+
+echo "[watcher] Initial build: demo-form-validations plugin..."
+(cd /app/plugins/form/demo-form-validations && node_modules/.bin/moduul build) || true
 
 echo "[watcher] Initial build: storage-minio plugin..."
 (cd /app/plugins/storage/minio     && node_modules/.bin/moduul build --format cjs) || true
@@ -34,11 +38,12 @@ echo "[watcher] Initial build: storage-minio plugin..."
 # Phase 4: fan out concurrent watch processes.
 echo "[watcher] Starting watch processes..."
 exec npx concurrently \
-  --names "pkgs,demo-form,storage-minio" \
+  --names "pkgs,demo-form,demo-form-val,storage-minio" \
   --prefix "[{name}]" \
-  --prefix-colors "cyan,yellow,blue" \
+  --prefix-colors "cyan,yellow,green,blue" \
   --timestamp-format "HH:mm:ss" \
   --kill-others-on-fail false \
   "npx tsc --build /app/packages/sdk/tsconfig.json --watch --preserveWatchOutput" \
   "npx nodemon --legacy-watch --watch /app/plugins/form/demo-form/src --ext ts,json --delay 1 --exec 'cd /app/plugins/form/demo-form && node_modules/.bin/moduul build || true'" \
+  "npx nodemon --legacy-watch --watch /app/plugins/form/demo-form-validations/src --ext ts,json --delay 1 --exec 'cd /app/plugins/form/demo-form-validations && node_modules/.bin/moduul build || true'" \
   "npx nodemon --legacy-watch --watch /app/plugins/storage/minio/src --ext ts,json --delay 1 --exec 'cd /app/plugins/storage/minio && node_modules/.bin/moduul build --format cjs || true'"

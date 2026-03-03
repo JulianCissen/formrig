@@ -1,4 +1,4 @@
-import { Component, Input, inject, input, Signal, WritableSignal } from '@angular/core';
+import { Component, Input, inject, input, signal, Signal, WritableSignal } from '@angular/core';
 import { ControlContainer, ReactiveFormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FieldDto } from '@formrig/shared';
 import { FileUploadEntry } from '../file-upload-entry.model';
@@ -26,6 +27,7 @@ import { FileUploadEntry } from '../file-upload-entry.model';
     MatSelectModule,
     MatAutocompleteModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressBarModule,
     ReactiveFormsModule,
   ],
@@ -45,4 +47,9 @@ export class FormFieldComponent {
   @Input() openFile!: (entry: FileUploadEntry) => void;
   @Input() dismissError!: (fieldId: string, clientId: string) => void;
   @Input() deleteUploadedFile!: (fieldId: string, entry: FileUploadEntry) => void;
+
+  @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
+  @Input() validationState: Signal<Map<string, string[]>> = signal(new Map<string, string[]>());
+  @Input() currentValues: Signal<Record<string, unknown>> = signal({});
+  @Input() onBlur: (fieldId: string) => void = () => {};
 }

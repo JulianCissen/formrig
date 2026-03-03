@@ -17,6 +17,10 @@ export class Form extends BaseEntity {
   @Property({ type: 'jsonb', default: '{}' })
   values: Record<string, unknown> = {};
 
+  /** ISO timestamp set when the form is submitted. Null until submission. */
+  @Property({ type: 'timestamptz', nullable: true })
+  submittedAt: Date | null = null;
+
   @OneToMany(() => FileRecord, r => r.form)
   fileRecords = new Collection<FileRecord>(this);
 }
