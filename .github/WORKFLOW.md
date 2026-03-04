@@ -1,13 +1,10 @@
-# GLOBAL WORKFLOW — State Machine, Dispatch, and Loops
+# GLOBAL WORKFLOW
 
-## Purpose
-
-This document is the canonical source for workflow states, transitions, gate behaviour,
-and repair loops. The ProjectManager implements this state machine.
+State machine, dispatch rules, and repair loops for the ProjectManager.
 
 **Source-of-truth boundaries:**
 - This file → workflow states, transitions, gate behaviour.
-- `CONTRACT.md` → persistence schema, ASK_USER protocol, retry/write semantics, resume rules.
+- `.github/contracts/` → schemas, protocols, output contracts, and templates.
 
 ---
 
@@ -39,446 +36,162 @@ ASK_USER | BLOCKED
 
 ## Followup Requests and Steering
 
-Every message the user sends in an existing chat is one of two categories. The ProjectManager
-MUST classify it **before doing anything else**.
+Classify every user message before acting:
 
-### Category A — New goal
+**Category A — New goal** (distinct feature/fix/change, unrelated to active session): create a new session folder, start from REFINE or REFINE_LEAN. Previous session remains untouched.
 
-The user is describing a distinct feature, fix, or change that is **not** a correction or
-addition to work already in progress. Signals: new verb ("build", "add", "create", "fix"),
-new subject, or a goal unrelated to the active session.
+**Category B — Steering** (correction, clarification, or priority change for the active session):
+1. Read `status.json` → `current_state` and the `in-progress` task (if any).
+2. If a Developer task is `in-progress` and input is relevant to it → re-dispatch Developer for the same task with input appended to `task.goal` as `"Steering amendment: <paraphrased input>"`, including all `session_changed_files` so far.
+3. If input targets a different state/agent → record as `pending_steering` in `status.json` (schema: [status-schema.md](contracts/core/status-schema.md)) and inject when that state is next entered.
+4. If input would change already-approved spec/architecture → enter `ASK_USER` first: summarise the change, confirm scope change vs. clarification, then re-run REFINE/DESIGN/PLAN as needed.
 
-**Rule:** Treat it as a fresh engagement.
+**Routing reference:**
 
-1. Create a **new session folder** (`YYYY-MM-DD_<new-slug>`).
-2. Start from the **beginning of the workflow** — REFINE (full) or REFINE_LEAN (lean).
-3. Do NOT reuse, mutate, or reference the previous session's artefacts as input to the new
-   session (they may be read for context, but the previous session folder is read-only).
-4. The previous session remains untouched in `.agents-work/`.
-
-### Category B — Steering input
-
-The user is providing a correction, clarification, priority change, or additional detail that
-is **directly related to a session already underway**. The goal has not changed; the user is
-guiding how it is achieved.
-
-**Rule:** Resume in the active loop and route the input to the right agent.
-
-#### Step 1 — Read active state
-
-Read `status.json` from the most recent open session. Find `current_state` and the task with
-`status: in-progress` (if any). This tells you which loop and which agent is currently active.
-
-#### Step 2 — Route by relevance
-
-**If a Developer task is `in-progress`:**
-
-1. **Relevant to the current Developer task?**
-   - YES → Re-dispatch Developer for the **same task** with the steering input appended to
-     `task.goal` (label it clearly: `"Steering amendment: <paraphrased input>"`). Include all
-     `session_changed_files` accumulated so far.
-   - NO → Identify the state/agent the input belongs to (see table below) and record it as a
-     pending steering note in `status.json` under `pending_steering` (see schema note below).
-     The note will be injected into the relevant agent's dispatch when that state is next
-     entered.
-
-**If no Developer task is in-progress** (e.g., in APPROVE_SPEC, DESIGN, PLAN,
-INTEGRATE, repair loops):
-
-- Apply the same relevance check: is the input meant for the **currently active agent / state**?
-  - YES → Incorporate it into the current dispatch or re-run the current state with the input
-    included.
-  - NO → Record it as a `pending_steering` note targeting the appropriate future state.
-
-#### Routing reference table
-
-| Input type | Target state / agent |
+| Input type | Target |
 |---|---|
-| Scope change or acceptance-criteria change | REFINE (re-run Refiner) |
-| Architecture concern or new constraint | Architect (re-run DESIGN or queue for next DESIGN entry) |
-| Task breakdown or sequencing change | Planner (re-run PLAN) |
-| Code-level correction or new requirement for active task | Developer (re-dispatch current task) |
-| Code-level correction for a **completed** task | FIX_REVIEW repair loop against that task |
-| Review or quality concern | Reviewer |
+| Scope or AC change | REFINE |
+| Architecture concern or new constraint | Architect (DESIGN) |
+| Task breakdown or sequencing change | Planner (PLAN) |
+| Code correction for active task | Developer (current task) |
+| Code correction for completed task | FIX_REVIEW |
+| Review / quality concern | Reviewer |
 | Test concern | QA |
 | Security concern | Security |
-
-#### Scope-change escalation
-
-If the steering input would change the spec, acceptance criteria, or architecture already
-approved by the user, the ProjectManager MUST enter `ASK_USER` before acting:
-
-1. Summarise what would change and why.
-2. Ask the user to confirm scope change vs. clarification.
-3. On confirmation, re-run REFINE / DESIGN / PLAN as needed, then continue.
-4. On denial, treat as a NO routing and record as a pending note for context only.
-
-#### `pending_steering` schema note
-
-When a steering input cannot be applied immediately, persist it in `status.json`:
-
-```json
-"pending_steering": [
-  {
-    "id": "PS-1",
-    "input": "Original user text",
-    "target_state": "DESIGN",
-    "target_agent": "Architect",
-    "recorded_at": "ISO-8601",
-    "status": "pending | injected"
-  }
-]
-```
-
-ProjectManager MUST inject all `status: pending` entries targeting a given state into the
-agent dispatch when that state is entered, then flip their `status` to `"injected"`.
 
 ---
 
 ## States
 
 ### REFINE
+**Agent:** Refiner | **Produces:** `spec.md`, `acceptance.json`, `status.json` | **Gate:** all three exist and pass content validation (see [artifact-model.md](contracts/artifact-model.md)).
 
-**Agent:** Refiner  
-**Produces:** `spec.md`, `acceptance.json`, `status.json` (initial creation)  
-**Gate:** All three files exist and pass content validation (see CONTRACT.md).
+### REFINE_LEAN _(lean only)_
+Dispatch Refiner with `lean: true` for minimal artifacts (short `spec.md`, `acceptance.json`, single-task `tasks.json`, `status.json`). Only if Refiner returns `BLOCKED` or is demonstrably unavailable may ProjectManager create these directly — the sole permitted exception. Complexity found by Developer → exit lean, restart full REFINE.
 
-Refiner gathers goals, out-of-scope boundaries, testable acceptance criteria, Definition of Done, and constraints/assumptions via `ask_questions`.
+### APPROVE_SPEC _(full mode only)_
+ProjectManager uses `ask_questions` directly (not via subagent). `current_state: APPROVE_SPEC`. Decision ID: `UD-APPROVE-SPEC` (update in-place). Present `spec.md` + `acceptance.json` summary.
 
-Refiner writes output to `.agents-work/<session>/` and returns JSON. ProjectManager moves
-to `APPROVE_SPEC` once the gate passes.
-
----
-
-### REFINE_LEAN _(lean mode only)_
-
-ProjectManager dispatches Refiner with a `lean: true` flag to create **minimal** artifacts:
-- Short `spec.md` (goal + acceptance criteria only)
-- `acceptance.json`
-- Single-task `tasks.json`
-- Initial `status.json`
-
-ProjectManager **MUST** dispatch Refiner first. Only if Refiner returns `status: BLOCKED`
-or is demonstrably unavailable after an explicit dispatch attempt may ProjectManager create
-these minimal artifacts directly — this is the **sole permitted exception** to the no-edit rule.
-
-Gate: artifacts exist. If Developer discovers complexity, exit lean mode and restart from
-full REFINE.
-
----
-
-### APPROVE_SPEC _(mandatory user gate, full mode only)_
-
-**Trigger:** Automatically after REFINE completes.  
-**Mechanism:** ProjectManager uses `ask_questions` directly (NOT via subagent).  
-**`current_state`:** MUST be set to `APPROVE_SPEC` (not `ASK_USER`).  
-**Decision ID:** `UD-APPROVE-SPEC` (well-known, update in-place across correction cycles).
-
-ProjectManager presents a summary of `spec.md` and `acceptance.json` and asks the user to approve as-is or request changes with details.
-
-**Gate:** `UD-APPROVE-SPEC` has `status: answered` AND `answer` starts with `"approved"`.  
-`"changes-requested: <detail>"` reopens the loop: ProjectManager routes corrections to
-Refiner, appends an audit entry to `approve-spec-history.jsonl`, sets
-`gate_tracking.APPROVE_SPEC.correction_status = queued`, and re-enters `APPROVE_SPEC`.
-
-Workflow MUST NOT proceed to `DESIGN` without explicit approval.
-
----
+**Gate:** `UD-APPROVE-SPEC` `status: answered` AND `answer` starts with `"approved"`. `"changes-requested: <detail>"` → route to Refiner, set `gate_tracking.APPROVE_SPEC.correction_status = queued`, re-enter APPROVE_SPEC.
 
 ### DESIGN
-
 **Agents:** Researcher (conditional) → SolutionArchitect (conditional) → Architect → Designer (conditional)  
-**Produces:** `solution-architecture.md` (if greenfield), `architecture.md`, `adr/` (optional),
-`design-specs/` (if UI involved), `research/` (if Researcher involved)  
-**Gate:** `architecture.md` consistent with `spec.md`. Risks recorded. Conditional artifacts
-exist if their trigger conditions were met.
+**Produces:** `architecture.md`, optionally `solution-architecture.md`, `adr/`, `design-specs/`, `research/`  
+**Gate:** `architecture.md` consistent with `spec.md`; conditional artifacts present if triggered.
 
-**Researcher trigger:** Call Researcher before SolutionArchitect/Architect when any applies:
-- Technology or library evaluation needed
-- Existing codebase analysis required
-- Best-practices research for an unfamiliar domain
-- Root-cause investigation for a complex bug
-- Dependency evaluation
+- **Researcher trigger:** technology/library evaluation, codebase analysis, best-practices research, root-cause investigation, dependency evaluation.
+  - **If Researcher returns `NEEDS_INFO`:** enter `ASK_USER` — present the open question and what information Researcher needs, then re-dispatch Researcher with the user's answer injected into `task.goal` as a steering amendment. If the user cannot provide the information, enter `BLOCKED`.
+- **SolutionArchitect trigger:** all of — target project doesn't yet exist, stack not mandated, building new service/app/lib/component. When used, Architect treats `solution-architecture.md` as fixed constraints.
+- **Designer trigger:** new screen/view/layout, changed navigation or interaction flow, new reusable UI component.
+  - **If Designer returns `NEEDS_INFO`:** enter `ASK_USER` — present the open questions and what information Designer needs, then re-dispatch Designer with the user's answer injected into `task.goal`. If the user cannot provide the information, enter `BLOCKED`.
 
-**SolutionArchitect trigger:** Call SolutionArchitect before Architect when ALL of these apply:
-- Target component or project does not yet exist as a codebase
-- Technology stack is not mandated by an existing system
-- The task involves building a new service, app, library, or standalone component
-
-When SolutionArchitect runs, Architect MUST read `solution-architecture.md` and treat it as
-fixed constraints. Architect does not re-litigate tech stack choices.
-
-**Designer trigger:** Call Designer (after Architect) when any applies:
-- New screen, view, template, or layout
-- Changed navigation or interaction flow
-- New reusable UI component or major visual change
-
----
-
-### APPROVE_DESIGN _(mandatory user gate, full mode only)_
-
-Same mechanism as `APPROVE_SPEC`. Decision ID: `UD-APPROVE-DESIGN`.
-
-ProjectManager presents `spec.md`, `architecture.md`, and `design-specs/` (if Designer was involved) and asks the user to approve or request changes.
-
-**Gate:** `UD-APPROVE-DESIGN` has `status: answered` AND `answer` starts with `"approved"`. Changes-requested routes back to Architect / Designer / Refiner as appropriate. Appends to `approve-design-history.jsonl` on each `changes-requested`.
-
----
+### APPROVE_DESIGN _(full mode only)_
+Same mechanism as APPROVE_SPEC. Decision ID: `UD-APPROVE-DESIGN`. Present `spec.md`, `architecture.md`, `solution-architecture.md` (if SolutionArchitect ran), and `design-specs/` (if Designer ran). Changes-requested → route to Architect/Designer/Refiner as appropriate; set `gate_tracking.APPROVE_DESIGN.correction_status = queued`, re-enter APPROVE_DESIGN.
 
 ### PLAN
+**Agent:** Planner | **Produces:** `tasks.json` (all `not-started`) | **Gate:** at least one task with `id`, `status`, `goal`, `acceptance_checks`, `dependencies`.
 
-**Agent:** Planner  
-**Produces:** `tasks.json` (with all tasks: `not-started`)  
-**Gate:** at least one task with `id`, `status`, `goal`, `acceptance_checks`, `dependencies`.
-Tasks have realistic dependencies and each has a clear `done_when` condition encoded in
-`acceptance_checks`.
+### REVIEW_STRATEGY _(full mode only, automatic)_
+No user input. ProjectManager sets `runtime_flags.review_strategy`:
+- **per-batch** — ≥ 5 tasks OR any task has `security`, `perf`, or `breaking-change` risk flag.
+- **single-final** — < 5 tasks AND all tasks have only `none` risk flags.
 
----
-
-### REVIEW_STRATEGY _(automatic, full mode only)_
-
-**Trigger:** Automatically after PLAN completes.  
-**Mechanism:** ProjectManager applies the selection rule autonomously — no user input required.  
-**`current_state`:** `REVIEW_STRATEGY`.
-
-**Auto-selection rule:**
-- **per-batch** — if the plan has ≥ 5 tasks, OR any task has `risk_flags` containing
-  `security`, `perf`, or `breaking-change`.
-- **single-final** — if the plan has < 5 tasks AND all tasks have only `none` risk flags.
-
-ProjectManager records the chosen strategy in `status.json` under
-`runtime_flags.review_strategy` (`"per-batch" | "single-final"`) and immediately advances
-to `IMPLEMENT_LOOP` without pausing for user input.
-
-Gate: `runtime_flags.review_strategy` is set to `"per-batch"` or `"single-final"`.
+Record in `status.json` and advance immediately to IMPLEMENT_LOOP. Gate: `runtime_flags.review_strategy` is set.
 
 ---
 
 ### IMPLEMENT_LOOP
 
-Behaviour depends on the chosen review strategy (lean mode always uses per-batch).
+**Per-batch strategy** (and lean mode): for each task whose dependencies are `completed`:
+1. Developer: `in-progress` → implement → `implemented`.
+2. Reviewer (provide ALL `session_changed_files`).
+3. QA — dispatched for every task. (All tasks map to at least one AC per Planner rules.)
+4. Security if `risk_flags` contains `security` or change touches auth/input/network. `NEEDS_DECISION` → ASK_USER. Security is also dispatched when Reviewer's output has a non-empty `gates.security_concerns` array — regardless of task `risk_flags`.
+5. ProjectManager promotes `implemented → completed` once all gates pass.
 
-#### Per-batch strategy
+**Partially-blocked batch:** if a Developer batch returns with some tasks `implemented` and some `blocked`, accept the implemented tasks (advance them through the normal review gate — Reviewer, QA, Security as applicable) and enter the FIX path only for the blocked tasks.
 
-For each task whose dependencies are `completed`:
+After ALL tasks `completed` (per-batch only) — **cross-task final review**: dispatch Reviewer with `task.id: "meta"` for comprehensive read of all session-changed files. Gate: Reviewer OK or PASS_WITH_NOTES → ASK_USER. BLOCKED → FIX_REVIEW.
 
-1. Developer sets task `status: in-progress`, implements the task, sets `status: implemented`.
-2. Reviewer reviews (with ALL session-changed files provided via `session_changed_files`).
-3. QA (if task touches behaviour / logic or acceptance criteria).
-4. Security (if `risk_flags` contains `security` or change touches auth / input / network).
+**Single-final strategy:** all tasks — Developer implements each (`in-progress` → `implemented`) with no per-task review. After ALL `implemented`: dispatch combined Reviewer + QA + Security (`task.id: "meta"`, `session_changed_files` = ALL session files). Gates: same as per-batch. Gates for single-final: `PASS_WITH_NOTES` triggers ASK_USER (present notes to the user for decision); `BLOCKED` triggers FIX_REVIEW. Promote all to `completed`. Proceed to INTEGRATE. _(The combined review serves as the cross-task final review — do not run it again.)_
 
-**Gates per task:**
-- Reviewer `OK` (or `PASS_WITH_NOTES` — see ASK_USER trigger below)
-- QA `OK` (if dispatched)
-- Security `OK` (if dispatched). `NEEDS_DECISION` → enter `ASK_USER` before proceeding.
-- ProjectManager promotes task: `implemented → completed`.
-
-#### Single-final strategy
-
-For each task (in dependency order):
-
-1. Developer sets `in-progress`, implements, sets `implemented`. No review yet.
-
-After ALL tasks reach `implemented`:
-
-1. ProjectManager dispatches combined Reviewer (`task.id: "meta"`, `task.goal: "Single-final
-   review of all session changes"`) + QA + Security (if applicable).
-2. `session_changed_files` MUST list ALL files changed by any agent during the session.
-3. Gates (applied once): Reviewer OK, QA OK, Security OK. Repair loops as normal.
-4. After combined review passes, ProjectManager promotes all tasks `implemented → completed`.
-5. Proceed directly to INTEGRATE — no additional final review step.
-
-#### Full-scope context rule for Reviewer
-
-ProjectManager MUST provide Reviewer with `session_changed_files` listing ALL files changed
-during the session by ANY agent.
-
-- **Per-task review (incremental):** Reviewer focuses deep reading on the current task's files.
-  Checks `session_changed_files` selectively for cross-task interactions.
-- **Final review (comprehensive):** Reviewer reads ALL non-deleted files in full. Deleted files
-  reviewed via diff only (intentional removal + no dangling references).
-
-#### Cross-task final review _(per-batch strategy only)_
-
-After ALL tasks reach `completed`, BEFORE entering INTEGRATE:
-
-1. ProjectManager dispatches Reviewer with `task.id: "meta"` and a goal of cross-cutting review.
-2. Reviewer reads all session-changed files comprehensively.
-3. Gate: Reviewer OK (or PASS_WITH_NOTES → ASK_USER decision). If BLOCKED → FIX_REVIEW.
-
-_In single-final mode the combined review already serves as the cross-task final review. Do NOT
-run it a second time._
-
----
+**Full-scope context rule:** Reviewer always receives `session_changed_files` listing ALL files changed by ANY agent during the session. Per-task mode: Reviewer focuses on current task's files, checks others for cross-task interactions. Final/meta mode: reads ALL non-deleted files in full.
 
 ### INTEGRATE
-
-**Agent:** Integrator (full mode) or ProjectManager directly (lean mode)  
-**Purpose:** Green build, dependency resolution, CI/pipeline checks  
-**Gate:** CI green, OR if no CI, `acceptance_checks` commands pass locally.
-
-In lean mode, ProjectManager runs `acceptance_checks` commands directly without dispatching
-Integrator. If checks fail → FIX_BUILD.
-
----
+**Agent:** Integrator (full) / ProjectManager directly (lean) | **Gate:** CI green, or `acceptance_checks` pass locally. In lean mode, ProjectManager runs checks directly; failure → FIX_BUILD.
 
 ### DOCUMENT _(full mode only)_
-
-**Agent:** Docs  
-**Produces:** Updated README (if applicable), `report.md`  
-**Gate:** `report.md` exists and contains: what was done, how to run, how to test, known issues.
-
----
+**Agent:** Docs | **Produces:** `report.md`, updated README | **Gate:** `report.md` contains: what was done, how to run, how to test, known issues.
 
 ### DONE
+**Before declaring DONE:** if `runtime_flags.accumulated_knowledge_contributions` is non-empty, verify that `.agents-context/` files appear in `session_changed_files` or that Docs was dispatched and returned `OK`. If neither holds, enter `BLOCKED` with known issue: 'DONE gate failed: knowledge contributions not persisted'.
 
-ProjectManager returns a **human-readable** final summary (not JSON) to the user, pointing to
-`report.md`, key artifacts, and any known issues.
+ProjectManager returns human-readable summary (not JSON) to the user pointing to `report.md` and key artifacts. Set `status.json` `current_state: DONE`.
 
-`status.json` is updated with `current_state: DONE`.
+**Lean-mode DONE:** If `runtime_flags.accumulated_knowledge_contributions` is non-empty, dispatch Docs to persist them before returning the human-readable DONE summary.
 
----
+### ASK_USER
+`current_state: ASK_USER`.
 
-### ASK_USER _(ad-hoc decisions only)_
-
-`current_state: ASK_USER`. Mechanism and persistence: see CONTRACT.md.
-
-**Enter ASK_USER when:**
-- Ambiguous requirements with multiple valid interpretations.
-- Reviewer returns `PASS_WITH_NOTES` and user should decide which notes to address.
-- Design trade-offs with no clear winner.
-- Scope creep risk (confirm before expanding).
-- Security returns `NEEDS_DECISION` (medium risk) — **deterministic trigger**.
-
-**Do NOT enter ASK_USER for:**
-- Trivial decisions the ProjectManager can make autonomously.
-- Technical implementation details.
-- Anything resolved by best-effort + documented assumption.
-
+**Enter when:** ambiguous requirements; Reviewer `PASS_WITH_NOTES` (user decides which to address); design trade-offs with no clear winner; scope creep risk; Security `NEEDS_DECISION` (deterministic trigger).  
+**Do not enter for:** trivial decisions; technical implementation details; anything resolvable by assumption + documentation.  
 After user responds, return to the `state_context` recorded in the decision entry.
 
 ---
 
 ## Repair Loops
 
-| Loop | Trigger | Agents dispatched | Resolution |
-|------|---------|-------------------|------------|
-| `FIX_REVIEW` | Reviewer returns `BLOCKED` | Developer fixes → Reviewer re-reviews | Reviewer `OK` |
-| `FIX_TESTS` | QA returns `BLOCKED` | Developer/QA fix → QA re-runs | QA `OK` |
-| `FIX_SECURITY` | Security returns `BLOCKED` (high/critical) | Developer fixes → Security re-audits | Security `OK` |
-| `FIX_BUILD` | CI/build red in INTEGRATE | Integrator or Developer fixes → INTEGRATE reruns | CI green |
+| Loop | Trigger | Dispatched | Resolution |
+|------|---------|-----------|------------|
+| `FIX_REVIEW` | Reviewer `BLOCKED` | Developer → Reviewer | Reviewer `OK` |
+| `FIX_TESTS` | QA `BLOCKED` | Developer/QA | QA `OK` |
+| `FIX_SECURITY` | Security `BLOCKED` | Developer → Security | Security `OK` |
+| `FIX_BUILD` | CI/build red | Integrator (full mode) or Developer (lean mode) | CI green |
 
-### Developer Auto-Retry
+**Developer auto-retry:** If Developer or the first Reviewer pass returns `BLOCKED` and the implementation is fundamentally off-track (wrong direction, not incremental quality issues), re-dispatch Developer once with blocking findings injected into `task.goal` as `"Steering amendment: <findings>"`. Record in `retry_counts.<task-id>.auto_retry` (cap: 1). If still blocked, enter the normal repair loop. Do not apply for incremental quality issues (style, test gaps, minor correctness).
 
-If Developer returns `status: BLOCKED` **or** the first Reviewer pass returns `BLOCKED` with findings indicating the implementation is _fundamentally off-track_ (misunderstood the task goal, not merely incremental quality issues), ProjectManager may automatically re-dispatch Developer **once** before entering the formal repair loop:
-
-1. Inject all blocking findings into `task.goal` as a `"Steering amendment: <summary of findings>"`.
-2. Include all `session_changed_files` accumulated so far so Developer continues from existing work on disk.
-3. Record this in `status.json` under `retry_counts.<task-id>.auto_retry` (cap: 1 per task).
-4. If the auto-retry still produces a `BLOCKED` result, enter the normal repair loop — do not auto-retry again.
-
-**Do not apply auto-retry for incremental quality issues** (style violations, test gaps, minor correctness) — those go directly to the formal repair loop. Apply only when the core implementation direction was wrong.
-
-### Retry Budget
-
-Each repair loop has a maximum of **3 iterations** per loop type per task.
-
-After 3 failed attempts, ProjectManager enters `ASK_USER` with:
-- What the loop is and how many attempts were made.
-- What was tried each time and why it failed.
-- Options: (a) try a different approach, (b) accept with known issues, (c) reduce scope, (d) user
-  provides guidance.
-
-Retry counts tracked in `status.json` under `retry_counts`:
-
-```json
-"retry_counts": {
-  "T-001": { "FIX_REVIEW": 2, "FIX_TESTS": 0, "FIX_SECURITY": 0, "FIX_BUILD": 0 }
-}
-```
+**Retry budget:** Max 3 iterations per loop type per task. After 3 failures → `ASK_USER`: describe the loop, attempts made, and offer options (different approach / accept with known issues / reduce scope / user guidance). Counts in `status.json` `retry_counts` — see [status-schema.md](contracts/core/status-schema.md).
 
 ---
 
 ## Lean Mode
 
-Lean mode is for **trivial, well-scoped, low-risk changes** (typo fix, config change,
-single-line bug fix, version bump).
+**Criteria — ALL must apply:** unambiguous task; ≤ 3 files affected; no architectural decisions; no UI/UX decisions; no security implications at intake; estimated effort ≤ 5 minutes.
 
-### Criteria — ALL must apply
-
-- Task is unambiguous; no spec interpretation needed.
-- ≤ 3 files affected.
-- No architectural decisions required.
-- No UI/UX design decisions required.
-- No security implications at intake time.
-- Estimated effort ≤ 5 minutes.
-
-### Lean workflow
-
-```
-REFINE_LEAN → IMPLEMENT_LOOP → INTEGRATE → DONE
-```
-
-- `APPROVE_SPEC`, `APPROVE_DESIGN`, DESIGN, DOCUMENT are **skipped**. `REVIEW_STRATEGY` auto-selects `single-final` (lean tasks are always ≤ 3 files, low risk).
-- Reviewer is **never skipped**, even in lean mode.
-- Security is called if the change touches auth / input / network.
-- Integrator is **not dispatched**; ProjectManager runs acceptance checks directly.
-- Docs is **not dispatched**; ProjectManager writes `report.md` directly.
-- If Developer discovers the task is more complex than assessed, ProjectManager MUST exit lean
-  mode and restart from full REFINE.
+**Rules:**
+- APPROVE_SPEC, APPROVE_DESIGN, DESIGN skipped. REVIEW_STRATEGY auto-selects `single-final`.
+- Reviewer is **never** skipped.
+- Security dispatched if change touches auth/input/network.
+- Integrator not dispatched — ProjectManager runs acceptance checks directly.
+- Docs is dispatched only if `accumulated_knowledge_contributions` is non-empty; otherwise ProjectManager writes `report.md` directly.
+- Complexity found by Developer → exit lean, restart full REFINE.
 
 ---
 
 ## Dispatch Rules
 
-In a full run, the ProjectManager MUST dispatch every core agent at least once:
+**Mandatory core agents (full mode):** Refiner, Architect, Planner, Developer, Reviewer, QA, Security, Integrator, Docs.  
+**Conditional agents:** SolutionArchitect (greenfield, undecided stack), Designer (UI/UX changes), Researcher (research needed).  
+**Mandatory user checkpoints (full mode):** APPROVE_SPEC, APPROVE_DESIGN.
 
-**Mandatory core agents (full mode):**
-`Refiner, Architect, Planner, Developer, Reviewer, QA, Security, Integrator, Docs`
-
-**Conditional agents (dispatched only when their trigger condition is met):**
-`SolutionArchitect` (greenfield, undecided stack), `Designer` (UI/UX changes), `Researcher` (research needed)
-
-**Mandatory user checkpoints (full mode):**
-`APPROVE_SPEC` (after REFINE), `APPROVE_DESIGN` (after DESIGN)
-
-Note: Security CAN return `OK` with no findings — it must still be dispatched.
+Security CAN return `OK` with no findings — it must still be dispatched.
 
 ---
 
 ## Definition of Done
 
-`DONE` only when:
-
-- All criteria in `acceptance.json` are satisfied (or explicitly waived with documented reasons).
-- CI green (if available), or `acceptance_checks` commands pass locally.
+- All criteria in `acceptance.json` satisfied (or explicitly waived with documented reasons).
+- CI green, or `acceptance_checks` commands pass locally.
 - `report.md` contains: what was done, how to run, how to test, known issues.
 - `status.json` has `current_state: DONE` and no `user_decisions` with `status: pending`.
+- If `runtime_flags.accumulated_knowledge_contributions` is non-empty: `.agents-context/` files appear in `session_changed_files` or Docs was dispatched and returned `OK`.
 
 ---
 
 ## Project-Level Instructions
 
-If `.github/copilot-instructions.md` exists, the ProjectManager MUST instruct every subagent
-to read it before starting work.
+**`copilot-instructions.md`:** At session start, check if `.github/copilot-instructions.md` exists. Persist in `status.json` `runtime_flags.copilot_instructions_exists` and `runtime_flags.copilot_checked_at`. Re-check from disk (not memory) before every dispatch. If it exists, instruct every subagent to read it.
 
-**Detection and persistence:**
-1. At session start, check if `.github/copilot-instructions.md` exists.
-2. Persist in `status.json`: `runtime_flags.copilot_instructions_exists` and
-   `runtime_flags.copilot_checked_at`.
-3. Before every subagent dispatch, read this value from disk (not memory).
-4. If missing/uncertain (after resume or context compression), re-check and re-persist.
+**Precedence (highest → lowest):** Contract schema files → agent spec files → WORKFLOW.md → `.github/copilot-instructions.md`. Conflicts resolve in favour of higher-priority sources; log in `artifacts.notes`.
 
-**Precedence (highest first):**
-1. `CONTRACT.md` — I/O schema, gates, role boundaries.
-2. Agent spec files — role behaviour.
-3. `WORKFLOW.md` — process rules.
-4. `.github/copilot-instructions.md` — project conventions (lowest priority).
-
-Conflicts MUST be resolved in favour of higher-priority sources, with the conflict noted in
-`artifacts.notes`.
-
-**Knowledge base:**
-At session start, scan `.agents-context/` for topic files relevant to the session goal. Persist
-their paths in `status.json` under `runtime_flags.context_topics`. Include relevant files in
-`context_files` for Refiner, Researcher, Architect, SolutionArchitect, and Developer dispatches.
+**Knowledge base:** At session start, scan `.agents-context/` for topic files relevant to the goal. Persist paths in `status.json` `runtime_flags.context_topics`. Include relevant files in `context_files` for Refiner, Researcher, Architect, SolutionArchitect, and Developer dispatches.

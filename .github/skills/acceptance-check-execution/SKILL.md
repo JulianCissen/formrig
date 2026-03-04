@@ -7,76 +7,44 @@ description: Protocol for executing acceptance criteria verify commands from acc
 
 ## Command Types
 
-Every AC `verify` value begins with one of two prefixes:
-
 | Prefix | Action |
 |--------|--------|
-| `cmd: <command>` | Execute the command directly in the terminal. |
-| `manual: <description>` | Cannot be automated. Record as `skipped (manual)` and include the description in the report so the user can verify it themselves. `manual` ACs **do not block** the pipeline. |
+| `cmd: <command>` | Execute in the terminal. |
+| `manual: <description>` | Cannot be automated. Record as `skipped (manual)` and surface in `notes` for user verification. Manual ACs **never block** the pipeline. |
 
----
+## Execution Steps (per `cmd:` AC)
 
-## Execution Steps (per AC)
+1. Run the command.
+2. Record: AC ID, full command, exit code, one-line stdout/stderr summary on failure.
+3. Diagnose failure as **authoring error** or **implementation defect**:
+   - **Authoring error** — a one-line fix (wrong expected value, case mismatch, missing test import). Fix it, re-run, note the correction in output `notes`.
+   - **Implementation defect** — the code does not satisfy the AC. Record the failure and continue to the next AC; do not stop early.
+4. After all per-AC commands, run the full test suite once for regressions.
 
-For each `cmd:` verify command:
+## What You May Fix
 
-1. Execute the command.
-2. Record: AC ID, the full command string, exit code, and a one-line summary of stdout/stderr if it failed.
-3. Diagnose any failure as either an **authoring error** or an **implementation defect**:
-   - **Authoring error:** a one-line fix (wrong expected value, case mismatch in test assertion, missing import in test file). Fix it, re-run, and note the correction in output `notes`.
-   - **Implementation defect:** the code does not satisfy the AC. Record the failure and **continue to the next AC** — do not stop early.
-4. After all ACs, run the project's full test suite once to catch regressions.
-
----
-
-## Scope: what you may fix
-
-You may only fix **authoring errors** — minor test assertion mistakes that do not reflect a real logic defect:
-- Wrong string casing (`"not found"` vs `"Not Found"`)
+**Only authoring errors:**
+- Wrong string casing in an assertion (`"not found"` → `"Not Found"`)
 - Wrong numeric literal in an assertion
-- Missing test import that causes a syntax error
-- Test setup that references a renamed symbol
+- Missing test import causing a syntax error
+- Test setup referencing a renamed symbol
 
-You MUST NOT fix:
-- Test logic that is wrong because the implementation is wrong — return `BLOCKED` for these.
-- Application code of any kind.
+**Do NOT fix:**
+- Test logic that is wrong because the implementation is wrong → return `BLOCKED`
+- Any application code
 
----
-
-## Result Recording Format
+## Result Format
 
 ```json
-{
-  "ac_id": "AC-001",
-  "command": "npm test -- --grep 'login'",
-  "result": "pass | fail | skipped (manual)",
-  "detail": "14 tests passed"
-}
+{ "ac_id": "AC-001", "command": "npm test -- --grep 'login'", "result": "pass | fail | skipped (manual)", "detail": "14 tests passed" }
 ```
 
----
-
-## Full Test Suite
-
-After all per-AC commands, run the full test suite:
-- Use the command designated in `acceptance.json` as the full-suite command, if one is present.
-- Otherwise infer the standard command for the project type (e.g. `npm test`, `pytest`, `go test ./...`).
-
-Record:
+Full test suite:
 ```json
-{
-  "command": "npm test",
-  "result": "pass | fail",
-  "counts": { "passed": 142, "failed": 0, "skipped": 3 }
-}
+{ "command": "npm test", "result": "pass | fail", "counts": { "passed": 142, "failed": 0, "skipped": 3 } }
 ```
-
----
 
 ## Gate
 
-Return `BLOCKED` if, after all self-corrections:
-- Any `cmd:` AC verify command exits non-zero.
-- The full test suite has failures.
-
-Return `OK` if all `cmd:` commands pass and the full test suite is green.
+- `BLOCKED` — any `cmd:` verify command exits non-zero after self-correction, OR full test suite has failures.
+- `OK` — all `cmd:` commands pass and full test suite is green.

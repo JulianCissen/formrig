@@ -5,22 +5,20 @@ description: Verifying that a file write succeeded by reading it back immediatel
 
 # Read-After-Write Verification
 
-Whenever you write a critical artefact, **read it back immediately** and confirm the expected content is present before proceeding.
+After every `edit` call that writes a critical file, read it back immediately and confirm the expected content is present before proceeding.
 
 ## Protocol
 
-After every `edit` call that writes a critical file:
+1. Issue a `read` for the same file path.
+2. Verify expected content is present (see checklist below).
+3. If content is missing or wrong: attempt the write once more, then re-read.
+4. If the second attempt also fails: return `status: BLOCKED` with detail in `notes`.
 
-1. Issue a `read` call for the same file path.
-2. Verify the expected content is present (see per-file checklist below).
-3. If the content is missing or wrong: attempt the write once more, then read again.
-4. If the second attempt also fails: return `status: BLOCKED` with the detail recorded in `notes`.
-
-## Per-Artefact Verification Checklist
+## Per-Artefact Checklist
 
 ### `tasks.json`
-- Task count matches what you intended to write.
-- Every task has all required fields (`id`, `batch_id`, `title`, `goal`, `status`, `dependencies`, `acceptance_checks`, `risk_flags`, `files_to_touch`, `notes`).
+- Task count matches intent.
+- Every task has all required fields: `id`, `batch_id`, `title`, `goal`, `status`, `dependencies`, `acceptance_checks`, `risk_flags`, `files_to_touch`, `notes`.
 - Every AC ID from `acceptance.json` appears in at least one task's `acceptance_checks`.
 - JSON is syntactically valid (no trailing commas, balanced brackets).
 
@@ -30,8 +28,8 @@ After every `edit` call that writes a critical file:
 - Any new `user_decisions` or `known_issues` entry is present.
 
 ### `spec.md`
-- All required sections are present: Goals, Out of Scope, Acceptance Criteria, Definition of Done, Constraints, Assumptions.
-- Acceptance Criteria list references AC IDs that match `acceptance.json`.
+- All required sections present: Goals, Out of Scope, Acceptance Criteria, Definition of Done, Constraints, Assumptions.
+- AC IDs in the spec match those in `acceptance.json`.
 
 ### `acceptance.json`
 - Every criterion has `id`, `description`, and `verify` fields.
@@ -39,16 +37,5 @@ After every `edit` call that writes a critical file:
 - AC IDs are unique.
 
 ### Any other file
-- Key content you authored is readable and not empty.
-- If you wrote structured data (JSON, YAML), confirm it parses without error.
-
-## Example
-
-```
-# After writing tasks.json:
-write → tasks.json (5 tasks)
-read  → tasks.json
-check → 5 tasks present, all ACs covered, JSON valid ✓
-```
-
-If the read shows only 3 tasks, re-write and re-check before proceeding.
+- Key content you authored is readable and non-empty.
+- Structured data (JSON, YAML) parses without error.
