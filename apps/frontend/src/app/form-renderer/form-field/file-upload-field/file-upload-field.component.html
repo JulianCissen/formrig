@@ -1,0 +1,93 @@
+<app-field-plain-wrapper
+  [fieldId]="field().id"
+  [label]="field().label"
+  [hint]="field().hint"
+  [info]="field().info"
+  [dirtyFieldIds]="dirtyFieldIds"
+  [validationState]="validationState">
+  <div
+    class="file-upload-zone"
+    [class.is-drag-over]="dragOverFieldId() === field().id"
+    [attr.aria-label]="'Upload file: ' + field().label"
+    [attr.aria-describedby]="field().hint ? field().id + '-hint' : null"
+    role="button"
+    tabindex="0"
+    (click)="fileInput.click()"
+    (keydown.enter)="fileInput.click()"
+    (keydown.space)="fileInput.click()"
+    (dragover)="onDragOver($event, field().id)"
+    (dragleave)="onDragLeave($event, field().id)"
+    (drop)="onDrop($event, field().id)"
+  >
+    <mat-icon aria-hidden="true" class="file-upload-zone__icon">cloud_upload</mat-icon>
+    <span class="file-upload-zone__cta">
+      Drag &amp; drop files here or <span class="file-upload-zone__browse-link">click to browse</span>
+    </span>
+    <input
+      #fileInput
+      type="file"
+      [id]="'field-' + field().id"
+      [multiple]="field().multiple"
+      [accept]="field().accept"
+      class="file-upload-zone__input"
+      (change)="onFileChange($event, field().id)"
+    />
+  </div>
+  <!-- always-present aria-live region (screen readers require this to be in the DOM before announcements) -->
+  <div aria-live="polite" aria-atomic="false" class="visually-hidden"></div>
+  <ul class="file-list" aria-label="Uploaded files">
+    @for (entry of uploadEntries().get(field().id) ?? []; track entry.clientId) {
+      <li class="file-entry"
+          [class.file-entry--uploading]="entry.status === 'uploading'"
+          [class.file-entry--error]="entry.status === 'error'"
+          [attr.role]="entry.status === 'error' ? 'alert' : null">
+
+        <span class="file-entry__name">
+          @if (entry.status === 'done') {
+            {{ entry.filename }}
+          } @else if (entry.status === 'uploading') {
+            {{ entry.file?.name }}
+          } @else if (entry.status === 'error') {
+            {{ entry.file?.name }}
+          } @else {
+            {{ entry.file?.name }}
+          }
+        </span>
+
+        <span class="file-entry__actions">
+          @if (entry.status === 'uploading') {
+            <mat-progress-bar
+              mode="indeterminate"
+              [attr.aria-label]="'Uploading ' + entry.file?.name"
+              class="file-entry__progress-bar">
+            </mat-progress-bar>
+          }
+          @if (entry.status === 'done') {
+            <button mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Open ' + entry.filename"
+                    (click)="openFile(entry)">
+              <mat-icon>file_download</mat-icon>
+            </button>
+            <button mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Delete ' + entry.filename"
+                    (click)="deleteUploadedFile(field().id, entry)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+          @if (entry.status === 'error') {
+            <mat-icon class="file-entry__error-indicator" color="warn" aria-hidden="true">error_outline</mat-icon>
+            <span class="file-entry__error-message">{{ entry.errorMessage }}</span>
+            <button mat-icon-button
+                    type="button"
+                    aria-label="Dismiss error"
+                    (click)="dismissError(field().id, entry.clientId)">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </span>
+      </li>
+    }
+  </ul>
+</app-field-plain-wrapper>

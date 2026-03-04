@@ -1,0 +1,14 @@
+<app-field-plain-wrapper
+  [fieldId]="field().id"
+  [label]="''"
+  [hint]="field().hint"
+  [info]="field().info"
+  [dirtyFieldIds]="dirtyFieldIds"
+  [validationState]="validationState">
+  <mat-checkbox [formControlName]="field().id"
+                [required]="field().required"
+                [attr.aria-describedby]="field().hint ? field().id + '-hint' : null"
+                (blur)="onBlur(field().id)">
+    {{ field().label }}
+  </mat-checkbox>
+</app-field-plain-wrapper>

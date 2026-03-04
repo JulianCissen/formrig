@@ -2,7 +2,7 @@
 // Plugin authors: import { TextField, BaseField } from '@formrig/sdk'
 // Field class types — for type annotations only.
 // NOTE: to construct instances (e.g. new RadioField(…)), import from '@formrig/shared' directly.
-export type { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField, MultiSelectField } from '@formrig/shared';
+export type { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField, MultiSelectField, DatePickerField } from '@formrig/shared';
 
 // SDK-own types
 export type { FormDefinition, FormEventContext, FormTypePlugin, FileMeta, AVScanResult } from './types.js';

@@ -84,6 +84,17 @@ const fileUploadField = (overrides: Partial<FieldDto> = {}): FieldDto =>
     ...overrides,
   }) as FieldDto;
 
+const dpField = (overrides: Partial<FieldDto> = {}): FieldDto =>
+  ({
+    id: 'dob-0',
+    type: 'date-picker',
+    label: 'Date of Birth',
+    required: false,
+    disabled: false,
+    value: null,
+    ...overrides,
+  }) as FieldDto;
+
 // ── text ─────────────────────────────────────────────────────────────────────
 
 describe('hardValidate — text', () => {
@@ -277,6 +288,49 @@ describe('hardValidate — file-upload', () => {
   it('throws BadRequestException for a numeric value', () => {
     expect(() => hardValidate(fileUploadField(), 42)).toThrow(BadRequestException);
   });
+});
+
+// ── date-picker ───────────────────────────────────────────────────────────────
+
+describe('hardValidate — date-picker', () => {
+  it('accepts null', () => {
+    expect(() => hardValidate(dpField(), null)).not.toThrow();
+  });
+
+  it('accepts valid yyyy-mm-dd string', () => {
+    expect(() => hardValidate(dpField(), '2000-01-31')).not.toThrow();
+  });
+
+  it('rejects empty string', () => {
+    expect(() => hardValidate(dpField(), '')).toThrow(BadRequestException);
+  });
+
+  it('rejects mm-dd-yyyy format', () => {
+    expect(() => hardValidate(dpField(), '01-31-2000')).toThrow(BadRequestException);
+  });
+
+  it('rejects arbitrary string', () => {
+    expect(() => hardValidate(dpField(), 'hello')).toThrow(BadRequestException);
+  });
+
+  it('rejects number', () => {
+    expect(() => hardValidate(dpField(), 20000131)).toThrow(BadRequestException);
+  });
+
+  it('rejects yyyy/mm/dd format', () => {
+    expect(() => hardValidate(dpField(), '2000/01/31')).toThrow(BadRequestException);
+  });
+
+  it('rejects calendar-invalid date 2000-02-31', () =>
+    expect(() => hardValidate(dpField(), '2000-02-31')).toThrow(BadRequestException));
+  it('rejects calendar-invalid date 9999-99-99', () =>
+    expect(() => hardValidate(dpField(), '9999-99-99')).toThrow(BadRequestException));
+  it('rejects undefined', () =>
+    expect(() => hardValidate(dpField(), undefined as unknown as null)).toThrow(BadRequestException));
+  it('rejects boolean false', () =>
+    expect(() => hardValidate(dpField(), false as unknown as null)).toThrow(BadRequestException));
+  it('rejects 10-char wrong-pattern string not-a-date', () =>
+    expect(() => hardValidate(dpField(), 'not-a-date')).toThrow(BadRequestException));
 });
 
 // ── unknown type ──────────────────────────────────────────────────────────────

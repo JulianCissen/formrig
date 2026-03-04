@@ -1,4 +1,4 @@
-import { MultiSelectField, SelectField } from '../fields';
+import { MultiSelectField, SelectField, DatePickerField } from '../fields';
 import { FieldDtoSchema } from '../form-definition-dto';
 
 // ── MultiSelectField constructor ─────────────────────────────────────────────
@@ -80,5 +80,52 @@ describe('MultiSelectFieldDtoSchema — autocomplete field', () => {
     if (result.success && result.data.type === 'multi-select') {
       expect(result.data.value).toEqual(['a']);
     }
+  });
+});
+
+// ── DatePickerField constructor ──────────────────────────────────────────────────────
+
+describe('DatePickerField', () => {
+  it('has type "date-picker"', () => expect(new DatePickerField('DOB').type).toBe('date-picker'));
+  it('defaults value to null', () => expect(new DatePickerField('DOB').value).toBeNull());
+  it('accepts initial value', () => expect(new DatePickerField('DOB', '2000-01-31').value).toBe('2000-01-31'));
+  it('defaults required to false', () => expect(new DatePickerField('DOB').required).toBe(false));
+  it('defaults disabled to false', () => expect(new DatePickerField('DOB').disabled).toBe(false));
+
+  it('minDate is undefined by default', () => expect(new DatePickerField('DOB').minDate).toBeUndefined());
+  it('maxDate is undefined by default', () => expect(new DatePickerField('DOB').maxDate).toBeUndefined());
+  it('minAge is undefined by default', () => expect(new DatePickerField('DOB').minAge).toBeUndefined());
+  it('maxAge is undefined by default', () => expect(new DatePickerField('DOB').maxAge).toBeUndefined());
+
+  it('minDate can be assigned after construction', () => {
+    const f = new DatePickerField('DOB');
+    f.minDate = '2000-01-01';
+    expect(f.minDate).toBe('2000-01-01');
+  });
+
+  it('maxDate can be assigned after construction', () => {
+    const f = new DatePickerField('DOB');
+    f.maxDate = '2025-12-31';
+    expect(f.maxDate).toBe('2025-12-31');
+  });
+
+  it('minAge can be assigned after construction', () => {
+    const f = new DatePickerField('DOB');
+    f.minAge = 18;
+    expect(f.minAge).toBe(18);
+  });
+
+  it('maxAge can be assigned after construction', () => {
+    const f = new DatePickerField('DOB');
+    f.maxAge = 100;
+    expect(f.maxAge).toBe(100);
+  });
+
+  it('all four shorthand props can be set simultaneously via Object.assign', () => {
+    const f = Object.assign(new DatePickerField('DOB'), { minDate: '1900-01-01', maxDate: '2006-01-01', minAge: 18, maxAge: 120 });
+    expect(f.minDate).toBe('1900-01-01');
+    expect(f.maxDate).toBe('2006-01-01');
+    expect(f.minAge).toBe(18);
+    expect(f.maxAge).toBe(120);
   });
 });

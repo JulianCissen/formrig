@@ -304,3 +304,66 @@ export interface FormStep {
   /** Ordered list of fields rendered inside this step's panel. */
   fields: BaseField[];
 }
+
+/**
+ * Date picker field.
+ *
+ * Maps to `<mat-datepicker>` in the Angular frontend.
+ * The `type` literal `'date-picker'` is used as the `@switch` discriminator in templates.
+ * Value is stored as an ISO 8601 date string (`yyyy-mm-dd`) or null.
+ */
+export class DatePickerField extends BaseField {
+  /** Discriminator — always `'date-picker'`. */
+  readonly type = 'date-picker' as const;
+
+  /**
+   * Declarative calendar lower bound (earliest selectable date).
+   * Format: `yyyy-mm-dd`. Frontend hint only — does not generate a rule.
+   */
+  minDate?: string;
+
+  /**
+   * Declarative calendar upper bound (latest selectable date).
+   * Format: `yyyy-mm-dd`. Frontend hint only — does not generate a rule.
+   */
+  maxDate?: string;
+
+  /**
+   * Minimum age in years (positive integer).
+   * Used as a calendar upper bound (latest birthdate = today − minAge years).
+   * Frontend hint only — does not generate a rule.
+   */
+  minAge?: number;
+
+  /**
+   * Maximum age in years (positive integer).
+   * Used as a calendar lower bound (earliest birthdate = today − maxAge years).
+   * Frontend hint only — does not generate a rule.
+   */
+  maxAge?: number;
+
+  /**
+   * Display format for keyboard input and the format hint.
+   * Valid format string: each of the tokens `dd`, `mm`, `yyyy` exactly once,
+   * separated by any single non-digit character. Examples: `'dd-mm-yyyy'`,
+   * `'mm/dd/yyyy'`, `'yyyy.mm.dd'`.
+   * When absent, the frontend defaults to `'dd-mm-yyyy'`.
+   * This is a frontend-only property; it is not used by the backend.
+   */
+  displayFormat?: string;
+
+  /**
+   * @param label    Human-readable label (passed to BaseField).
+   * @param value    Current ISO date string value or null. Default: null.
+   * @param required Inherited from BaseField. Default: false.
+   * @param disabled Inherited from BaseField. Default: false.
+   */
+  constructor(
+    label: string,
+    public value: string | null = null,
+    required: boolean = false,
+    disabled: boolean = false,
+  ) {
+    super(label, required, disabled);
+  }
+}

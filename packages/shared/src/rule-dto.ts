@@ -4,7 +4,8 @@ import { EqualsRule, NotEqualsRule, IsEmptyRule, IsNotEmptyRule,
          ContainsRule, MatchesPatternRule,
          MinLengthRule, MaxLengthRule, MinCountRule, MaxCountRule,
          IsTrueRule, IsFalseRule,
-         EqualsFieldRule, ComesAfterFieldRule, ComesBeforeFieldRule } from './rule';
+         EqualsFieldRule, ComesAfterFieldRule, ComesBeforeFieldRule,
+         OlderThanRule, YoungerThanRule, BeforeStaticDateRule, AfterStaticDateRule } from './rule';
 import type { Rule } from './rule';
 
 /** Optional custom error message field present on every rule DTO variant. */
@@ -26,8 +27,12 @@ export const RuleDtoSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('equals-field'),        fieldId: z.string(),                                                                                        ...m }),
   z.object({ type: z.literal('comes-after-field'),   fieldId: z.string(),                                                                                        ...m }),
   z.object({ type: z.literal('comes-before-field'),  fieldId: z.string(),                                                                                        ...m }),
+  z.object({ type: z.literal('older-than'),        years: z.number().int().positive(), ...m }),
+  z.object({ type: z.literal('younger-than'),       years: z.number().int().positive(), ...m }),
+  z.object({ type: z.literal('before-static-date'), date: z.string(), ...m }),
+  z.object({ type: z.literal('after-static-date'),  date: z.string(), ...m }),
 ]);
-// 15 members. RequiredRule is intentionally omitted — it is never serialised.
+// 19 members. RequiredRule is intentionally omitted — it is never serialised.
 
 export type RuleDto = z.infer<typeof RuleDtoSchema>;
 
@@ -54,6 +59,10 @@ function buildRule(dto: RuleDto): Rule {
     case 'is-false':           return new IsFalseRule();
     case 'equals-field':       return new EqualsFieldRule(dto.fieldId);
     case 'comes-after-field':  return new ComesAfterFieldRule(dto.fieldId);
-    case 'comes-before-field': return new ComesBeforeFieldRule(dto.fieldId);
+    case 'comes-before-field':  return new ComesBeforeFieldRule(dto.fieldId);
+    case 'older-than':           return new OlderThanRule(dto.years);
+    case 'younger-than':         return new YoungerThanRule(dto.years);
+    case 'before-static-date':   return new BeforeStaticDateRule(dto.date);
+    case 'after-static-date':    return new AfterStaticDateRule(dto.date);
   }
 }

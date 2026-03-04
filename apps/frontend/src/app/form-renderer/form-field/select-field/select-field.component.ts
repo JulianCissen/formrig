@@ -1,0 +1,35 @@
+import { Component, Input, inject, signal, Signal, input } from '@angular/core';
+import { ControlContainer, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { FieldDto } from '@formrig/shared';
+
+@Component({
+  selector: 'app-select-field',
+  standalone: true,
+  imports: [
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    ReactiveFormsModule,
+  ],
+  templateUrl: './select-field.component.html',
+  styleUrl: './select-field.component.scss',
+  viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
+})
+export class SelectFieldComponent {
+  readonly field = input.required<Extract<FieldDto, { type: 'select' }>>();
+
+  @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
+  @Input() validationState: Signal<Map<string, string[]>> = signal(new Map<string, string[]>());
+  @Input() onBlur: (fieldId: string) => void = () => {};
+}

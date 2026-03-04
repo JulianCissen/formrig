@@ -1,0 +1,108 @@
+:host {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.form-field {
+  width: 100%;
+}
+
+// ── Field label ──────────────────────────────────────────────────────────────
+//
+// .form-field__label is a plain <span> rendered above the control.
+// Uses M3 typography tokens to visually match a floating <mat-label>.
+//
+.form-field__label {
+  display: block;
+  color: var(--mat-sys-on-surface-variant);
+  font-family: var(--mat-sys-label-large-font);
+  font-size: var(--mat-sys-label-large-size);
+  font-weight: var(--mat-sys-label-large-weight);
+  letter-spacing: var(--mat-sys-label-large-tracking);
+  line-height: var(--mat-sys-label-large-line-height);
+  margin-bottom: var(--space-2);
+}
+
+// Stack radio buttons vertically with consistent gap.
+.form-field {
+  mat-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+
+// ── Field label row ──────────────────────────────────────────────────────────
+//
+// Flex wrapper for non-mat-form-field types (radio, checkbox, file-upload)
+// to place the field label and optional info icon button side-by-side.
+//
+.field-label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+
+  .form-field__label {
+    margin-bottom: 0;
+  }
+}
+
+// ── Field hint (non-mat-form-field types) ────────────────────────────────────
+//
+// Visually matches Angular Material's <mat-hint> — M3 body-small typography
+// at on-surface-variant colour.
+//
+.field-hint {
+  color: var(--mat-sys-on-surface-variant);
+  font-family: var(--mat-sys-body-small-font);
+  font-size: var(--mat-sys-body-small-size);
+  font-weight: var(--mat-sys-body-small-weight);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+  line-height: var(--mat-sys-body-small-line-height);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+}
+
+// ── Info icon button ─────────────────────────────────────────────────────────
+//
+// Applied to the info tooltip trigger button.
+// matIconButton provides the 40px touch target; we set the icon to 20px
+// so it reads as a secondary/muted affordance rather than a primary action.
+//
+.field-info-btn {
+  color: var(--mat-sys-on-surface-variant);
+
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ── Validation error block ────────────────────────────────────────────────────
+//
+// Non-mat-form-field fields render this block for their error state.
+// Matches M3 supporting-text visual style using error colour and body-small tokens.
+//
+
+.field-validation-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--mat-sys-error);
+  font-family: var(--mat-sys-body-small-font);
+  font-size: var(--mat-sys-body-small-size);
+  font-weight: var(--mat-sys-body-small-weight);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+  line-height: var(--mat-sys-body-small-line-height);
+  margin-block-start: var(--space-1);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}

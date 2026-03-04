@@ -1,5 +1,5 @@
 export { isSafePattern } from './regex-safety';
-export { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField, MultiSelectField } from './fields';
+export { BaseField, TextField, RadioField, CheckboxField, SelectField, TextareaField, FileUploadField, MultiSelectField, DatePickerField } from './fields';
 export type { FormStep } from './fields';
 export { FieldDtoSchema, StepDtoSchema, FormDefinitionDtoSchema } from './form-definition-dto';
 export type { FieldDto, StepDto, FormDefinitionDto } from './form-definition-dto';
@@ -10,6 +10,7 @@ export {
   ContainsRule, MatchesPatternRule, MinLengthRule, MaxLengthRule,
   MinCountRule, MaxCountRule, IsTrueRule, IsFalseRule,
   EqualsFieldRule, ComesAfterFieldRule, ComesBeforeFieldRule,
+  OlderThanRule, YoungerThanRule, BeforeStaticDateRule, AfterStaticDateRule,
 } from './rule';
 // RequiredRule is intentionally NOT exported from index
 

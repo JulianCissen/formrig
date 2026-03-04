@@ -189,6 +189,92 @@ export class ComesBeforeFieldRule extends Rule {
   protected defaultErrorMessage(): string { return `Must come before field "${this.fieldId}"`; }
 }
 
+// ── Date rules ──────────────────────────────────────────────────────────────
+
+export class OlderThanRule extends Rule {
+  readonly type = 'older-than' as const;
+  constructor(private readonly years: number) { super(); }
+
+  matches(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const [y, m, d] = (value as string).split('-').map(Number);
+    if (!y || !m || !d) return false;
+    const dob = new Date(y, m - 1, d); // local date, not UTC
+    if (isNaN(dob.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+    return age >= this.years;
+  }
+
+  protected defaultErrorMessage(): string {
+    return `Must be ${this.years} years old or older`;
+  }
+}
+
+export class YoungerThanRule extends Rule {
+  readonly type = 'younger-than' as const;
+  constructor(private readonly years: number) { super(); }
+
+  matches(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const [y, m, d] = (value as string).split('-').map(Number);
+    if (!y || !m || !d) return false;
+    const dob = new Date(y, m - 1, d);
+    if (isNaN(dob.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+    return age < this.years;
+  }
+
+  protected defaultErrorMessage(): string {
+    return `Must be younger than ${this.years} years old`;
+  }
+}
+
+export class BeforeStaticDateRule extends Rule {
+  readonly type = 'before-static-date' as const;
+  constructor(private readonly date: string) { super(); }
+
+  matches(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const [vy, vm, vd] = (value as string).split('-').map(Number);
+    const [ty, tm, td] = this.date.split('-').map(Number);
+    if (!vy || !vm || !vd || !ty || !tm || !td) return false;
+    const v = new Date(vy, vm - 1, vd);
+    const t = new Date(ty, tm - 1, td);
+    if (isNaN(v.getTime()) || isNaN(t.getTime())) return false;
+    return v < t;
+  }
+
+  protected defaultErrorMessage(): string {
+    return `Must be before ${this.date}`;
+  }
+}
+
+export class AfterStaticDateRule extends Rule {
+  readonly type = 'after-static-date' as const;
+  constructor(private readonly date: string) { super(); }
+
+  matches(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const [vy, vm, vd] = (value as string).split('-').map(Number);
+    const [ty, tm, td] = this.date.split('-').map(Number);
+    if (!vy || !vm || !vd || !ty || !tm || !td) return false;
+    const v = new Date(vy, vm - 1, vd);
+    const t = new Date(ty, tm - 1, td);
+    if (isNaN(v.getTime()) || isNaN(t.getTime())) return false;
+    return v > t;
+  }
+
+  protected defaultErrorMessage(): string {
+    return `Must be after ${this.date}`;
+  }
+}
+
 // ── Internal — NOT re-exported from index.ts ─────────────────────────────────
 
 /**

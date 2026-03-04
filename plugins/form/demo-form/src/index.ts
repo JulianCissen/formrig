@@ -1,4 +1,4 @@
-import { TextField, RadioField, CheckboxField, SelectField, MultiSelectField, TextareaField, FileUploadField } from '@formrig/shared';
+import { TextField, RadioField, CheckboxField, SelectField, MultiSelectField, TextareaField, FileUploadField, DatePickerField, OlderThanRule, AfterStaticDateRule } from '@formrig/shared';
 import type { FormStep } from '@formrig/shared';
 import type { FormTypePlugin, FormDefinition, FormEventContext } from '@formrig/sdk';
 
@@ -31,6 +31,18 @@ class DemoForm implements FormTypePlugin {
         fields: [
           new FileUploadField('Attach supporting documents', true, '.pdf,.docx'),
           new FileUploadField('Upload your CV', false, '.pdf,.doc,.docx'),
+        ],
+      } satisfies FormStep,
+      {
+        label: 'Personal Details',
+        description: 'A few date-related questions.',
+        fields: [
+          Object.assign(new DatePickerField('Date of birth'), { rules: [new OlderThanRule(18)] }),
+          Object.assign(new DatePickerField('Project start date'), { rules: [new AfterStaticDateRule('2024-01-01')] }),
+          Object.assign(new DatePickerField('Planned event date'), {
+            minDate: '2025-01-01',
+            maxDate: '2030-12-31',
+          }),
         ],
       } satisfies FormStep,
     ],

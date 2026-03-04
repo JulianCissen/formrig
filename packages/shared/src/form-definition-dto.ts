@@ -60,6 +60,41 @@ const TextareaFieldDtoSchema = BaseFieldDtoSchema.extend({
   minCharacters: z.number().int().positive().optional(),
 });
 
+const calendarValidDate = (val: string): boolean => {
+  const [y, m, d] = val.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+};
+
+const DatePickerFieldDtoSchema = BaseFieldDtoSchema.extend({
+  type:    z.literal('date-picker'),
+  value:   z.string().nullable().optional(),
+  minDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(calendarValidDate, { message: 'must be a calendar-valid date' }).optional(),
+  maxDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(calendarValidDate, { message: 'must be a calendar-valid date' }).optional(),
+  minAge:  z.number().int().positive().optional(),
+  maxAge:  z.number().int().positive().optional(),
+  displayFormat: z.string()
+    .regex(
+      /^(?:dd|mm|yyyy)[^0-9](?:dd|mm|yyyy)[^0-9](?:dd|mm|yyyy)$/,
+      'Must contain dd, mm, yyyy tokens separated by a single non-digit character'
+    )
+    .refine(
+      (s) => {
+        const tokens = s.split(/[^0-9a-z]/i).filter(Boolean);
+        return new Set(tokens).size === 3;
+      },
+      'Each token (dd, mm, yyyy) must appear exactly once'
+    )
+    .optional(),
+}).superRefine((data, ctx) => {
+  if (data.minDate && data.maxDate && data.minDate > data.maxDate) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'minDate must be <= maxDate', path: ['minDate'] });
+  }
+  if (data.minAge !== undefined && data.maxAge !== undefined && data.minAge > data.maxAge) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'minAge must be <= maxAge', path: ['minAge'] });
+  }
+});
+
 // FileUploadField intentionally omits `value` — files are uploaded separately via
 // POST /api/forms/:id/files and are not stored in the scalar values JSONB map.
 // The `multiple` flag IS present (needed by the file input element in the renderer).
@@ -81,6 +116,7 @@ export const FieldDtoSchema = z.discriminatedUnion('type', [
   RadioFieldDtoSchema,
   TextareaFieldDtoSchema,
   FileUploadFieldDtoSchema,
+  DatePickerFieldDtoSchema,
 ]);
 
 /** TypeScript type for a serialised field. Narrowable via field.type discriminant. */

@@ -15,6 +15,10 @@ import {
   ComesAfterFieldRule,
   ComesBeforeFieldRule,
   RequiredRule,
+  OlderThanRule,
+  YoungerThanRule,
+  BeforeStaticDateRule,
+  AfterStaticDateRule,
 } from '../rule';
 
 // ── EqualsRule ───────────────────────────────────────────────────────────────
@@ -259,4 +263,90 @@ describe('RequiredRule', () => {
   it('fails for undefined on array field', () => {
     expect(new RequiredRule('multi-select').matches(undefined)).toBe(false);
   });
+});
+
+// ── OlderThanRule ──────────────────────────────────────────────────────────────
+
+describe('OlderThanRule', () => {
+  it('returns true when person is exactly 18 years old today', () => {
+    const today = new Date();
+    const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
+    expect(new OlderThanRule(18).matches(dateStr)).toBe(true);
+  });
+  it('returns false when person will turn 18 years old tomorrow', () => {
+    const today = new Date();
+    const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate() + 1);
+    const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
+    expect(new OlderThanRule(18).matches(dateStr)).toBe(false);
+  });
+  it('returns false for null', () => expect(new OlderThanRule(18).matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(new OlderThanRule(18).matches('hello')).toBe(false));
+  it('returns false for number', () => expect(new OlderThanRule(18).matches(42)).toBe(false));
+  it('returns correct error message', () => expect(new OlderThanRule(18).errorMessage()).toBe('Must be 18 years old or older'));
+});
+
+// ── YoungerThanRule ──────────────────────────────────────────────────────────
+
+describe('YoungerThanRule', () => {
+  it('returns false when person is exactly 18 years old today', () => {
+    const today = new Date();
+    const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
+    expect(new YoungerThanRule(18).matches(dateStr)).toBe(false);
+  });
+  it('returns true when person will turn 18 years old tomorrow', () => {
+    const today = new Date();
+    const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate() + 1);
+    const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
+    expect(new YoungerThanRule(18).matches(dateStr)).toBe(true);
+  });
+  it('returns true for person clearly under 18 (born today)', () => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(new YoungerThanRule(18).matches(dateStr)).toBe(true);
+  });
+  it('returns false for null', () => expect(new YoungerThanRule(18).matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(new YoungerThanRule(18).matches('hello')).toBe(false));
+  it('returns correct error message', () => expect(new YoungerThanRule(18).errorMessage()).toBe('Must be younger than 18 years old'));
+});
+
+// ── BeforeStaticDateRule ──────────────────────────────────────────────────────
+
+describe('BeforeStaticDateRule', () => {
+  const rule = new BeforeStaticDateRule('2024-06-15');
+
+  it('returns true when value is strictly before the target date', () => {
+    expect(rule.matches('2024-06-14')).toBe(true);
+  });
+  it('returns false when value equals the target date (not strictly before)', () => {
+    expect(rule.matches('2024-06-15')).toBe(false);
+  });
+  it('returns false when value is after the target date', () => {
+    expect(rule.matches('2024-06-16')).toBe(false);
+  });
+  it('returns false for null', () => expect(rule.matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(rule.matches('hello')).toBe(false));
+  it('returns false for number', () => expect(rule.matches(42)).toBe(false));
+  it('returns correct error message', () => expect(rule.errorMessage()).toBe('Must be before 2024-06-15'));
+});
+
+// ── AfterStaticDateRule ───────────────────────────────────────────────────────
+
+describe('AfterStaticDateRule', () => {
+  const rule = new AfterStaticDateRule('2024-06-15');
+
+  it('returns true when value is strictly after the target date', () => {
+    expect(rule.matches('2024-06-16')).toBe(true);
+  });
+  it('returns false when value equals the target date (not strictly after)', () => {
+    expect(rule.matches('2024-06-15')).toBe(false);
+  });
+  it('returns false when value is before the target date', () => {
+    expect(rule.matches('2024-06-14')).toBe(false);
+  });
+  it('returns false for null', () => expect(rule.matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(rule.matches('hello')).toBe(false));
+  it('returns false for number', () => expect(rule.matches(42)).toBe(false));
+  it('returns correct error message', () => expect(rule.errorMessage()).toBe('Must be after 2024-06-15'));
 });

@@ -1,0 +1,25 @@
+:host {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.form-field {
+  width: 100%;
+}
+
+// ── Info icon button ─────────────────────────────────────────────────────────
+.field-info-btn {
+  color: var(--mat-sys-on-surface-variant);
+
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ── Error icon (mat-form-field trailing suffix) ─────────────────────────────
+.field-error-icon {
+  color: var(--mat-sys-error);
+}

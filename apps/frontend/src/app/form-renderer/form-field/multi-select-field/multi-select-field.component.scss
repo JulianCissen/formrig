@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.form-field {
+  width: 100%;
+}
+
+.field-info-btn {
+  color: var(--mat-sys-on-surface-variant);
+
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.field-error-icon {
+  color: var(--mat-sys-error);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+// ── Chip autocomplete ────────────────────────────────────────────────────────
+//
+// Animate each chip in when it is added to the DOM (scale + fade).
+// Uses the M3 standard easing token with a short 150 ms duration.
+//
+@keyframes chip-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+mat-chip-row {
+  animation: chip-enter 150ms var(--mat-sys-motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+}

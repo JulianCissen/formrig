@@ -1,0 +1,35 @@
+<div class="form-field">
+
+  <!-- Label row: visible label text + optional info button -->
+  <div class="field-label-row">
+    <span class="form-field__label">{{ label }}</span>
+    @if (info) {
+      <button
+        type="button"
+        matIconButton
+        [matTooltip]="info"
+        matTooltipPosition="above"
+        [attr.aria-label]="'More information about ' + label"
+        class="field-info-btn">
+        <mat-icon aria-hidden="true">info_outline</mat-icon>
+      </button>
+    }
+  </div>
+
+  <!-- Per-type control projected here -->
+  <ng-content />
+
+  <!-- Hint text -->
+  @if (hint) {
+    <p class="field-hint" [id]="fieldId + '-hint'">{{ hint }}</p>
+  }
+
+  <!-- Validation error block -->
+  @if (dirtyFieldIds().has(fieldId) && (validationState().get(fieldId)?.length ?? 0) > 0) {
+    <div class="field-validation-error" role="alert" [id]="fieldId + '-errors'">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ (validationState().get(fieldId) ?? []).join(' · ') }}</span>
+    </div>
+  }
+
+</div>

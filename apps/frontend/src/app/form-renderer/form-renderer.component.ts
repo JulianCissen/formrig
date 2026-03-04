@@ -514,6 +514,11 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           { value: (field as { value?: string | null }).value ?? null, disabled: field.disabled ?? false },
           []
         );
+      case 'date-picker':
+        return new FormControl<string | null>(
+          { value: (field as { value?: string | null }).value ?? null, disabled: field.disabled ?? false },
+          { updateOn: 'blur' }
+        );
       default:
         return new FormControl(
           { value: (field as { value?: string }).value ?? '', disabled: field.disabled },

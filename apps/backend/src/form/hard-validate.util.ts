@@ -90,6 +90,25 @@ export function hardValidate(field: FieldDto, value: unknown): void {
       throw new BadRequestException(`Field "${field.id}" is a file-upload field and cannot be set via PATCH`);
     }
 
+    case 'date-picker': {
+      const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+      if (value !== null) {
+        if (typeof value !== 'string' || !DATE_RE.test(value)) {
+          throw new BadRequestException(
+            `Field "${field.id}" must be null or a valid yyyy-mm-dd date string`,
+          );
+        }
+        const [y, m, d] = (value as string).split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) {
+          throw new BadRequestException(
+            `Field "${field.id}" must be null or a valid yyyy-mm-dd date string`,
+          );
+        }
+      }
+      break;
+    }
+
     default: {
       throw new BadRequestException(`Unknown field type: "${(field as { type: string }).type}"`);
     }

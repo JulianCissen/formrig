@@ -1,0 +1,71 @@
+<!--
+  mat-form-field-wrapper.component.html
+  All <mat-form-field> chrome lives here.
+  Sub-component content is projected via <ng-content />.
+  Angular Material distributes projected elements into internal slots
+  based on matInput / matSuffix / mat-hint / mat-error directive selectors.
+-->
+<mat-form-field
+  appearance="outline"
+  subscriptSizing="dynamic"
+  class="form-field"
+  [class.ng-invalid]="dirtyFieldIds().has(fieldId) && (validationState().get(fieldId)?.length ?? 0) > 0"
+  [class.ng-dirty]="dirtyFieldIds().has(fieldId)">
+
+  <!-- Floating label — Angular Material associates this with the projected matInput via fieldId -->
+  <mat-label>{{ label }}</mat-label>
+
+  <!--
+    All per-type content is projected here: the input/control and any type-specific matSuffix buttons.
+    Angular Material uses directive selectors (matInput, matSuffix, etc.) to place projected content
+    into its internal layout slots regardless of the <ng-content> position.
+  -->
+  <ng-content />
+
+  <!--
+    Error icon suffix — shown when field is dirty and has validation errors.
+    Appears after any type-specific suffixes (e.g. datepicker toggle) in DOM order.
+    aria-hidden="true": the mat-error element below provides the announced text.
+  -->
+  @if (dirtyFieldIds().has(fieldId) && (validationState().get(fieldId)?.length ?? 0) > 0) {
+    <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+  }
+
+  <!--
+    Info button suffix — shown when the field has a tooltip description.
+    Always appears as the last suffix in DOM order (after error icon).
+  -->
+  @if (info) {
+    <button
+      type="button"
+      matIconButton
+      matSuffix
+      [matTooltip]="info"
+      matTooltipPosition="above"
+      [attr.aria-label]="'More information about ' + label"
+      class="field-info-btn">
+      <mat-icon aria-hidden="true">info_outline</mat-icon>
+    </button>
+  }
+
+  <!--
+    Hint text — shown when hint is present.
+    [id] allows the per-type input to reference it via aria-describedby.
+  -->
+  @if (hint) {
+    <mat-hint [id]="fieldId + '-hint'">{{ hint }}</mat-hint>
+  }
+
+  <!--
+    Validation error — shown when field is dirty and has errors.
+    Angular Material's mat-form-field applies role="alert" / aria-live="assertive"
+    to the mat-error container automatically; no explicit ARIA attributes needed here.
+    Multiple errors are joined with ' · ' separator.
+  -->
+  @if (dirtyFieldIds().has(fieldId) && (validationState().get(fieldId)?.length ?? 0) > 0) {
+    <mat-error [id]="fieldId + '-errors'">
+      {{ (validationState().get(fieldId) ?? []).join(' · ') }}
+    </mat-error>
+  }
+
+</mat-form-field>
