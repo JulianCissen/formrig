@@ -13,70 +13,80 @@ function fieldSlug(label: string, index: number): string {
 // ── Step 1 fields (flat indices 0–3) ────────────────────────────────────────
 
 // Index 0: radio — drives conditional rendering for Team size field
-const applyingAs = new RadioField(
-  'Applying as (Individual or Team)',
-  ['Individual', 'Team'],
-  null,   // default: nothing selected
-  true,   // required
-);
+const applyingAs = new RadioField({
+  label: 'Applying as (Individual or Team)',
+  options: ['Individual', 'Team'],
+  value: null,
+  required: true,
+});
 
 // Index 1: text — required, minCharacters + maxCharacters soft validation
-const fullName = new TextField('Full name', '', true);
-fullName.minCharacters = 2;
-fullName.maxCharacters = 50;
+const fullName = new TextField({ label: 'Full name', value: '', required: true, minCharacters: 2, maxCharacters: 50 });
 
 // Index 2: text — only visible when 'Team' is selected (conditional rendering)
-const teamSize = new TextField('Team size', '', false);
-teamSize.pattern = '^[1-9][0-9]*$'; // positive integer only — pattern validation demo
-teamSize.visibleWhen = {
-  fieldId: fieldSlug('Applying as (Individual or Team)', 0),
-  rule: new EqualsRule('Team'),
-};
+const teamSize = new TextField({
+  label: 'Team size',
+  value: '',
+  pattern: '^[1-9][0-9]*$', // positive integer only — pattern validation demo
+  visibleWhen: {
+    fieldId: fieldSlug('Applying as (Individual or Team)', 0),
+    rule: new EqualsRule({ expected: 'Team' }),
+  },
+});
 
 // Index 3: text — required, pattern validation (email-like)
-const contactEmail = new TextField('Contact email', '', true);
-contactEmail.rules = [
-  new MatchesPatternRule('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
-    .withMessage('Please enter a valid email address (e.g. hello@example.com).'),
-];
-contactEmail.hint = 'Enter a valid email address, e.g. name@example.com';
+const contactEmail = new TextField({
+  label: 'Contact email',
+  value: '',
+  required: true,
+  rules: [
+    new MatchesPatternRule({ pattern: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$' })
+      .withMessage('Please enter a valid email address (e.g. hello@example.com).'),
+  ],
+  hint: 'Enter a valid email address, e.g. name@example.com',
+});
 
 // ── Step 2 fields (flat indices 4–8) ────────────────────────────────────────
 
 // Index 4: multi-select with autocomplete — minSelected + maxSelected soft validation
-const skills = new MultiSelectField(
-  'Technical skills',
-  ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker', 'Python', 'React', 'Go'],
-  [],
-  true,   // autocomplete
-);
-skills.minSelected = 1;
-skills.maxSelected = 3;
+const skills = new MultiSelectField({
+  label: 'Technical skills',
+  options: ['TypeScript', 'Angular', 'NestJS', 'PostgreSQL', 'Docker', 'Python', 'React', 'Go'],
+  value: [],
+  autocomplete: true,
+  minSelected: 1,
+  maxSelected: 3,
+});
 
 // Index 5: select — drives conditional rendering for State field
-const country = new SelectField(
-  'Country',
-  ['United Kingdom', 'United States', 'Germany', 'France', 'Japan', 'Other'],
-  null,
-  false,  // no autocomplete
-  true,   // required
-);
-country.info = 'If you select USA, you will be asked to provide a state.';
+const country = new SelectField({
+  label: 'Country',
+  options: ['United Kingdom', 'United States', 'Germany', 'France', 'Japan', 'Other'],
+  value: null,
+  autocomplete: false,
+  required: true,
+  info: 'If you select USA, you will be asked to provide a state.',
+});
 
 // Index 6: text — visible only when USA is selected
-const stateOrTerritory = new TextField('State or territory', '', false);
-stateOrTerritory.visibleWhen = {
-  fieldId: fieldSlug('Country', 5),
-  rule: new EqualsRule('United States'),
-};
+const stateOrTerritory = new TextField({
+  label: 'State or territory',
+  value: '',
+  visibleWhen: {
+    fieldId: fieldSlug('Country', 5),
+    rule: new EqualsRule({ expected: 'United States' }),
+  },
+});
 
 // Index 7: textarea — maxCharacters soft validation + character counter
-const bio = new TextareaField('Short bio', '', 4, false);
-bio.maxCharacters = 300;
+const bio = new TextareaField({ label: 'Short bio', value: '', rows: 4, maxCharacters: 300 });
 
 // Index 8: checkbox — IsTrueRule: must be checked to submit
-const terms = new CheckboxField('I accept the terms and conditions', false, false);
-terms.rules = [new IsTrueRule().withMessage('You must accept the terms and conditions to continue.')];
+const terms = new CheckboxField({
+  label: 'I accept the terms and conditions',
+  value: false,
+  rules: [new IsTrueRule().withMessage('You must accept the terms and conditions to continue.')],
+});
 
 class DemoValidationsForm implements FormTypePlugin {
   readonly definition: FormDefinition = {

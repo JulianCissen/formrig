@@ -18,14 +18,16 @@ export abstract class Rule {
 
 export class EqualsRule extends Rule {
   readonly type = 'equals' as const;
-  constructor(private readonly expected: unknown) { super(); }
+  private readonly expected: unknown;
+  constructor({ expected }: { expected: unknown }) { super(); this.expected = expected; }
   matches(value: unknown): boolean { return value === this.expected; }
   protected defaultErrorMessage(): string { return `Must equal ${String(this.expected)}`; }
 }
 
 export class NotEqualsRule extends Rule {
   readonly type = 'not-equals' as const;
-  constructor(private readonly expected: unknown) { super(); }
+  private readonly expected: unknown;
+  constructor({ expected }: { expected: unknown }) { super(); this.expected = expected; }
   matches(value: unknown): boolean { return value !== this.expected; }
   protected defaultErrorMessage(): string { return `Must not equal ${String(this.expected)}`; }
 }
@@ -56,7 +58,8 @@ export class IsNotEmptyRule extends Rule {
 
 export class ContainsRule extends Rule {
   readonly type = 'contains' as const;
-  constructor(private readonly substring: string) { super(); }
+  private readonly substring: string;
+  constructor({ substring }: { substring: string }) { super(); this.substring = substring; }
   matches(value: unknown): boolean {
     if (typeof value === 'string') return value.includes(this.substring);
     if (Array.isArray(value)) return value.includes(this.substring);
@@ -67,18 +70,20 @@ export class ContainsRule extends Rule {
 
 export class MatchesPatternRule extends Rule {
   readonly type = 'matches-pattern' as const;
+  private readonly pattern: string;
   private readonly regex: RegExp;
   /**
    * @param pattern A valid regex pattern string.
    * @throws {SyntaxError} When the provided pattern is not a valid regular expression.
    * @throws {Error} When the provided pattern is rejected as potentially unsafe (ReDoS risk).
    */
-  constructor(private readonly pattern: string) {
+  constructor({ pattern }: { pattern: string }) {
     super();
     if (!isSafePattern(pattern)) {
       throw new Error(`Pattern '${pattern}' was rejected as potentially unsafe (ReDoS risk).`);
     }
     this.regex = new RegExp(pattern);  // throws SyntaxError on invalid pattern
+    this.pattern = pattern;
   }
   matches(value: unknown): boolean {
     return this.regex.test(String(value));
@@ -88,7 +93,8 @@ export class MatchesPatternRule extends Rule {
 
 export class MinLengthRule extends Rule {
   readonly type = 'min-length' as const;
-  constructor(private readonly min: number) { super(); }
+  private readonly min: number;
+  constructor({ min }: { min: number }) { super(); this.min = min; }
   matches(value: unknown): boolean {
     return String(value ?? '').length >= this.min;
   }
@@ -97,7 +103,8 @@ export class MinLengthRule extends Rule {
 
 export class MaxLengthRule extends Rule {
   readonly type = 'max-length' as const;
-  constructor(private readonly max: number) { super(); }
+  private readonly max: number;
+  constructor({ max }: { max: number }) { super(); this.max = max; }
   matches(value: unknown): boolean {
     return String(value ?? '').length <= this.max;
   }
@@ -108,7 +115,8 @@ export class MaxLengthRule extends Rule {
 
 export class MinCountRule extends Rule {
   readonly type = 'min-count' as const;
-  constructor(private readonly min: number) { super(); }
+  private readonly min: number;
+  constructor({ min }: { min: number }) { super(); this.min = min; }
   matches(value: unknown): boolean {
     return Array.isArray(value) && value.length >= this.min;
   }
@@ -117,7 +125,8 @@ export class MinCountRule extends Rule {
 
 export class MaxCountRule extends Rule {
   readonly type = 'max-count' as const;
-  constructor(private readonly max: number) { super(); }
+  private readonly max: number;
+  constructor({ max }: { max: number }) { super(); this.max = max; }
   matches(value: unknown): boolean {
     return Array.isArray(value) && value.length <= this.max;
   }
@@ -142,7 +151,8 @@ export class IsFalseRule extends Rule {
 
 export class EqualsFieldRule extends Rule {
   readonly type = 'equals-field' as const;
-  constructor(private readonly fieldId: string) { super(); }
+  private readonly fieldId: string;
+  constructor({ fieldId }: { fieldId: string }) { super(); this.fieldId = fieldId; }
   matches(value: unknown, values?: Record<string, unknown>): boolean {
     return values !== undefined && this.fieldId in values
       ? value === values[this.fieldId]
@@ -153,7 +163,8 @@ export class EqualsFieldRule extends Rule {
 
 export class ComesAfterFieldRule extends Rule {
   readonly type = 'comes-after-field' as const;
-  constructor(private readonly fieldId: string) { super(); }
+  private readonly fieldId: string;
+  constructor({ fieldId }: { fieldId: string }) { super(); this.fieldId = fieldId; }
   matches(value: unknown, values?: Record<string, unknown>): boolean {
     if (
       values === undefined ||
@@ -172,7 +183,8 @@ export class ComesAfterFieldRule extends Rule {
 
 export class ComesBeforeFieldRule extends Rule {
   readonly type = 'comes-before-field' as const;
-  constructor(private readonly fieldId: string) { super(); }
+  private readonly fieldId: string;
+  constructor({ fieldId }: { fieldId: string }) { super(); this.fieldId = fieldId; }
   matches(value: unknown, values?: Record<string, unknown>): boolean {
     if (
       values === undefined ||
@@ -193,7 +205,8 @@ export class ComesBeforeFieldRule extends Rule {
 
 export class OlderThanRule extends Rule {
   readonly type = 'older-than' as const;
-  constructor(private readonly years: number) { super(); }
+  private readonly years: number;
+  constructor({ years }: { years: number }) { super(); this.years = years; }
 
   matches(value: unknown): boolean {
     if (typeof value !== 'string') return false;
@@ -215,7 +228,8 @@ export class OlderThanRule extends Rule {
 
 export class YoungerThanRule extends Rule {
   readonly type = 'younger-than' as const;
-  constructor(private readonly years: number) { super(); }
+  private readonly years: number;
+  constructor({ years }: { years: number }) { super(); this.years = years; }
 
   matches(value: unknown): boolean {
     if (typeof value !== 'string') return false;
@@ -237,7 +251,8 @@ export class YoungerThanRule extends Rule {
 
 export class BeforeStaticDateRule extends Rule {
   readonly type = 'before-static-date' as const;
-  constructor(private readonly date: string) { super(); }
+  private readonly date: string;
+  constructor({ date }: { date: string }) { super(); this.date = date; }
 
   matches(value: unknown): boolean {
     if (typeof value !== 'string') return false;
@@ -257,7 +272,8 @@ export class BeforeStaticDateRule extends Rule {
 
 export class AfterStaticDateRule extends Rule {
   readonly type = 'after-static-date' as const;
-  constructor(private readonly date: string) { super(); }
+  private readonly date: string;
+  constructor({ date }: { date: string }) { super(); this.date = date; }
 
   matches(value: unknown): boolean {
     if (typeof value !== 'string') return false;
@@ -284,7 +300,8 @@ export class AfterStaticDateRule extends Rule {
  */
 export class RequiredRule extends Rule {
   readonly type = 'required' as const;
-  constructor(private readonly fieldType: string) { super(); }
+  private readonly fieldType: string;
+  constructor({ fieldType }: { fieldType: string }) { super(); this.fieldType = fieldType; }
   matches(value: unknown): boolean {
     if (this.fieldType === 'checkbox') return true; // checkbox cannot be required
     if (Array.isArray(value)) return value.length > 0; // string[]

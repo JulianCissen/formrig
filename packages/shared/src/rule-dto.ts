@@ -45,24 +45,24 @@ export function ruleFromDto(dto: RuleDto): Rule {
 
 function buildRule(dto: RuleDto): Rule {
   switch (dto.type) {
-    case 'equals':             return new EqualsRule(dto.expected);
-    case 'not-equals':         return new NotEqualsRule(dto.expected);
+    case 'equals':             return new EqualsRule({ expected: dto.expected });
+    case 'not-equals':         return new NotEqualsRule({ expected: dto.expected });
     case 'is-empty':           return new IsEmptyRule();
     case 'is-not-empty':       return new IsNotEmptyRule();
-    case 'contains':           return new ContainsRule(dto.substring);
-    case 'matches-pattern':    return new MatchesPatternRule(dto.pattern);
-    case 'min-length':         return new MinLengthRule(dto.min);
-    case 'max-length':         return new MaxLengthRule(dto.max);
-    case 'min-count':          return new MinCountRule(dto.min);
-    case 'max-count':          return new MaxCountRule(dto.max);
+    case 'contains':           return new ContainsRule({ substring: dto.substring });
+    case 'matches-pattern':    return new MatchesPatternRule({ pattern: dto.pattern });
+    case 'min-length':         return new MinLengthRule({ min: dto.min });
+    case 'max-length':         return new MaxLengthRule({ max: dto.max });
+    case 'min-count':          return new MinCountRule({ min: dto.min });
+    case 'max-count':          return new MaxCountRule({ max: dto.max });
     case 'is-true':            return new IsTrueRule();
     case 'is-false':           return new IsFalseRule();
-    case 'equals-field':       return new EqualsFieldRule(dto.fieldId);
-    case 'comes-after-field':  return new ComesAfterFieldRule(dto.fieldId);
-    case 'comes-before-field':  return new ComesBeforeFieldRule(dto.fieldId);
-    case 'older-than':           return new OlderThanRule(dto.years);
-    case 'younger-than':         return new YoungerThanRule(dto.years);
-    case 'before-static-date':   return new BeforeStaticDateRule(dto.date);
-    case 'after-static-date':    return new AfterStaticDateRule(dto.date);
+    case 'equals-field':       return new EqualsFieldRule({ fieldId: dto.fieldId });
+    case 'comes-after-field':  return new ComesAfterFieldRule({ fieldId: dto.fieldId });
+    case 'comes-before-field':  return new ComesBeforeFieldRule({ fieldId: dto.fieldId });
+    case 'older-than':           return new OlderThanRule({ years: dto.years });
+    case 'younger-than':         return new YoungerThanRule({ years: dto.years });
+    case 'before-static-date':   return new BeforeStaticDateRule({ date: dto.date });
+    case 'after-static-date':    return new AfterStaticDateRule({ date: dto.date });
   }
 }

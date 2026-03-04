@@ -33,16 +33,44 @@ export abstract class BaseField {
    */
   info?: string;
 
+  public label: string;
+  public required: boolean;
+  public disabled: boolean;
+
   /**
-   * @param label    Human-readable label displayed in the form UI.
-   * @param required Whether the field must have a non-empty value on submission.
-   * @param disabled Whether the field is rendered in a non-interactive disabled state.
+   * @param label       Human-readable label displayed in the form UI.
+   * @param required    Whether the field must have a non-empty value on submission.
+   * @param disabled    Whether the field is rendered in a non-interactive disabled state.
+   * @param hint        Optional persistent hint text displayed below the field input.
+   * @param info        Optional contextual information shown via tooltip on an info icon.
+   * @param rules       Optional list of soft-validation rules.
+   * @param visibleWhen Optional visibility condition.
    */
-  constructor(
-    public label: string,
-    public required: boolean = false,
-    public disabled: boolean = false,
-  ) {}
+  constructor({
+    label,
+    required = false,
+    disabled = false,
+    hint,
+    info,
+    rules,
+    visibleWhen,
+  }: {
+    label: string;
+    required?: boolean;
+    disabled?: boolean;
+    hint?: string;
+    info?: string;
+    rules?: Rule[];
+    visibleWhen?: ConditionTree;
+  }) {
+    this.label = label;
+    this.required = required;
+    this.disabled = disabled;
+    this.hint = hint;
+    this.info = info;
+    this.rules = rules;
+    this.visibleWhen = visibleWhen;
+  }
 }
 
 /**
@@ -64,19 +92,35 @@ export class TextField extends BaseField {
   /** Soft validation: regex pattern string. Generates a MatchesPatternRule. */
   pattern?: string;
 
+  public value: string;
+
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param value    Current string value of the input. Default: empty string.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label         Human-readable label (passed to BaseField).
+   * @param value         Current string value of the input. Default: empty string.
+   * @param required      Inherited from BaseField. Default: false.
+   * @param disabled      Inherited from BaseField. Default: false.
+   * @param hint          Optional persistent hint text.
+   * @param info          Optional tooltip info text.
+   * @param rules         Optional validation rules.
+   * @param visibleWhen   Optional visibility condition.
+   * @param maxCharacters Soft validation: max allowed characters.
+   * @param minCharacters Soft validation: min required characters.
+   * @param pattern       Soft validation: regex pattern string.
    */
-  constructor(
-    label: string,
-    public value: string = '',
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, value = '', required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+    maxCharacters, minCharacters, pattern,
+  }: {
+    label: string; value?: string; required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    maxCharacters?: number; minCharacters?: number; pattern?: string;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.value = value;
+    this.maxCharacters = maxCharacters;
+    this.minCharacters = minCharacters;
+    this.pattern = pattern;
   }
 }
 
@@ -90,21 +134,31 @@ export class RadioField extends BaseField {
   /** Discriminator — always `'radio'`. */
   readonly type = 'radio' as const;
 
+  public options: string[];
+  public value: string | null;
+
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param options  Ordered list of option labels.
-   * @param value    Currently selected option label. Default: null.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label      Human-readable label (passed to BaseField).
+   * @param options    Ordered list of option labels.
+   * @param value      Currently selected option label. Default: null.
+   * @param required   Inherited from BaseField. Default: false.
+   * @param disabled   Inherited from BaseField. Default: false.
+   * @param hint       Optional persistent hint text.
+   * @param info       Optional tooltip info text.
+   * @param rules      Optional validation rules.
+   * @param visibleWhen Optional visibility condition.
    */
-  constructor(
-    label: string,
-    public options: string[],
-    public value: string | null = null,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, options, value = null, required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+  }: {
+    label: string; options: string[]; value?: string | null;
+    required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.options = options;
+    this.value = value;
   }
 }
 
@@ -122,19 +176,27 @@ export class CheckboxField extends BaseField {
   /** Discriminator — always `'checkbox'`. */
   readonly type = 'checkbox' as const;
 
+  public value: boolean;
+
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param value    The boolean toggle state. Default: false.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label      Human-readable label (passed to BaseField).
+   * @param value      The boolean toggle state. Default: false.
+   * @param required   Inherited from BaseField. Default: false.
+   * @param disabled   Inherited from BaseField. Default: false.
+   * @param hint       Optional persistent hint text.
+   * @param info       Optional tooltip info text.
+   * @param rules      Optional validation rules.
+   * @param visibleWhen Optional visibility condition.
    */
-  constructor(
-    label: string,
-    public value: boolean = false,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, value = false, required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+  }: {
+    label: string; value?: boolean; required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.value = value;
   }
 }
 
@@ -148,6 +210,10 @@ export class SelectField extends BaseField {
   /** Discriminator — always `'select'`. */
   readonly type = 'select' as const;
 
+  public options: string[];
+  public value: string | null;
+  public autocomplete: boolean;
+
   /**
    * @param label        Human-readable label (passed to BaseField).
    * @param options      Ordered list of selectable options.
@@ -155,16 +221,24 @@ export class SelectField extends BaseField {
    * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select>`. Default: false.
    * @param required     Inherited from BaseField. Default: false.
    * @param disabled     Inherited from BaseField. Default: false.
+   * @param hint         Optional persistent hint text.
+   * @param info         Optional tooltip info text.
+   * @param rules        Optional validation rules.
+   * @param visibleWhen  Optional visibility condition.
    */
-  constructor(
-    label: string,
-    public options: string[],
-    public value: string | null = null,
-    public autocomplete: boolean = false,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, options, value = null, autocomplete = false,
+    required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+  }: {
+    label: string; options: string[]; value?: string | null;
+    autocomplete?: boolean; required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.options = options;
+    this.value = value;
+    this.autocomplete = autocomplete;
   }
 }
 
@@ -184,6 +258,10 @@ export class MultiSelectField extends BaseField {
   /** Soft validation: maximum number of items that may be selected. Generates a MaxCountRule. */
   maxSelected?: number;
 
+  public options: string[];
+  public value: string[];
+  public autocomplete: boolean;
+
   /**
    * @param label        Human-readable label (passed to BaseField).
    * @param options      Ordered list of selectable options.
@@ -191,16 +269,30 @@ export class MultiSelectField extends BaseField {
    * @param autocomplete When true, renders with `<mat-autocomplete>` instead of `<mat-select [multiple]>`. Default: false.
    * @param required     Inherited from BaseField. Default: false.
    * @param disabled     Inherited from BaseField. Default: false.
+   * @param hint         Optional persistent hint text.
+   * @param info         Optional tooltip info text.
+   * @param rules        Optional validation rules.
+   * @param visibleWhen  Optional visibility condition.
+   * @param minSelected  Soft validation: minimum items selected.
+   * @param maxSelected  Soft validation: maximum items selected.
    */
-  constructor(
-    label: string,
-    public options: string[],
-    public value: string[] = [],
-    public autocomplete: boolean = false,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, options, value = [], autocomplete = false,
+    required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+    minSelected, maxSelected,
+  }: {
+    label: string; options: string[]; value?: string[];
+    autocomplete?: boolean; required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    minSelected?: number; maxSelected?: number;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.options = options;
+    this.value = value;
+    this.autocomplete = autocomplete;
+    this.minSelected = minSelected;
+    this.maxSelected = maxSelected;
   }
 }
 
@@ -220,21 +312,37 @@ export class TextareaField extends BaseField {
   /** Soft validation: min required characters. Generates a MinLengthRule. */
   minCharacters?: number;
 
+  public value: string;
+  public rows: number;
+
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param value    Current multi-line text content. Default: empty string.
-   * @param rows     Visible row count hint rendered via `[rows]` binding. Default: 4.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label         Human-readable label (passed to BaseField).
+   * @param value         Current multi-line text content. Default: empty string.
+   * @param rows          Visible row count hint rendered via `[rows]` binding. Default: 4.
+   * @param required      Inherited from BaseField. Default: false.
+   * @param disabled      Inherited from BaseField. Default: false.
+   * @param hint          Optional persistent hint text.
+   * @param info          Optional tooltip info text.
+   * @param rules         Optional validation rules.
+   * @param visibleWhen   Optional visibility condition.
+   * @param maxCharacters Soft validation: max allowed characters.
+   * @param minCharacters Soft validation: min required characters.
    */
-  constructor(
-    label: string,
-    public value: string = '',
-    public rows: number = 4,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, value = '', rows = 4, required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+    maxCharacters, minCharacters,
+  }: {
+    label: string; value?: string; rows?: number;
+    required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    maxCharacters?: number; minCharacters?: number;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.value = value;
+    this.rows = rows;
+    this.maxCharacters = maxCharacters;
+    this.minCharacters = minCharacters;
   }
 }
 
@@ -250,30 +358,41 @@ export class FileUploadField extends BaseField {
   /** Discriminator — always `'file-upload'`. */
   readonly type = 'file-upload' as const;
 
+  /** Whether the user may select more than one file at a time. Default: false. */
+  public multiple: boolean;
+
+  /** Comma-separated MIME types or file extensions passed to the native `<input accept>` attribute. Default: `''`. */
+  public accept: string;
+
+  /** Maximum number of files the user may attach. Default: undefined (no limit). */
+  maxFiles?: number;
+
+  /** Maximum total upload size in bytes. Default: undefined (no limit). */
+  maxSizeBytes?: number;
+
   /**
-   * @param label        Human-readable label (passed to BaseField).
-   * @param multiple     Whether the user may select more than one file at a time. Default: false.
-   * @param accept       Comma-separated MIME types or file extensions passed to the native
-   *                     `<input accept>` attribute. Default: `''` (all file types allowed).
-   * @param maxFiles     Maximum number of files the user may attach. Default: undefined (no limit).
-   * @param maxSizeBytes Maximum total upload size in bytes. Default: undefined (no limit).
-   * @param rename       Optional base name for stored files. When set, the backend uses this
-   *                     value instead of a random UUID as the filename base (a `_${index}` suffix
-   *                     and the original file extension are always appended). Default: undefined.
-   * @param required     Inherited from BaseField. Default: false.
-   * @param disabled     Inherited from BaseField. Default: false.
+   * Optional base name for stored files. When set, the backend uses this value instead of a random UUID
+   * as the filename base (a `_${index}` suffix and the original file extension are always appended).
    */
-  constructor(
-    label: string,
-    public multiple: boolean = false,
-    public accept: string = '',
-    public maxFiles?: number,
-    public maxSizeBytes?: number,
-    public rename?: string,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  rename?: string;
+
+  constructor({
+    label, multiple = false, accept = '',
+    maxFiles, maxSizeBytes, rename,
+    required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+  }: {
+    label: string; multiple?: boolean; accept?: string;
+    maxFiles?: number; maxSizeBytes?: number; rename?: string;
+    required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.multiple = multiple;
+    this.accept = accept;
+    this.maxFiles = maxFiles;
+    this.maxSizeBytes = maxSizeBytes;
+    this.rename = rename;
   }
 }
 
@@ -352,18 +471,39 @@ export class DatePickerField extends BaseField {
    */
   displayFormat?: string;
 
+  public value: string | null;
+
   /**
-   * @param label    Human-readable label (passed to BaseField).
-   * @param value    Current ISO date string value or null. Default: null.
-   * @param required Inherited from BaseField. Default: false.
-   * @param disabled Inherited from BaseField. Default: false.
+   * @param label         Human-readable label (passed to BaseField).
+   * @param value         Current ISO date string value or null. Default: null.
+   * @param required      Inherited from BaseField. Default: false.
+   * @param disabled      Inherited from BaseField. Default: false.
+   * @param hint          Optional persistent hint text.
+   * @param info          Optional tooltip info text.
+   * @param rules         Optional validation rules.
+   * @param visibleWhen   Optional visibility condition.
+   * @param minDate       Declarative calendar lower bound (yyyy-mm-dd).
+   * @param maxDate       Declarative calendar upper bound (yyyy-mm-dd).
+   * @param minAge        Minimum age in years.
+   * @param maxAge        Maximum age in years.
+   * @param displayFormat Display format for keyboard input.
    */
-  constructor(
-    label: string,
-    public value: string | null = null,
-    required: boolean = false,
-    disabled: boolean = false,
-  ) {
-    super(label, required, disabled);
+  constructor({
+    label, value = null, required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+    minDate, maxDate, minAge, maxAge, displayFormat,
+  }: {
+    label: string; value?: string | null;
+    required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    minDate?: string; maxDate?: string; minAge?: number; maxAge?: number; displayFormat?: string;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.value = value;
+    this.minDate = minDate;
+    this.maxDate = maxDate;
+    this.minAge = minAge;
+    this.maxAge = maxAge;
+    this.displayFormat = displayFormat;
   }
 }

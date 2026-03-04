@@ -23,24 +23,24 @@ export function getEffectiveRules(
 
   // 1. Virtual required rule (skipped for checkbox — checkboxes cannot be required)
   if (field.required && field.type !== 'checkbox') {
-    rules.push(new RequiredRule(field.type));
+    rules.push(new RequiredRule({ fieldType: field.type }));
   }
 
   // 2. Property-based shorthands
   if (field.type === 'text' || field.type === 'textarea') {
     if (field.minCharacters != null)
-      rules.push(new MinLengthRule(field.minCharacters));
+      rules.push(new MinLengthRule({ min: field.minCharacters }));
     if (field.maxCharacters != null)
-      rules.push(new MaxLengthRule(field.maxCharacters));
+      rules.push(new MaxLengthRule({ max: field.maxCharacters }));
     if (field.type === 'text' && field.pattern != null)
-      rules.push(new MatchesPatternRule(field.pattern));
+      rules.push(new MatchesPatternRule({ pattern: field.pattern }));
   }
 
   if (field.type === 'multi-select') {
     if (field.minSelected != null)
-      rules.push(new MinCountRule(field.minSelected));
+      rules.push(new MinCountRule({ min: field.minSelected }));
     if (field.maxSelected != null)
-      rules.push(new MaxCountRule(field.maxSelected));
+      rules.push(new MaxCountRule({ max: field.maxSelected }));
   }
 
   // 3. Generic rules[] entries

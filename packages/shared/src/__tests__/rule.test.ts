@@ -24,7 +24,7 @@ import {
 // ── EqualsRule ───────────────────────────────────────────────────────────────
 
 describe('EqualsRule', () => {
-  const rule = new EqualsRule('hello');
+  const rule = new EqualsRule({ expected: 'hello' });
   it('matches exact value', () => expect(rule.matches('hello')).toBe(true));
   it('fails on different value', () => expect(rule.matches('world')).toBe(false));
   it('fails on different type', () => expect(rule.matches(42)).toBe(false));
@@ -33,7 +33,7 @@ describe('EqualsRule', () => {
 // ── NotEqualsRule ────────────────────────────────────────────────────────────
 
 describe('NotEqualsRule', () => {
-  const rule = new NotEqualsRule('hello');
+  const rule = new NotEqualsRule({ expected: 'hello' });
   it('matches different value', () => expect(rule.matches('world')).toBe(true));
   it('fails on equal value', () => expect(rule.matches('hello')).toBe(false));
 });
@@ -69,7 +69,7 @@ describe('IsNotEmptyRule', () => {
 // ── ContainsRule ─────────────────────────────────────────────────────────────
 
 describe('ContainsRule', () => {
-  const rule = new ContainsRule('foo');
+  const rule = new ContainsRule({ substring: 'foo' });
   it('matches string containing substring', () => expect(rule.matches('foobar')).toBe(true));
   it('fails string not containing substring', () => expect(rule.matches('bar')).toBe(false));
   it('matches string[] containing the item', () => expect(rule.matches(['foo', 'bar'])).toBe(true));
@@ -81,36 +81,36 @@ describe('ContainsRule', () => {
 
 describe('MatchesPatternRule', () => {
   it('matches when pattern matches', () => {
-    expect(new MatchesPatternRule('^\\d+$').matches('123')).toBe(true);
+    expect(new MatchesPatternRule({ pattern: '^\\d+$' }).matches('123')).toBe(true);
   });
   it('fails when pattern does not match', () => {
-    expect(new MatchesPatternRule('^\\d+$').matches('abc')).toBe(false);
+    expect(new MatchesPatternRule({ pattern: '^\\d+$' }).matches('abc')).toBe(false);
   });
   it('coerces non-string value to string before testing', () => {
-    expect(new MatchesPatternRule('^42$').matches(42)).toBe(true);
+    expect(new MatchesPatternRule({ pattern: '^42$' }).matches(42)).toBe(true);
   });
   it('throws at construction time with invalid regex pattern', () => {
     // safe-regex rejects syntactically invalid patterns, so an Error is thrown
     // before new RegExp() is reached
-    expect(() => new MatchesPatternRule('[invalid')).toThrow(Error);
+    expect(() => new MatchesPatternRule({ pattern: '[invalid' })).toThrow(Error);
   });
 });
 
 // ── MinLengthRule ────────────────────────────────────────────────────────────
 
 describe('MinLengthRule', () => {
-  const rule = new MinLengthRule(3);
+  const rule = new MinLengthRule({ min: 3 });
   it('passes at exactly min length', () => expect(rule.matches('abc')).toBe(true));
   it('passes above min length', () => expect(rule.matches('abcd')).toBe(true));
   it('fails one below min length', () => expect(rule.matches('ab')).toBe(false));
-  it('coerces non-string to string (number 5 has length 1 >= 1)', () => expect(new MinLengthRule(1).matches(5)).toBe(true));
+  it('coerces non-string to string (number 5 has length 1 >= 1)', () => expect(new MinLengthRule({ min: 1 }).matches(5)).toBe(true));
   it('coerces non-string to string (123 coerces to "123", length 3 >= 3)', () => expect(rule.matches(123)).toBe(true));
 });
 
 // ── MaxLengthRule ────────────────────────────────────────────────────────────
 
 describe('MaxLengthRule', () => {
-  const rule = new MaxLengthRule(3);
+  const rule = new MaxLengthRule({ max: 3 });
   it('passes at exactly max length', () => expect(rule.matches('abc')).toBe(true));
   it('passes below max length', () => expect(rule.matches('ab')).toBe(true));
   it('fails one above max length', () => expect(rule.matches('abcd')).toBe(false));
@@ -121,7 +121,7 @@ describe('MaxLengthRule', () => {
 // ── MinCountRule ─────────────────────────────────────────────────────────────
 
 describe('MinCountRule', () => {
-  const rule = new MinCountRule(2);
+  const rule = new MinCountRule({ min: 2 });
   it('passes at exactly min count', () => expect(rule.matches(['a', 'b'])).toBe(true));
   it('passes above min count', () => expect(rule.matches(['a', 'b', 'c'])).toBe(true));
   it('fails one below min count', () => expect(rule.matches(['a'])).toBe(false));
@@ -131,7 +131,7 @@ describe('MinCountRule', () => {
 // ── MaxCountRule ─────────────────────────────────────────────────────────────
 
 describe('MaxCountRule', () => {
-  const rule = new MaxCountRule(2);
+  const rule = new MaxCountRule({ max: 2 });
   it('passes at exactly max count', () => expect(rule.matches(['a', 'b'])).toBe(true));
   it('passes below max count', () => expect(rule.matches(['a'])).toBe(true));
   it('fails one above max count', () => expect(rule.matches(['a', 'b', 'c'])).toBe(false));
@@ -159,7 +159,7 @@ describe('IsFalseRule', () => {
 // ── EqualsFieldRule ──────────────────────────────────────────────────────────
 
 describe('EqualsFieldRule', () => {
-  const rule = new EqualsFieldRule('other');
+  const rule = new EqualsFieldRule({ fieldId: 'other' });
 
   it('matches when value equals referenced field value', () => {
     expect(rule.matches('hello', { other: 'hello' })).toBe(true);
@@ -178,7 +178,7 @@ describe('EqualsFieldRule', () => {
 // ── ComesAfterFieldRule ──────────────────────────────────────────────────────
 
 describe('ComesAfterFieldRule', () => {
-  const rule = new ComesAfterFieldRule('start');
+  const rule = new ComesAfterFieldRule({ fieldId: 'start' });
 
   it('returns true when value date comes after referenced date', () => {
     expect(rule.matches('2026-06-01', { start: '2026-05-01' })).toBe(true);
@@ -199,14 +199,14 @@ describe('ComesAfterFieldRule', () => {
     expect(rule.matches(20260601, { start: '2026-05-01' })).toBe(false);
   });
   it('safe fallback when referenced value is not a string', () => {
-    expect(new ComesAfterFieldRule('start').matches('2026-06-01', { start: 20260501 })).toBe(false);
+    expect(new ComesAfterFieldRule({ fieldId: 'start' }).matches('2026-06-01', { start: 20260501 })).toBe(false);
   });
 });
 
 // ── ComesBeforeFieldRule ─────────────────────────────────────────────────────
 
 describe('ComesBeforeFieldRule', () => {
-  const rule = new ComesBeforeFieldRule('end');
+  const rule = new ComesBeforeFieldRule({ fieldId: 'end' });
 
   it('returns true when value date comes before referenced date', () => {
     expect(rule.matches('2026-04-01', { end: '2026-05-01' })).toBe(true);
@@ -227,7 +227,7 @@ describe('ComesBeforeFieldRule', () => {
     expect(rule.matches(20260401, { end: '2026-05-01' })).toBe(false);
   });
   it('safe fallback when referenced value is not a string', () => {
-    expect(new ComesBeforeFieldRule('start').matches('2026-06-01', { start: 20260501 })).toBe(false);
+    expect(new ComesBeforeFieldRule({ fieldId: 'start' }).matches('2026-06-01', { start: 20260501 })).toBe(false);
   });
 });
 
@@ -235,33 +235,33 @@ describe('ComesBeforeFieldRule', () => {
 
 describe('RequiredRule', () => {
   it('checkbox always matches regardless of value', () => {
-    const rule = new RequiredRule('checkbox');
+    const rule = new RequiredRule({ fieldType: 'checkbox' });
     expect(rule.matches(false)).toBe(true);
     expect(rule.matches(true)).toBe(true);
   });
   it('fails for empty string', () => {
-    expect(new RequiredRule('text').matches('')).toBe(false);
+    expect(new RequiredRule({ fieldType: 'text' }).matches('')).toBe(false);
   });
   it('fails for null', () => {
-    expect(new RequiredRule('text').matches(null)).toBe(false);
+    expect(new RequiredRule({ fieldType: 'text' }).matches(null)).toBe(false);
   });
   it('passes for non-empty string', () => {
-    expect(new RequiredRule('text').matches('hello')).toBe(true);
+    expect(new RequiredRule({ fieldType: 'text' }).matches('hello')).toBe(true);
   });
   it('fails for empty array', () => {
-    expect(new RequiredRule('multi-select').matches([])).toBe(false);
+    expect(new RequiredRule({ fieldType: 'multi-select' }).matches([])).toBe(false);
   });
   it('passes for non-empty array', () => {
-    expect(new RequiredRule('multi-select').matches(['a'])).toBe(true);
+    expect(new RequiredRule({ fieldType: 'multi-select' }).matches(['a'])).toBe(true);
   });
   it('returns correct error message', () => {
-    expect(new RequiredRule('text').errorMessage()).toBe('This field is required');
+    expect(new RequiredRule({ fieldType: 'text' }).errorMessage()).toBe('This field is required');
   });
   it('fails for undefined on string field', () => {
-    expect(new RequiredRule('text').matches(undefined)).toBe(false);
+    expect(new RequiredRule({ fieldType: 'text' }).matches(undefined)).toBe(false);
   });
   it('fails for undefined on array field', () => {
-    expect(new RequiredRule('multi-select').matches(undefined)).toBe(false);
+    expect(new RequiredRule({ fieldType: 'multi-select' }).matches(undefined)).toBe(false);
   });
 });
 
@@ -272,18 +272,18 @@ describe('OlderThanRule', () => {
     const today = new Date();
     const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
     const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
-    expect(new OlderThanRule(18).matches(dateStr)).toBe(true);
+    expect(new OlderThanRule({ years: 18 }).matches(dateStr)).toBe(true);
   });
   it('returns false when person will turn 18 years old tomorrow', () => {
     const today = new Date();
     const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate() + 1);
     const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
-    expect(new OlderThanRule(18).matches(dateStr)).toBe(false);
+    expect(new OlderThanRule({ years: 18 }).matches(dateStr)).toBe(false);
   });
-  it('returns false for null', () => expect(new OlderThanRule(18).matches(null)).toBe(false));
-  it('returns false for non-date string', () => expect(new OlderThanRule(18).matches('hello')).toBe(false));
-  it('returns false for number', () => expect(new OlderThanRule(18).matches(42)).toBe(false));
-  it('returns correct error message', () => expect(new OlderThanRule(18).errorMessage()).toBe('Must be 18 years old or older'));
+  it('returns false for null', () => expect(new OlderThanRule({ years: 18 }).matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(new OlderThanRule({ years: 18 }).matches('hello')).toBe(false));
+  it('returns false for number', () => expect(new OlderThanRule({ years: 18 }).matches(42)).toBe(false));
+  it('returns correct error message', () => expect(new OlderThanRule({ years: 18 }).errorMessage()).toBe('Must be 18 years old or older'));
 });
 
 // ── YoungerThanRule ──────────────────────────────────────────────────────────
@@ -293,28 +293,28 @@ describe('YoungerThanRule', () => {
     const today = new Date();
     const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
     const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
-    expect(new YoungerThanRule(18).matches(dateStr)).toBe(false);
+    expect(new YoungerThanRule({ years: 18 }).matches(dateStr)).toBe(false);
   });
   it('returns true when person will turn 18 years old tomorrow', () => {
     const today = new Date();
     const dob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate() + 1);
     const dateStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`;
-    expect(new YoungerThanRule(18).matches(dateStr)).toBe(true);
+    expect(new YoungerThanRule({ years: 18 }).matches(dateStr)).toBe(true);
   });
   it('returns true for person clearly under 18 (born today)', () => {
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    expect(new YoungerThanRule(18).matches(dateStr)).toBe(true);
+    expect(new YoungerThanRule({ years: 18 }).matches(dateStr)).toBe(true);
   });
-  it('returns false for null', () => expect(new YoungerThanRule(18).matches(null)).toBe(false));
-  it('returns false for non-date string', () => expect(new YoungerThanRule(18).matches('hello')).toBe(false));
-  it('returns correct error message', () => expect(new YoungerThanRule(18).errorMessage()).toBe('Must be younger than 18 years old'));
+  it('returns false for null', () => expect(new YoungerThanRule({ years: 18 }).matches(null)).toBe(false));
+  it('returns false for non-date string', () => expect(new YoungerThanRule({ years: 18 }).matches('hello')).toBe(false));
+  it('returns correct error message', () => expect(new YoungerThanRule({ years: 18 }).errorMessage()).toBe('Must be younger than 18 years old'));
 });
 
 // ── BeforeStaticDateRule ──────────────────────────────────────────────────────
 
 describe('BeforeStaticDateRule', () => {
-  const rule = new BeforeStaticDateRule('2024-06-15');
+  const rule = new BeforeStaticDateRule({ date: '2024-06-15' });
 
   it('returns true when value is strictly before the target date', () => {
     expect(rule.matches('2024-06-14')).toBe(true);
@@ -334,7 +334,7 @@ describe('BeforeStaticDateRule', () => {
 // ── AfterStaticDateRule ───────────────────────────────────────────────────────
 
 describe('AfterStaticDateRule', () => {
-  const rule = new AfterStaticDateRule('2024-06-15');
+  const rule = new AfterStaticDateRule({ date: '2024-06-15' });
 
   it('returns true when value is strictly after the target date', () => {
     expect(rule.matches('2024-06-16')).toBe(true);
