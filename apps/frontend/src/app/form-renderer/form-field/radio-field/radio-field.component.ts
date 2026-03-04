@@ -13,6 +13,7 @@ import { FieldPlainWrapperComponent } from '../wrappers/field-plain-wrapper.comp
     FieldPlainWrapperComponent,
   ],
   templateUrl: './radio-field.component.html',
+  styleUrl: './radio-field.component.scss',
   viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
 export class RadioFieldComponent {
