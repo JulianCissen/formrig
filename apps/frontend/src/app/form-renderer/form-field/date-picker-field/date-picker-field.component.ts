@@ -1,11 +1,12 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, Input, OnInit, ViewChild, computed, inject, input, isDevMode, signal, Signal } from '@angular/core';
-import { parseDisplayDate, formatIsoDate } from './date-format.util';
+import { AfterViewInit, Component, DestroyRef, ElementRef, Input, OnInit, ViewChild, computed, effect, inject, input, isDevMode, signal, Signal } from '@angular/core';
+import { formatIsoDate } from './date-format.util';
+import { FormrigDateAdapter, DISPLAY_FORMAT_TOKEN } from './date-format-adapter';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlContainer, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule, MatDatepickerInputEvent } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MAT_NATIVE_DATE_FORMATS, MAT_DATE_FORMATS, MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -26,6 +27,13 @@ import { FieldDto } from '@formrig/shared';
   ],
   templateUrl: './date-picker-field.component.html',
   styleUrl: './date-picker-field.component.scss',
+  providers: [
+    // Per-component display-format signal shared between this component and
+    // FormrigDateAdapter so Material parses/formats using the field's format.
+    { provide: DISPLAY_FORMAT_TOKEN, useFactory: () => signal('dd-mm-yyyy') },
+    { provide: DateAdapter, useClass: FormrigDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: MAT_NATIVE_DATE_FORMATS },
+  ],
   viewProviders: [{
     provide: ControlContainer,
     useFactory: () => inject(ControlContainer, { skipSelf: true }),
@@ -42,6 +50,24 @@ export class DatePickerFieldComponent implements OnInit, AfterViewInit {
 
   private readonly controlContainer = inject(ControlContainer);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly _displayFormatSig = inject(DISPLAY_FORMAT_TOKEN);
+
+  /**
+   * True while the date input is focused.
+   * Suppresses `nativeElement.value` overwrites from the `valueChanges`
+   * subscription while the user is typing so that partial input (which
+   * Material may temporarily report as null) does not clear the field.
+   */
+  private _inputFocused = false;
+
+  /**
+   * Keep the shared display-format signal in sync with the field definition.
+   * Declared as a class field so Angular's DI/injection context is active
+   * when the effect is registered.
+   */
+  private readonly _displayFormatEffect = effect(() => {
+    this._displayFormatSig.set(this.field().displayFormat ?? 'dd-mm-yyyy');
+  });
 
   protected get control(): FormControl<string | null> {
     return this.controlContainer.control!.get(this.field().id) as FormControl<string | null>;
@@ -71,21 +97,26 @@ export class DatePickerFieldComponent implements OnInit, AfterViewInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(v => {
         if ((v as unknown) instanceof Date) {
-          // CVA committed a Date object at blur — convert to yyyy-mm-dd using local time
+          // FormrigDateAdapter parsed a valid date from user input and Material
+          // called _cvaOnChange(Date).  Convert to an ISO string so the form
+          // control always stores a yyyy-mm-dd string, never a Date object.
           const date = v as unknown as Date;
           const y = date.getFullYear();
           const m = String(date.getMonth() + 1).padStart(2, '0');
           const d = String(date.getDate()).padStart(2, '0');
           const iso = `${y}-${m}-${d}`;
-          // Re-set to ISO string; next emission will carry the correct string value
           ctrl.setValue(iso);
-          if (this.inputRef?.nativeElement) {
-            this.inputRef.nativeElement.value = formatIsoDate(iso, this.activeFormat());
-          }
-          // _controlValue.set is handled by the next emission (which will be the iso string)
+          // writeValue(iso) will be called by Angular and FormrigDateAdapter.format
+          // will produce the correct display string — no manual DOM write needed.
+          // The subsequent valueChanges(iso) fires the non-Date branch below, which
+          // is suppressed by _inputFocused, so there is no display flicker or loop.
           return;
         }
-        if (this.inputRef?.nativeElement) {
+        // Suppress display updates while the user is actively typing:
+        // Material calls _cvaOnChange(null) for partial/invalid input, which
+        // emits valueChanges(null).  Writing nativeElement.value = '' here would
+        // erase what the user is in the middle of entering.
+        if (!this._inputFocused && this.inputRef?.nativeElement) {
           this.inputRef.nativeElement.value = formatIsoDate(v as string | null, this.activeFormat());
         }
       });
@@ -202,6 +233,8 @@ export class DatePickerFieldComponent implements OnInit, AfterViewInit {
   });
 
   protected onDateChange(event: MatDatepickerInputEvent<Date>): void {
+    // Calendar selection — Material emits a Date object via dateChange.
+    // Convert to ISO and let writeValue / FormrigDateAdapter.format update the display.
     const d = event.value;
     if (!d) {
       this.control.setValue(null);
@@ -219,19 +252,36 @@ export class DatePickerFieldComponent implements OnInit, AfterViewInit {
     this.inputRef.nativeElement.focus();
   }
 
+  /**
+   * Formats ISO date strings in a validation error message according to the
+   * active display format.  E.g. "Must be after 2024-01-01" becomes
+   * "Must be after 01-01-2024" when the display format is `dd-mm-yyyy`.
+   */
+  protected readonly formattedErrors = computed((): string[] => {
+    const errors = this.validationState().get(this.field().id) ?? [];
+    const fmt = this.activeFormat();
+    const isoPattern = /\d{4}-\d{2}-\d{2}/g;
+    return errors.map(msg =>
+      msg.replace(isoPattern, (iso) => formatIsoDate(iso, fmt) || iso)
+    );
+  });
+
+  protected onInputFocus(): void {
+    this._inputFocused = true;
+  }
+
   protected onInputBlur(): void {
-    const raw = this.inputRef.nativeElement.value.trim();
-    if (raw === '') {
-      this.onBlur(this.field().id);
-      return;
-    }
-    const iso = parseDisplayDate(raw, this.activeFormat());
-    if (iso !== null) {
-      this.control.setValue(iso);
-      this.inputRef.nativeElement.value = formatIsoDate(iso, this.activeFormat());
-    } else {
-      this.control.setValue(null);
-      this.inputRef.nativeElement.value = '';
+    this._inputFocused = false;
+    // FormrigDateAdapter handles all parsing during typing via Material's _onInput.
+    // By blur time the control value is already correct (ISO string or null).
+    // If the raw input is non-empty but parsed to null (incomplete / invalid),
+    // clear the input element so it doesn't show stale unrecognised text.
+    if (this.inputRef?.nativeElement) {
+      const raw = this.inputRef.nativeElement.value.trim();
+      if (raw && !this.control.value) {
+        this.inputRef.nativeElement.value = '';
+        this.control.setValue(null);
+      }
     }
     this.onBlur(this.field().id);
   }

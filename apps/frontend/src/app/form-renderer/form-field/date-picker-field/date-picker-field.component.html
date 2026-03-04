@@ -17,6 +17,7 @@
     [min]="calendarMin()"
     [max]="calendarMax()"
     [attr.aria-describedby]="field().id + '-hint'"
+    (focus)="onInputFocus()"
     (dateChange)="onDateChange($event)"
     (blur)="onInputBlur()" />
 
@@ -60,7 +61,7 @@
 
   @if (dirtyFieldIds().has(field().id) && (validationState().get(field().id)?.length ?? 0) > 0) {
     <mat-error [id]="field().id + '-errors'">
-      {{ (validationState().get(field().id) ?? []).join(' \u00b7 ') }}
+      {{ formattedErrors().join(' \u00b7 ') }}
     </mat-error>
   }
 
