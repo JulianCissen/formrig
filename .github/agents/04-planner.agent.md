@@ -6,7 +6,7 @@ tools:
   - edit     # write tasks.json to .agents-work/<session>/
   - search   # understand existing project structure to estimate scope and file targets
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Planner

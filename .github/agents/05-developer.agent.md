@@ -7,7 +7,7 @@ tools:
   - execute  # run scaffolding commands, tests, linters, and type-checkers
   - search   # discover existing patterns, find relevant files, check for usages
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Developer

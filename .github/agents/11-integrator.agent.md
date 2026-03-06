@@ -7,7 +7,7 @@ tools:
   - execute  # install dependencies, build, run acceptance checks, invoke CI locally
   - search   # locate build scripts, CI config files, dependency manifests
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Integrator

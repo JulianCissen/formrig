@@ -6,7 +6,7 @@ tools:
   - search   # trace data flows, find usages of flagged patterns, check dependency files
   - web      # look up CVE databases, security advisories, and package vulnerability records
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Security

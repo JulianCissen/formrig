@@ -6,7 +6,7 @@ tools:
   - edit    # write report.md to session folder; update README or other docs in the project
   - search  # locate existing documentation files, find public APIs and exported symbols to document
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Docs

@@ -7,7 +7,7 @@ tools:
   - search   # find existing components, screen patterns, and design tokens in the codebase
   - web      # look up Material Design 3 specs, WCAG criteria, component API documentation
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Designer

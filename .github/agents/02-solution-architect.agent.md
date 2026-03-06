@@ -7,7 +7,7 @@ tools:
   - search      # search the codebase for existing conventions, shared libraries, tooling standards
   - web         # research technologies, compare libraries, review documentation
 model: "Gemini 3.1 Pro (Preview) (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Solution Architect

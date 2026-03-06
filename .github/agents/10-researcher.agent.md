@@ -7,7 +7,7 @@ tools:
   - search   # codebase analysis — find patterns, usages, dependencies, entry points
   - web      # technology research, official documentation, changelog, CVE databases
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Researcher

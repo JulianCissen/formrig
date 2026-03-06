@@ -7,7 +7,7 @@ tools:
   - search      # search the codebase for existing conventions, modules, and dependencies
   - web         # look up library documentation or technical references when needed
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Architect

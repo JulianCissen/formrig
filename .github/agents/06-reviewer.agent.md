@@ -5,7 +5,7 @@ tools:
   - read     # ALL session-changed files + existing source for context
   - search   # find usages, trace dependencies, check for dangling references
 model: "Claude Sonnet 4.6 (copilot)"
-user-invokable: false
+user-invocable: false
 ---
 
 # Reviewer
