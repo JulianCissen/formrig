@@ -13,6 +13,9 @@ export interface FormDefinition {
   /** Optional human-readable title rendered above the form. */
   title?: string;
 
+  /** Optional human-readable description rendered below the title. */
+  description?: string;
+
   /**
    * Flat list of fields. Used when the form is NOT divided into steps.
    *

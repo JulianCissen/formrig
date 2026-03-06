@@ -13,11 +13,12 @@
   top: 0;
   z-index: 100;
   height: 56px;
-  background: var(--mat-sys-surface);
+  background: var(--mat-sys-surface-container);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .app-wordmark {
-  font-size: 22px;
+  font-size: var(--mat-sys-title-medium-size, 16px);
   font-weight: 700;
   color: var(--mat-sys-on-surface);
   letter-spacing: -0.02em;
@@ -41,8 +42,8 @@
   overflow: hidden;
 
   // Override Material background on the container
-  --mat-sidenav-container-background-color: var(--mat-sys-surface);
-  --mat-sidenav-content-background-color: var(--mat-sys-surface);
+  --mat-sidenav-container-background-color: var(--mat-sys-surface-container);
+  --mat-sidenav-content-background-color: var(--mat-sys-surface-container-low);
 }
 
 // ─── Nav Rail (≥ 600px) ──────────────────────────────────────────────────────
@@ -55,12 +56,33 @@
   --mat-sidenav-container-width: 80px;
 }
 
+.nav-logo-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) 0 var(--space-6);
+}
+
+.nav-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.03em;
+  user-select: none;
+}
+
 .nav-rail-list {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: var(--space-5);
-  gap: var(--space-1);
+  padding-top: var(--space-3);
+  gap: var(--space-2);
 }
 
 // Material focus-indicator override for nav items
@@ -81,7 +103,7 @@
 
   // On mobile: add bottom padding so content isn't hidden behind fixed bottom nav
   @media (max-width: 599px) {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--space-9) + env(safe-area-inset-bottom));
   }
 }
 

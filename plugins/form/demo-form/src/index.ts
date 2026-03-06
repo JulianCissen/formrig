@@ -6,6 +6,7 @@ class DemoForm implements FormTypePlugin {
   readonly definition: FormDefinition = {
     id: 'demo-form',
     title: 'Demo Form',
+    description: 'Demo form plugin for formrig MVP',
     steps: [
       {
         label: 'About You',

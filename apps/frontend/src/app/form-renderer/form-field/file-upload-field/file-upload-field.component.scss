@@ -111,16 +111,16 @@
 }
 
 .file-entry--error {
-  background: var(--mat-sys-error-container, #fce8e6);
+  background: var(--mat-sys-error-container);
   border-radius: 4px;
   padding: 4px 8px;
 }
 
 .file-entry__error-indicator {
-  color: var(--mat-sys-error, #b00020);
+  color: var(--mat-sys-error);
 }
 
 .file-entry__error-message {
   font-size: 0.75rem;
-  color: var(--mat-sys-error, #b00020);
+  color: var(--mat-sys-error);
 }

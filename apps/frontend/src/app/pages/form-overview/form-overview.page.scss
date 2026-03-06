@@ -1,0 +1,239 @@
+// ── Loading ────────────────────────────────────────────────────────────────────
+
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+// ── Error ──────────────────────────────────────────────────────────────────────
+
+.error-msg {
+  color: var(--mat-sys-error);
+  padding: var(--space-3) 0;
+  margin: 0;
+}
+
+// ── Page header row ────────────────────────────────────────────────────────────
+
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.form-count {
+  font-size: var(--mat-sys-label-large-size);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// ── Card grid ──────────────────────────────────────────────────────────────────
+
+// .cards-grid is used by the redesigned template (T-008).
+// .form-grid is kept for backward compatibility with the current template.
+.form-grid,
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+  padding: var(--space-4) 0;
+}
+
+// ── Form card ──────────────────────────────────────────────────────────────────
+
+.form-card {
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-standard),
+    box-shadow var(--transition-standard);
+  display: flex;
+  flex-direction: column;
+
+  &::before {
+    content: '';
+    display: block;
+    height: var(--space-1);
+    background: var(--mat-sys-primary-container);
+    flex-shrink: 0;
+  }
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--mat-sys-outline);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--mat-sys-shadow) 10%, transparent);
+
+    .card-footer {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ── Card body ──────────────────────────────────────────────────────────────────
+
+.card-body {
+  padding: var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// ── Card title ─────────────────────────────────────────────────────────────────
+
+.card-title {
+  font-size: var(--mat-sys-title-medium-size);
+  line-height: var(--mat-sys-title-medium-line-height);
+  font-weight: var(--mat-sys-title-medium-weight);
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 var(--space-2) 0;
+}
+
+// ── Type badge ─────────────────────────────────────────────────────────────────
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--radius-xs);
+  padding: 2px var(--space-2);
+  font-size: var(--mat-sys-label-small-size);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// ── Card metadata row ──────────────────────────────────────────────────────────
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  font-size: var(--mat-sys-body-small-size);
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Legacy date class used by existing template
+.date {
+  font-size: var(--mat-sys-body-small-size);
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+}
+
+// ── Card footer ────────────────────────────────────────────────────────────────
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--transition-interact),
+    visibility var(--transition-interact);
+}
+
+// Legacy card-actions class used by existing template
+.card-actions {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+}
+
+// ── Stretched link ─────────────────────────────────────────────────────────────
+// The anchor is a direct child of .form-card (position: relative) so it always
+// lives outside .card-footer and remains in the tab order regardless of footer
+// visibility.
+
+.card-open-link {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm); // match card border-radius
+  }
+}
+
+// ── Screen-reader only utility ─────────────────────────────────────────────────
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ── Card footer actions ────────────────────────────────────────────────────────
+
+.card-footer-actions {
+  position: relative;
+  z-index: 1;
+}
+
+// ── Delete confirm label ───────────────────────────────────────────────────────
+
+.delete-confirm-label {
+  flex: 1;
+  font-size: var(--mat-sys-body-small-size);
+  color: var(--mat-sys-error);
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: var(--space-12);
+
+  mat-icon,
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--mat-sys-outline);
+    margin-bottom: var(--space-4);
+  }
+
+  h2,
+  .empty-title {
+    font-size: var(--mat-sys-title-large-size);
+    line-height: var(--mat-sys-title-large-line-height);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  p,
+  .empty-body {
+    font-size: var(--mat-sys-body-medium-size);
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 var(--space-6) 0;
+  }
+}

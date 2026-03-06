@@ -24,6 +24,12 @@
   }
 }
 
+.page-header {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
 .page-back {
   display: flex;
   align-items: center;
@@ -44,10 +50,10 @@
 }
 
 .page-title {
-  font-size: clamp(28px, 3.5vw, 32px);
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: var(--mat-sys-display-small-size);
+  line-height: var(--mat-sys-display-small-line-height);
+  font-weight: var(--mat-sys-display-small-weight);
+  letter-spacing: var(--mat-sys-display-small-tracking);
   color: var(--mat-sys-on-surface);
   margin: 0;
   outline: none;
@@ -75,7 +81,7 @@
   }
 
   p {
-    font-size: 16px;
+    font-size: var(--mat-sys-body-medium-size);
     line-height: 1.5;
     color: var(--mat-sys-on-surface-variant);
     margin: 0;

@@ -25,6 +25,15 @@ html {
   ));
 }
 
+html.dark {
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$violet-palette,
+    ),
+  ));
+}
+
 html, body {
   height: 100%;
   margin: 0;
@@ -49,6 +58,8 @@ html, body {
   --space-8:  48px;
   --space-9:  64px;
   --space-10: 80px;
+  --space-11: 88px;
+  --space-12: 96px;
 
   // Border radius scale
   --radius-xs:   4px;
@@ -111,4 +122,20 @@ html {
 
 .multiline-tooltip {
   white-space: pre-line;
+}
+
+// ─── Material Stepper — M3 token overrides ────────────────────────────────────
+
+mat-stepper {
+  --mat-stepper-header-selected-state-icon-background-color: var(--mat-sys-primary);
+  --mat-stepper-header-selected-state-icon-foreground-color: var(--mat-sys-on-primary);
+  --mat-stepper-header-done-state-icon-background-color: var(--mat-sys-secondary-container);
+  --mat-stepper-header-done-state-icon-foreground-color: var(--mat-sys-on-secondary-container);
+  --mat-stepper-line-color: var(--mat-sys-outline-variant);
+  // Note: Angular Material M3 does not expose a separate CSS custom property for
+  // the completed/done connector line colour — the M3 token map only defines
+  // `stepper-line-color` (used for all states). There is no
+  // `--mat-stepper-header-selected-state-line-color` or
+  // `--mat-stepper-line-color-done` token in this version. This is a known gap;
+  // revisit when Angular Material adds per-state connector tokens.
 }

@@ -40,9 +40,10 @@ export class FormService {
    * Returns an empty array when no plugins are loaded (AC-3).
    */
   getFormTypes(): FormTypeDto[] {
-    return this.pluginSvc.getAll().map(({ manifest }) => ({
-      name:        manifest.name,
-      description: String((manifest as unknown as Record<string, unknown>)['description'] ?? ''),
+    return this.pluginSvc.getAll().map(({ manifest, plugin }) => ({
+      identifier:  manifest.name,
+      title:       plugin.definition.title ?? manifest.name,
+      description: plugin.definition.description ?? '',
       version:     manifest.version,
     }));
   }
@@ -360,10 +361,16 @@ export class FormService {
     return { fieldMap, form };
   }
 
+  /** Derives the human-readable display title for a plugin. */
+  private pluginDisplayTitle(pluginId: string): string {
+    const loaded = this.pluginSvc.find(pluginId);
+    return loaded?.plugin.definition.title ?? loaded?.manifest.name ?? pluginId;
+  }
+
   private toSummary(form: Form): FormSummaryDto {
     return {
       id:        form.id,
-      title:     this.pluginSvc.find(form.pluginId)?.manifest.name ?? form.pluginId,
+      title:     this.pluginDisplayTitle(form.pluginId),
       pluginId:  form.pluginId,
       createdAt: form.createdAt.toISOString(),
       updatedAt: form.updatedAt.toISOString(),

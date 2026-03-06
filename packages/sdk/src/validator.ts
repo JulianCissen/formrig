@@ -13,6 +13,7 @@ export const FormTypePluginSchema = z.object({
   definition: z.object({
     id: z.string(),
     title: z.string().optional(),
+    description: z.string().optional(),
     fields: z.array(z.unknown()).optional(),
     steps: z.array(z.unknown()).optional(),
   }),

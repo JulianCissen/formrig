@@ -1,10 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink }                         from '@angular/router';
-import { Router }                             from '@angular/router';
-import { DatePipe }                          from '@angular/common';
+import { DatePipe }                           from '@angular/common';
 import { Title }                              from '@angular/platform-browser';
 import { MatProgressSpinnerModule }           from '@angular/material/progress-spinner';
-import { MatCardModule }                      from '@angular/material/card';
 import { MatButtonModule }                    from '@angular/material/button';
 import { MatIconModule }                      from '@angular/material/icon';
 import { MatSnackBarModule, MatSnackBar }     from '@angular/material/snack-bar';
@@ -20,13 +18,25 @@ import { FormSummary }                        from '../../models/form-api.model'
     RouterLink,
     DatePipe,
     MatProgressSpinnerModule,
-    MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatSnackBarModule,
   ],
   template: `
     <app-page-wrapper title="Forms">
+
+      <!-- New form CTA in the page header actions slot -->
+      <a pageActions routerLink="/form/new" matButton="filled">
+        <mat-icon aria-hidden="true">add</mat-icon>
+        New form
+      </a>
+
+      <!-- Form count badge in the page subtitle slot — hidden during initial load -->
+      @if (!loading()) {
+        <span pageSubtitle class="form-count">
+          {{ forms().length }} {{ forms().length === 1 ? 'form' : 'forms' }}
+        </span>
+      }
 
       <!-- Loading -->
       @if (loading()) {
@@ -37,66 +47,68 @@ import { FormSummary }                        from '../../models/form-api.model'
 
       <!-- Error -->
       @if (error()) {
-        <p class="error-msg">{{ error() }}</p>
+        <p class="error-msg" role="alert">{{ error() }}</p>
+      }
+
+      <!-- Cards grid -->
+      @if (!loading() && !error() && forms().length > 0) {
+        <div class="cards-grid">
+          @for (form of forms(); track form.id) {
+            <article class="form-card">
+              <!-- Stretched link — sits outside footer so it is always in the tab order -->
+              <a [routerLink]="['/form', form.id]" class="card-open-link">
+                <span class="sr-only">Open {{ form.title || form.id }}</span>
+              </a>
+
+              <div class="card-body">
+                <h2 class="card-title">{{ form.title }}</h2>
+                <span class="type-badge">{{ form.pluginId }}</span>
+                <div class="card-meta">
+                  <mat-icon aria-hidden="true">calendar_today</mat-icon>
+                  {{ form.createdAt | date:'mediumDate' }}
+                </div>
+              </div>
+              <!-- Open action is handled by .card-open-link stretched-link above; footer contains delete-only per architecture decision -->
+              <div class="card-footer">
+                <div class="card-footer-actions">
+                  @if (confirmDeleteId() === form.id) {
+                    <span class="delete-confirm-label">Delete this form?</span>
+                    <button matButton aria-label="Cancel delete"
+                            (click)="onCancelDelete($event)">Cancel</button>
+                    <button matButton [attr.aria-label]="'Delete ' + (form.title || form.id)"
+                            (click)="onConfirmDelete($event, form.id)">Delete</button>
+                  } @else {
+                    <button matIconButton (click)="onDeleteClick($event, form.id)"
+                            [attr.aria-label]="'Delete ' + (form.title || form.id)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </div>
       }
 
       <!-- Empty state -->
       @if (!loading() && !error() && forms().length === 0) {
         <div class="empty-state">
-          <p>No forms yet. <a routerLink="/form/new">Create your first form →</a></p>
-        </div>
-      }
-
-      <!-- Form list -->
-      @if (!loading() && forms().length > 0) {
-        <div class="form-grid">
-          @for (form of forms(); track form.id) {
-            <mat-card
-              class="form-card"
-              (click)="navigateToForm(form.id)"
-              role="button"
-              [attr.aria-label]="'Open form: ' + form.title"
-            >
-              <mat-card-header>
-                <mat-card-title>{{ form.title }}</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <p class="date">Created {{ form.createdAt | date:'MMM d, y, h:mm a' }}</p>
-              </mat-card-content>
-              <mat-card-actions class="card-actions">
-                @if (confirmDeleteId() === form.id) {
-                  <span class="delete-confirm-label">Delete this form?</span>
-                  <button matButton (click)="onCancelDelete($event)">Cancel</button>
-                  <button matButton (click)="onConfirmDelete($event, form.id)">Delete</button>
-                } @else {
-                  <button matIconButton aria-label="Delete form"
-                          (click)="onDeleteClick($event, form.id)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                }
-              </mat-card-actions>
-            </mat-card>
-          }
+          <mat-icon aria-hidden="true">article</mat-icon>
+          <h2 class="empty-title">No forms yet</h2>
+          <p class="empty-body">Create your first form to get started.</p>
+          <a routerLink="/form/new" matButton="filled">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Create form
+          </a>
         </div>
       }
 
     </app-page-wrapper>
   `,
-  styles: [`
-    .spinner-wrap { display: flex; justify-content: center; padding: 2rem; }
-    .error-msg    { color: var(--mat-warn-color, red); padding: 1rem 0; }
-    .empty-state  { padding: 2rem 0; text-align: center; }
-    .form-grid    { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; padding: 1rem 0; }
-    .form-card    { cursor: pointer; transition: box-shadow 0.15s; }
-    .form-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-    .date         { font-size: 0.8rem; color: var(--mat-secondary-text-color, #666); margin: 0; }
-    .card-actions { display: flex; align-items: center; padding: 0 0.5rem; }
-    .delete-confirm-label { flex: 1; font-size: 0.875rem; color: var(--mat-sys-error, #b00020); }
-  `],
+  styleUrl: './form-overview.page.scss',
 })
 export class FormOverviewPage implements OnInit {
   private readonly api          = inject(FormApiService);
-  private readonly router       = inject(Router);
   private readonly titleService = inject(Title);
   private readonly snackBar     = inject(MatSnackBar);
 
@@ -111,10 +123,6 @@ export class FormOverviewPage implements OnInit {
       next:  (forms) => { this.forms.set(forms); this.loading.set(false); },
       error: ()      => { this.error.set('Failed to load forms.'); this.loading.set(false); },
     });
-  }
-
-  navigateToForm(id: string): void {
-    this.router.navigate(['/form', id]);
   }
 
   onDeleteClick(event: Event, id: string): void {

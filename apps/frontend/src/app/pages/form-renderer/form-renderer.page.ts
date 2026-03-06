@@ -1,15 +1,21 @@
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router }             from '@angular/router';
-import { Title }                              from '@angular/platform-browser';
-import { PageWrapperComponent }               from '../../shared/page-wrapper/page-wrapper.component';
-import { FormRendererComponent }              from '../../form-renderer/form-renderer.component';
+import { ActivatedRoute, Router, RouterLink }  from '@angular/router';
+import { Title }                               from '@angular/platform-browser';
+import { MatButtonModule }                     from '@angular/material/button';
+import { MatIconModule }                       from '@angular/material/icon';
+import { PageWrapperComponent }                from '../../shared/page-wrapper/page-wrapper.component';
+import { FormRendererComponent }               from '../../form-renderer/form-renderer.component';
 
 @Component({
   selector: 'app-form-renderer-page',
   standalone: true,
-  imports: [PageWrapperComponent, FormRendererComponent],
+  imports: [PageWrapperComponent, FormRendererComponent, RouterLink, MatButtonModule, MatIconModule],
   template: `
     <app-page-wrapper [title]="pageTitle()">
+      <a pageBack matButton routerLink="/">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        Forms
+      </a>
       @if (formId()) {
         <app-form-renderer
           [formId]="formId()!"

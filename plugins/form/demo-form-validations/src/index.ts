@@ -92,6 +92,7 @@ class DemoValidationsForm implements FormTypePlugin {
   readonly definition: FormDefinition = {
     id: 'demo-form-validations',
     title: 'Validation & Conditional Rendering Demo',
+    description: 'Demo form showcasing soft validations and conditional rendering',
     steps: [
       {
         label: 'About Your Application',

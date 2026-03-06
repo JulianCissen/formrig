@@ -7,125 +7,145 @@
 } @else {
   <div class="autosave-bar" role="status" aria-live="polite">
     @if (autosaveStatus() === 'saving') { <span>Saving…</span> }
-    @if (autosaveStatus() === 'saved')  { <span>Saved</span> }
-    @if (autosaveStatus() === 'error')  { <span class="autosave-error">Save failed</span> }
+    @if (autosaveStatus() === 'saved')  {
+      <span class="autosave-saved">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        Saved
+      </span>
+    }
+    @if (autosaveStatus() === 'error')  {
+      <span class="autosave-error">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        Save failed
+      </span>
+    }
   </div>
   @let form = formDef()!;
 
-  @if ((form.steps?.length ?? 0) > 0) {
-    <!-- BRANCH A: STEPPER -->
-    <div class="stepper-container">
-    <mat-stepper
-      #stepper
-      [orientation]="orientation()"
-      linear
-      [attr.aria-label]="form.title ?? 'Form'"
-      (selectionChange)="onStepChange($event)"
-      (animationDone)="onStepAnimationDone()">
+  <div class="form-panel">
+    @if ((form.steps?.length ?? 0) > 0) {
+      <!-- BRANCH A: STEPPER -->
+      <div class="stepper-container">
+      <mat-stepper
+        #stepper
+        [orientation]="orientation()"
+        linear
+        [attr.aria-label]="form.title ?? 'Form'"
+        (selectionChange)="onStepChange($event)"
+        (animationDone)="onStepAnimationDone()">
 
-      @for (step of form.steps!; track step.label; let i = $index) {
-        <mat-step
-          [stepControl]="stepGroups[i]"
-          [label]="step.label"
-          [hasError]="stepGroups[i].invalid && stepGroups[i].touched"
-          errorMessage="Please complete all required fields">
-          <div #stepContent class="step-content">
-            <form [formGroup]="stepGroups[i]">
-              @for (field of step.fields; track field.id) {
-                @if (visibleFieldIds().has(field.id)) {
-                  <app-form-field
-                    [@fadeIn]
-                    [field]="field"
-                    [uploadEntries]="uploadEntries"
-                    [dragOverFieldId]="dragOverFieldId"
-                    [onFileChange]="onFileChange.bind(this)"
-                    [onDragOver]="onDragOver.bind(this)"
-                    [onDragLeave]="onDragLeave.bind(this)"
-                    [onDrop]="onDrop.bind(this)"
-                    [openFile]="openFile.bind(this)"
-                    [dismissError]="dismissError.bind(this)"
-                    [deleteUploadedFile]="deleteUploadedFile.bind(this)"
-                    [dirtyFieldIds]="dirtyFieldIds"
-                    [validationState]="validationState"
-                    [currentValues]="currentValues"
-                    [onBlur]="markFieldDirty.bind(this)"
-                  />
+        @for (step of form.steps!; track step.label; let i = $index) {
+          <mat-step
+            [stepControl]="stepGroups[i]"
+            [label]="step.label"
+            [hasError]="stepGroups[i].invalid && stepGroups[i].touched"
+            errorMessage="Please complete all required fields">
+            <div #stepContent class="step-content">
+              <form [formGroup]="stepGroups[i]">
+                @for (field of step.fields; track field.id) {
+                  @if (visibleFieldIds().has(field.id)) {
+                    <app-form-field
+                      [@fadeIn]
+                      [field]="field"
+                      [uploadEntries]="uploadEntries"
+                      [dragOverFieldId]="dragOverFieldId"
+                      [onFileChange]="onFileChange.bind(this)"
+                      [onDragOver]="onDragOver.bind(this)"
+                      [onDragLeave]="onDragLeave.bind(this)"
+                      [onDrop]="onDrop.bind(this)"
+                      [openFile]="openFile.bind(this)"
+                      [dismissError]="dismissError.bind(this)"
+                      [deleteUploadedFile]="deleteUploadedFile.bind(this)"
+                      [dirtyFieldIds]="dirtyFieldIds"
+                      [validationState]="validationState"
+                      [currentValues]="currentValues"
+                      [onBlur]="markFieldDirty.bind(this)"
+                    />
+                  }
                 }
-              }
-              <div class="form-actions">
-                @if (i > 0) {
-                  <button matButton type="button" matStepperPrevious>Back</button>
-                }
-                @if (i < form.steps!.length - 1) {
-                  <button matButton type="button" matStepperNext (click)="markStepTouched(i)">Next</button>
-                } @else {
-                  <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">
-                    {{ submitErrors().join('. ') }}
-                  </span>
-                  <span
-                    [matTooltip]="submitTooltip()"
-                    [matTooltipDisabled]="!submitDisabled()"
-                    matTooltipClass="multiline-tooltip"
-                  >
-                    <button
-                      matButton="filled"
-                      type="button"
-                      [disabled]="submitDisabled()"
-                      [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
-                      (click)="onSubmitClicked()"
-                    >
-                      Submit
+                <div class="form-actions">
+                  @if (i > 0) {
+                    <button matButton="outlined" type="button" matStepperPrevious>
+                      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+                      Back
                     </button>
-                  </span>
-                }
-              </div>
-            </form>
-          </div>
-        </mat-step>
-      }
-    </mat-stepper>
-    </div>
-
-  } @else {
-    <!-- BRANCH B: FLAT -->
-    <form class="form-body" [formGroup]="flatGroup!">
-      @for (field of form.fields; track field.id) {
-        @if (visibleFieldIds().has(field.id)) {
-          <app-form-field
-            [@fadeIn]
-            [field]="field"
-            [uploadEntries]="uploadEntries"
-            [dragOverFieldId]="dragOverFieldId"
-            [onFileChange]="onFileChange.bind(this)"
-            [onDragOver]="onDragOver.bind(this)"
-            [onDragLeave]="onDragLeave.bind(this)"
-            [onDrop]="onDrop.bind(this)"
-            [openFile]="openFile.bind(this)"
-            [dismissError]="dismissError.bind(this)"
-            [deleteUploadedFile]="deleteUploadedFile.bind(this)"
-            [dirtyFieldIds]="dirtyFieldIds"
-            [validationState]="validationState"
-            [currentValues]="currentValues"
-            [onBlur]="markFieldDirty.bind(this)"
-          />
+                  }
+                  @if (i < form.steps!.length - 1) {
+                    <button matButton="filled" type="button" matStepperNext (click)="markStepTouched(i)">
+                      Next
+                      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                    </button>
+                  } @else {
+                    <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">
+                      {{ submitErrors().join('. ') }}
+                    </span>
+                    <span
+                      [matTooltip]="submitTooltip()"
+                      [matTooltipDisabled]="!submitDisabled()"
+                      matTooltipClass="multiline-tooltip"
+                    >
+                      <button
+                        matButton="filled"
+                        type="button"
+                        [disabled]="submitDisabled()"
+                        [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
+                        (click)="onSubmitClicked()"
+                      >
+                        Submit
+                        <mat-icon aria-hidden="true">send</mat-icon>
+                      </button>
+                    </span>
+                  }
+                </div>
+              </form>
+            </div>
+          </mat-step>
         }
-      }
-      <div class="form-actions">
-        <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">{{ submitErrors().slice(0, 5).join('. ') }}</span>
-        <span
-          [matTooltip]="submitTooltip()"
-          [matTooltipDisabled]="!submitDisabled()"
-          matTooltipClass="multiline-tooltip">
-          <button
-            matButton="filled"
-            type="button"
-            [disabled]="submitDisabled()"
-            [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
-            (click)="onSubmitClicked()">
-            Submit
-          </button>
-        </span>
+      </mat-stepper>
       </div>
-    </form>
-  }
+
+    } @else {
+      <!-- BRANCH B: FLAT -->
+      <form class="form-body" [formGroup]="flatGroup!">
+        @for (field of form.fields; track field.id) {
+          @if (visibleFieldIds().has(field.id)) {
+            <app-form-field
+              [@fadeIn]
+              [field]="field"
+              [uploadEntries]="uploadEntries"
+              [dragOverFieldId]="dragOverFieldId"
+              [onFileChange]="onFileChange.bind(this)"
+              [onDragOver]="onDragOver.bind(this)"
+              [onDragLeave]="onDragLeave.bind(this)"
+              [onDrop]="onDrop.bind(this)"
+              [openFile]="openFile.bind(this)"
+              [dismissError]="dismissError.bind(this)"
+              [deleteUploadedFile]="deleteUploadedFile.bind(this)"
+              [dirtyFieldIds]="dirtyFieldIds"
+              [validationState]="validationState"
+              [currentValues]="currentValues"
+              [onBlur]="markFieldDirty.bind(this)"
+            />
+          }
+        }
+        <div class="form-actions">
+          <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">{{ submitErrors().slice(0, 5).join('. ') }}</span>
+          <span
+            [matTooltip]="submitTooltip()"
+            [matTooltipDisabled]="!submitDisabled()"
+            matTooltipClass="multiline-tooltip">
+            <button
+              matButton="filled"
+              type="button"
+              [disabled]="submitDisabled()"
+              [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
+              (click)="onSubmitClicked()">
+              Submit
+              <mat-icon aria-hidden="true">send</mat-icon>
+            </button>
+          </span>
+        </div>
+      </form>
+    }
+  </div>
 }

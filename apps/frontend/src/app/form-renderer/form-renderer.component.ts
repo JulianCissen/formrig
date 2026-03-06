@@ -34,7 +34,6 @@ import { FormFieldComponent } from './form-field/form-field.component';
   imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, MatTooltipModule, ReactiveFormsModule, FormFieldComponent],
   templateUrl: './form-renderer.component.html',
   styleUrl: './form-renderer.component.scss',
-  host: { style: 'display:block; padding:2rem; width:100%' },
   animations: [
     trigger('fadeIn', [
       transition(':enter', [
@@ -356,7 +355,9 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           this.flatGroup = this.buildFlatGroup(result.data.fields ?? []);
           this.setupFlatAutosave();
         }
-        this.titleLoaded.emit(result.data.title ?? 'Form');
+        const displayTitle = result.data.title
+          ?? this.formId.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        this.titleLoaded.emit(displayTitle);
 
         // Hydrate upload entries from server-persisted file records
         const rawFileRecords = raw['fileRecords'] as Array<{

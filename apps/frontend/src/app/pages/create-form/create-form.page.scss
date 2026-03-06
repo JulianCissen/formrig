@@ -1,0 +1,271 @@
+// ── Page container ─────────────────────────────────────────────────────────────
+// Applied via :host so max-width constraint works regardless of wrapper element.
+
+:host {
+  display: block;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+// ── Form wrapper (existing .create-form class) ─────────────────────────────────
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+}
+
+// ── Section label ──────────────────────────────────────────────────────────────
+
+.section-label {
+  display: block;
+  font-size: var(--mat-sys-label-large-size);
+  line-height: var(--mat-sys-label-large-line-height);
+  font-weight: var(--mat-sys-label-large-weight);
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 var(--space-3) 0;
+}
+
+// ── Type section container ─────────────────────────────────────────────────────
+
+.type-section {
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Type cards list (redesigned template, T-009) ───────────────────────────────
+
+.type-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+// ── Type card grid (existing template — single column) ─────────────────────────
+
+.type-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+// ── Individual type card ───────────────────────────────────────────────────────
+
+.type-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 2px solid var(--mat-sys-outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--mat-sys-surface);
+  cursor: pointer;
+  position: relative;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+  outline: none;
+
+  &:hover {
+    border-color: var(--mat-sys-outline);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  // ── Selected state ───────────────────────────────────────────────────────────
+
+  &.type-card--selected {
+    border-color: var(--mat-sys-primary);
+    background: var(--mat-sys-primary-container);
+
+    .type-card__icon-area,
+    .type-card-icon-area {
+      background: var(--mat-sys-primary);
+      color: var(--mat-sys-on-primary);
+    }
+  }
+}
+
+// ── Card icon area ─────────────────────────────────────────────────────────────
+
+.type-card__icon-area,
+.type-card-icon-area {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border-radius: var(--radius-sm);
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+// ── Card content ───────────────────────────────────────────────────────────────
+
+.type-card__content,
+.type-card-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+// ── Card name ──────────────────────────────────────────────────────────────────
+
+.type-card__name,
+.type-card-name {
+  font-size: var(--mat-sys-title-small-size);
+  line-height: var(--mat-sys-title-small-line-height);
+  font-weight: var(--mat-sys-title-small-weight);
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 var(--space-1) 0;
+}
+
+// ── Card description ───────────────────────────────────────────────────────────
+
+.type-card__description,
+.type-card-description {
+  font-size: var(--mat-sys-body-medium-size);
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+}
+
+// ── Existing mat-card-title / mat-card-subtitle typography ─────────────────────
+
+.type-card mat-card-title {
+  font-size: var(--mat-sys-title-small-size);
+  font-weight: var(--mat-sys-title-small-weight);
+  line-height: var(--mat-sys-title-small-line-height);
+  color: var(--mat-sys-on-surface);
+}
+
+.type-card mat-card-subtitle {
+  font-size: var(--mat-sys-body-medium-size);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// ── Version badge ──────────────────────────────────────────────────────────────
+
+.type-version,
+.version-badge {
+  font-size: var(--mat-sys-label-small-size);
+  background: var(--mat-sys-surface-container);
+  border-radius: var(--radius-xs);
+  padding: 2px var(--space-2);
+  color: var(--mat-sys-on-surface-variant);
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  margin: 0;
+}
+
+// ── Check badge (existing template) ───────────────────────────────────────────
+
+.type-card__check {
+  display: none;
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    line-height: 1;
+  }
+}
+
+.type-card--selected .type-card__check {
+  display: flex;
+}
+
+// ── Loading spinner ────────────────────────────────────────────────────────────
+
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+// ── Loading row (inline with submit button) ────────────────────────────────────
+
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) 0;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--mat-sys-outline);
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--mat-sys-body-medium-size);
+    line-height: 1.5;
+  }
+}
+
+// ── Error message ──────────────────────────────────────────────────────────────
+
+.error-msg {
+  color: var(--mat-sys-error);
+  margin: 0;
+  font-size: var(--mat-sys-body-small-size);
+}
+
+// ── Submit section ─────────────────────────────────────────────────────────────
+
+.submit-section {
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+// ── Submit button (existing inline selector) ───────────────────────────────────
+
+.create-form > button {
+  align-self: flex-start;
+}
+
+// ── Spinner inside button ──────────────────────────────────────────────────────
+
+button mat-spinner {
+  display: inline-block;
+}

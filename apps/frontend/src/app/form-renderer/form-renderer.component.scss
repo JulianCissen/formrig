@@ -1,4 +1,10 @@
-// Host styles applied via component host binding
+// ── Host ─────────────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+  width: 100%;
+  padding: var(--space-5) var(--space-6);
+}
 
 .form-loading {
   display: flex;
@@ -11,15 +17,30 @@
   color: var(--mat-sys-error);
 }
 
+// ── Form panel card ───────────────────────────────────────────────────────────
+
+.form-panel {
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--space-8);
+  max-width: 680px; /* Fixed design constant — not a spacing token */
+  margin: 0 auto;
+  width: 100%;
+}
+
 .form-body {
-  max-width: 640px;
+  max-width: 640px; /* Fixed design constant — not a spacing token */
   margin: 0 auto;
 }
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--space-4);
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: var(--space-5);
+  margin-top: var(--space-8);
 }
 
 // ── Step content wrapper ─────────────────────────────────────────────────────
@@ -29,16 +50,15 @@
 //
 
 .stepper-container {
-  max-width: 960px;
-  margin: 0 auto;
   width: 100%;
+  margin: 0 auto;
 }
 
 .step-content {
-  max-width: 640px;
+  max-width: 640px; /* Fixed design constant — not a spacing token */
   margin: 0 auto;
   width: 100%;
-  padding-top: 1.5rem; // room for mat-form-field floating label at top of step panel
+  padding-top: var(--space-5); // room for mat-form-field floating label at top of step panel
 }
 
 // Navigation row inside each step panel.
@@ -47,18 +67,49 @@
 // NOTE: The top-level .form-actions rule remains for the flat (non-stepped)
 // layout. These nested rules only apply inside .step-content.
 .step-content .form-actions {
-  gap: var(--space-2, 8px);
-  padding-top: var(--space-4, 16px);
+  gap: var(--space-2);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--mat-sys-outline-variant);
-  margin-top: var(--space-4, 16px);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
+// ── Autosave bar ─────────────────────────────────────────────────────────────
+
 .autosave-bar {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: var(--mat-sys-body-small-size);
+  color: var(--mat-sys-on-surface-variant);
   min-height: 1.2rem;
-  margin-bottom: 0.5rem;
-  .autosave-error { color: red; }
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.autosave-saved {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--mat-sys-tertiary, var(--mat-sys-on-surface-variant));
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.autosave-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--mat-sys-error);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .error-counter {

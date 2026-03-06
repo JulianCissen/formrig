@@ -1,6 +1,5 @@
 {
   "name": "demo-form",
   "version": "0.1.0",
-  "entryPoint": "./dist/index.js",
-  "description": "Demo form plugin for formrig MVP"
+  "entryPoint": "./dist/index.js"
 }

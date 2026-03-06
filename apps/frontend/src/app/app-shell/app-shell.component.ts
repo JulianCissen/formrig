@@ -1,4 +1,5 @@
 import { Component, inject, DestroyRef } from '@angular/core';
+import { ThemeService } from '../services/theme.service';
 import { RouterOutlet } from '@angular/router';
 import { Router, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
@@ -34,6 +35,7 @@ export class AppShellComponent {
   private readonly router = inject(Router);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly destroyRef = inject(DestroyRef);
+  readonly theme = inject(ThemeService);
 
   /** True when viewport width < 600px. Used to hide/show nav rail. */
   readonly isMobile = toSignal(
