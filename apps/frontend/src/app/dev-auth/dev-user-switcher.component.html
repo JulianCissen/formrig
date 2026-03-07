@@ -1,0 +1,32 @@
+<!-- Trigger chip -->
+<button
+  class="chip"
+  matRipple
+  [matMenuTriggerFor]="userMenu"
+  [attr.aria-label]="'Dev user: ' + (currentUserId() ?? 'None')">
+  <mat-icon aria-hidden="true" class="chip-bug-icon">bug_report</mat-icon>
+  <span class="chip-label" [class.no-user]="!currentUserId()">
+    {{ currentUserId() ?? 'No user' }}
+  </span>
+</button>
+
+<!-- Menu -->
+<mat-menu #userMenu="matMenu" [overlapTrigger]="false">
+  @for (user of MOCK_USERS; track user.id) {
+    <button mat-menu-item (click)="selectUser(user.id)"
+      [class.active-user]="user.id === currentUserId()">
+      <mat-icon [class.active-icon]="user.id === currentUserId()">
+        {{ user.id === currentUserId() ? 'check' : 'person' }}
+      </mat-icon>
+      {{ user.id }}
+      @if (user.id === currentUserId()) {
+        <span class="cdk-visually-hidden"> (current)</span>
+      }
+    </button>
+  }
+  <mat-divider />
+  <button mat-menu-item class="sign-out-item" (click)="signOut()">
+    <mat-icon class="sign-out-icon">logout</mat-icon>
+    Sign out
+  </button>
+</mat-menu>

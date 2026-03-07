@@ -1,7 +1,7 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, UploadedFile,
   UseInterceptors, Query, HttpCode, HttpStatus, ParseUUIDPipe, BadRequestException,
-  StreamableFile,
+  StreamableFile, UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FormService }         from './form.service';
@@ -11,7 +11,11 @@ import { FileMeta }            from '@formrig/sdk';
 import { CreateFormSchema }    from './dto/create-form.dto';
 import { FormTypeDto }         from './dto/form-type.dto';
 import { randomUUID }          from 'crypto';
+import { RequireAuthGuard }    from '../common/guards/require-auth.guard';
+import { CurrentUser }         from '../common/decorators/current-user.decorator';
+import { User }                from '../dev-auth/entities/user.entity';
 
+@UseGuards(RequireAuthGuard)
 @Controller('forms')
 export class FormsController {
   constructor(
@@ -22,16 +26,16 @@ export class FormsController {
   /** POST /forms — create a new form record */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() body: unknown) {
+  async create(@Body() body: unknown, @CurrentUser() user: User) {
     const parsed = CreateFormSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
-    return this.formService.createForm(parsed.data);
+    return this.formService.createForm(parsed.data, user);
   }
 
   /** GET /forms — list all form summaries */
   @Get()
-  async list() {
-    return this.formService.listForms();
+  async list(@CurrentUser() user: User) {
+    return this.formService.listForms(user);
   }
 
   /** GET /forms/types — list all loaded form-type plugins (AC-1, AC-2, AC-3) */
@@ -43,27 +47,27 @@ export class FormsController {
   /** POST /forms/:id/submit — validate and submit a form */
   @Post(':id/submit')
   @HttpCode(HttpStatus.OK)
-  submitForm(@Param('id', ParseUUIDPipe) id: string) {
-    return this.formService.submitForm(id);
+  async submitForm(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+    return this.formService.submitForm(id, user);
   }
 
   /** GET /forms/:id — get merged form detail */
   @Get(':id')
-  async getOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.formService.getForm(id);
+  async getOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+    return this.formService.getForm(id, user);
   }
 
   /** PATCH /forms/:id — autosave one field or batch update values */
   @Patch(':id')
-  async patch(@Param('id', ParseUUIDPipe) id: string, @Body() body: unknown) {
-    return this.formService.patchForm(id, body);
+  async patch(@Param('id', ParseUUIDPipe) id: string, @Body() body: unknown, @CurrentUser() user: User) {
+    return this.formService.patchForm(id, body, user);
   }
 
   /** DELETE /forms/:id — delete a form and all its associated data */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteForm(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.formService.deleteForm(id);
+  async deleteForm(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User): Promise<void> {
+    return this.formService.deleteForm(id, user);
   }
 
   /** POST /forms/:id/files — upload a file field */
@@ -96,6 +100,7 @@ export class FormsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query('fieldId') fieldId: string,
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: User,
   ) {
     if (!fieldId) throw new BadRequestException('fieldId query parameter is required');
     if (!file) throw new BadRequestException('file is required');
@@ -108,7 +113,7 @@ export class FormsController {
     };
 
     await this.filePipeline.process(file.path, meta, storageKey);
-    return this.formService.createFileRecord(id, fieldId, storageKey, meta);
+    return this.formService.createFileRecord(id, fieldId, storageKey, meta, user);
   }
 
   /** GET /forms/:id/files/:fileId/download — proxy-stream a file through the backend */
@@ -116,8 +121,9 @@ export class FormsController {
   async downloadFile(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('fileId', ParseUUIDPipe) fileId: string,
+    @CurrentUser() user: User,
   ): Promise<StreamableFile> {
-    const { stream, mimeType, filename } = await this.formService.getFileStream(id, fileId);
+    const { stream, mimeType, filename } = await this.formService.getFileStream(id, fileId, user);
     return new StreamableFile(stream, {
       type: mimeType,
       disposition: `attachment; filename="${filename}"`,
@@ -130,7 +136,8 @@ export class FormsController {
   async deleteFile(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('fileId', ParseUUIDPipe) fileId: string,
+    @CurrentUser() user: User,
   ): Promise<void> {
-    return this.formService.deleteFileRecord(id, fileId);
+    return this.formService.deleteFileRecord(id, fileId, user);
   }
 }

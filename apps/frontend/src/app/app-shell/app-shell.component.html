@@ -5,6 +5,9 @@
 <mat-toolbar class="app-toolbar" role="banner">
   <span class="app-wordmark">FormRig</span>
   <span class="toolbar-spacer"></span>
+  @if (devUserSwitcher) {
+    <ng-container *ngComponentOutlet="devUserSwitcher" />
+  }
   <button
     matIconButton
     (click)="theme.toggle()"
@@ -36,6 +39,12 @@
         />
       }
     </nav>
+    @if (devUserSwitcher) {
+      <mat-divider class="dev-switcher-divider" />
+      <div class="dev-switcher-rail">
+        <ng-container *ngComponentOutlet="devUserSwitcher" />
+      </div>
+    }
   </mat-sidenav>
 
   <!-- Main content area -->

@@ -5,6 +5,7 @@ import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { PluginService }           from '../plugin/plugin.service';
 import { FormEventContext, FileMeta } from '@formrig/sdk';
 import { BaseField, FieldDto, StepDto, getEffectiveRules } from '@formrig/shared';
+import { User }        from '../dev-auth/entities/user.entity';
 import { Form }       from './entities/form.entity';
 import { FileRecord } from './entities/file-record.entity';
 import { StoragePluginService } from '../file-storage/storage-plugin.service';
@@ -33,6 +34,14 @@ export class FormService {
     return base + '-' + index;
   }
 
+  // ── Ownership ────────────────────────────────────────────────────────────
+
+  async findOwnedForm(id: string, owner: User): Promise<Form> {
+    const form = await this.formRepo.findOne({ id, owner: { id: owner.id } });
+    if (!form) throw new NotFoundException(`Form "${id}" not found`);
+    return form;
+  }
+
   // ── CRUD ─────────────────────────────────────────────────────────────────
 
   /**
@@ -48,30 +57,29 @@ export class FormService {
     }));
   }
 
-  async createForm(dto: CreateFormDto): Promise<FormSummaryDto> {
+  async createForm(dto: CreateFormDto, owner: User): Promise<FormSummaryDto> {
     // Verify plugin exists
     const plugin = this.pluginSvc.find(dto.pluginId);
     if (!plugin) {
       throw new NotFoundException(`Plugin "${dto.pluginId}" is not loaded`);
     }
 
-    const form = this.formRepo.create({ pluginId: dto.pluginId, values: {}, createdAt: new Date(), updatedAt: new Date() });
+    const form = this.formRepo.create({ pluginId: dto.pluginId, values: {}, owner, createdAt: new Date(), updatedAt: new Date() });
     this.em.persist(form);
     await this.em.flush();
 
     return this.toSummary(form);
   }
 
-  async listForms(): Promise<FormSummaryDto[]> {
-    const forms = await this.formRepo.findAll({ orderBy: { createdAt: 'DESC' } });
+  async listForms(owner: User): Promise<FormSummaryDto[]> {
+    const forms = await this.formRepo.findAll({ where: { owner: { id: owner.id } }, orderBy: { createdAt: 'DESC' } });
     return forms
       .filter(f => this.pluginSvc.find(f.pluginId) !== undefined)
       .map(f => this.toSummary(f));
   }
 
-  async deleteForm(id: string): Promise<void> {
-    const form = await this.formRepo.findOne(id);
-    if (!form) throw new NotFoundException(`Form "${id}" not found`);
+  async deleteForm(id: string, owner: User): Promise<void> {
+    const form = await this.findOwnedForm(id, owner);
 
     // Clean up stored files from object storage (best-effort; DB cascade removes the rows)
     const fileRecords = await this.fileRepo.find({ form: { id } });
@@ -83,8 +91,8 @@ export class FormService {
     await this.em.flush();
   }
 
-  async getForm(id: string): Promise<FormDetailDto> {
-    const form = await this.formRepo.findOne(id, { populate: ['fileRecords'] });
+  async getForm(id: string, owner: User): Promise<FormDetailDto> {
+    const form = await this.formRepo.findOne({ id, owner: { id: owner.id } }, { populate: ['fileRecords'] });
     if (!form) throw new NotFoundException(`Form "${id}" not found`);
 
     const loaded = this.pluginSvc.find(form.pluginId);
@@ -156,7 +164,7 @@ export class FormService {
     };
   }
 
-  async patchForm(id: string, body: unknown): Promise<FormSummaryDto> {
+  async patchForm(id: string, body: unknown, owner: User): Promise<FormSummaryDto> {
     // Validate shape
     const parsed = UpdateFormValuesSchema.safeParse(body);
     if (!parsed.success) {
@@ -179,9 +187,12 @@ export class FormService {
       }
     }
 
+    // Ownership check — throws 404 if form not found or wrong owner.
+    // Pass the verified entity to buildFlatFieldDtos to avoid a second unscoped DB fetch.
+    const ownedForm = await this.findOwnedForm(id, owner);
+
     // Hard validation — resolve live field definitions and enforce type/constraint caps.
-    // buildFlatFieldDtos throws NotFoundException if the form or plugin is missing.
-    const { fieldMap, form } = await this.buildFlatFieldDtos(id);
+    const { fieldMap, form } = await this.buildFlatFieldDtos(id, ownedForm);
 
     if ('fieldId' in dto) {
       const fieldDto = fieldMap.get(dto.fieldId);
@@ -219,8 +230,11 @@ export class FormService {
     return this.toSummary(form);
   }
 
-  async submitForm(id: string): Promise<{ submittedAt: string }> {
-    const { fieldMap, form } = await this.buildFlatFieldDtos(id);
+  async submitForm(id: string, owner: User): Promise<{ submittedAt: string }> {
+    // Ownership check — throws 404 if form not found or wrong owner.
+    // Pass the verified entity to buildFlatFieldDtos to avoid a second unscoped DB fetch.
+    const ownedForm = await this.findOwnedForm(id, owner);
+    const { fieldMap, form } = await this.buildFlatFieldDtos(id, ownedForm);
 
     if (form.submittedAt !== null) {
       throw new ConflictException('Form already submitted');
@@ -264,9 +278,9 @@ export class FormService {
     fieldId: string,
     storageKey: string,
     meta: FileMeta,
+    owner: User,
   ): Promise<{ id: string; fieldId: string; filename: string; mimeType: string; size: number; url: string }> {
-    const form = await this.formRepo.findOne(formId);
-    if (!form) throw new NotFoundException(`Form "${formId}" not found`);
+    const form = await this.findOwnedForm(formId, owner);
 
     const filename = generateFilename(meta.originalName, 0);
 
@@ -294,7 +308,10 @@ export class FormService {
     };
   }
 
-  async getFileStream(formId: string, fileId: string): Promise<{ stream: Readable; mimeType: string; filename: string }> {
+  async getFileStream(formId: string, fileId: string, owner: User): Promise<{ stream: Readable; mimeType: string; filename: string }> {
+    // Two-step: findOwnedForm enforces form ownership (404 for absent/wrong-owner);
+    // file lookup is then scoped to that form. Security-equivalent to a single combined query.
+    await this.findOwnedForm(formId, owner);
     const record = await this.fileRepo.findOne({ id: fileId, form: { id: formId } });
     if (!record) throw new NotFoundException(`File "${fileId}" not found`);
 
@@ -302,7 +319,10 @@ export class FormService {
     return { stream, mimeType: record.mimeType, filename: record.filename };
   }
 
-  async deleteFileRecord(formId: string, fileId: string): Promise<void> {
+  async deleteFileRecord(formId: string, fileId: string, owner: User): Promise<void> {
+    // Two-step: findOwnedForm enforces form ownership (404 for absent/wrong-owner);
+    // file lookup is then scoped to that form. Security-equivalent to a single combined query.
+    await this.findOwnedForm(formId, owner);
     const record = await this.fileRepo.findOne({ id: fileId, form: { id: formId } });
     if (!record) throw new NotFoundException(`File "${fileId}" not found`);
 
@@ -318,10 +338,10 @@ export class FormService {
    * stored values into each field, then returns a slug → FieldDto map together
    * with the already-loaded Form entity so callers avoid a second DB round-trip.
    *
-   * Used by `patchForm` (hard validation) and will be used by `submitForm` (T-005).
+   * Used by `patchForm` and `submitForm`.
    */
-  async buildFlatFieldDtos(formId: string): Promise<{ fieldMap: Map<string, FieldDto>; form: Form }> {
-    const form = await this.formRepo.findOne(formId);
+  private async buildFlatFieldDtos(formId: string, preloadedForm?: Form): Promise<{ fieldMap: Map<string, FieldDto>; form: Form }> {
+    const form = preloadedForm ?? await this.formRepo.findOne(formId);
     if (!form) throw new NotFoundException(`Form "${formId}" not found`);
 
     const loaded = this.pluginSvc.find(form.pluginId);

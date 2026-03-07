@@ -139,3 +139,15 @@
     transition: top var(--transition-fast);
   }
 }
+
+// ─── Dev User Switcher ───────────────────────────────────────────────────────
+
+.dev-switcher-divider {
+  margin: 12px 0 4px;
+}
+
+.dev-switcher-rail {
+  display: flex;
+  justify-content: center;
+  padding: 0 4px 8px;
+}

@@ -2,6 +2,9 @@ import { UnprocessableEntityException, ConflictException } from '@nestjs/common'
 import { FormService } from '../form.service';
 import type { FieldDto } from '@formrig/shared';
 import type { Form } from '../entities/form.entity';
+import type { User } from '../../dev-auth/entities/user.entity';
+
+const mockUser = { id: 'user-1' } as User;
 
 // ── Minimal mock helpers ─────────────────────────────────────────────────────
 
@@ -51,6 +54,8 @@ function buildService(): { svc: FormService; emMock: { flush: jest.Mock } } {
     {} as never, // pluginSvc
     {} as never, // fileStorage
   );
+  // findOwnedForm is always mocked by the per-test buildFlatFieldDtos spy; stub it to resolve.
+  jest.spyOn(svc, 'findOwnedForm').mockResolvedValue({} as Form);
   return { svc, emMock };
 }
 
@@ -65,7 +70,7 @@ describe('FormService.submitForm', () => {
     ]);
     jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
 
-    const result = await svc.submitForm('form-1');
+    const result = await svc.submitForm('form-1', mockUser);
 
     expect(result.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(form.submittedAt).toBeInstanceOf(Date);
@@ -82,7 +87,7 @@ describe('FormService.submitForm', () => {
 
     let err!: UnprocessableEntityException;
     try {
-      await svc.submitForm('form-1');
+      await svc.submitForm('form-1', mockUser);
     } catch (e) {
       err = e as UnprocessableEntityException;
     }
@@ -114,7 +119,7 @@ describe('FormService.submitForm', () => {
 
     let err!: UnprocessableEntityException;
     try {
-      await svc.submitForm('form-1');
+      await svc.submitForm('form-1', mockUser);
     } catch (e) {
       err = e as UnprocessableEntityException;
     }
@@ -142,7 +147,7 @@ describe('FormService.submitForm', () => {
     ]);
     jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
 
-    await expect(svc.submitForm('form-1')).resolves.toMatchObject({
+    await expect(svc.submitForm('form-1', mockUser)).resolves.toMatchObject({
       submittedAt: expect.any(String),
     });
   });
@@ -153,7 +158,7 @@ describe('FormService.submitForm', () => {
     const fieldMap = new Map<string, FieldDto>();
     jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
 
-    await expect(svc.submitForm('form-1')).rejects.toBeInstanceOf(ConflictException);
+    await expect(svc.submitForm('form-1', mockUser)).rejects.toBeInstanceOf(ConflictException);
     expect(emMock.flush).not.toHaveBeenCalled();
   });
 
@@ -163,7 +168,7 @@ describe('FormService.submitForm', () => {
     const fieldMap = new Map<string, FieldDto>();
     jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
 
-    const result = await svc.submitForm('form-1');
+    const result = await svc.submitForm('form-1', mockUser);
 
     expect(result.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
@@ -178,7 +183,7 @@ describe('FormService.submitForm', () => {
 
     let err!: UnprocessableEntityException;
     try {
-      await svc.submitForm('form-1');
+      await svc.submitForm('form-1', mockUser);
     } catch (e) {
       err = e as UnprocessableEntityException;
     }
@@ -223,7 +228,7 @@ describe('FormService.submitForm', () => {
         form,
       });
 
-      await expect(svc.submitForm('form-1')).resolves.toMatchObject({
+      await expect(svc.submitForm('form-1', mockUser)).resolves.toMatchObject({
         submittedAt: expect.any(String),
       });
     });
@@ -238,7 +243,7 @@ describe('FormService.submitForm', () => {
 
       let err!: UnprocessableEntityException;
       try {
-        await svc.submitForm('form-1');
+        await svc.submitForm('form-1', mockUser);
       } catch (e) {
         err = e as UnprocessableEntityException;
       }

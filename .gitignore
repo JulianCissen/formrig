@@ -25,6 +25,9 @@ build/
 .DS_Store
 Thumbs.db
 
+# Quarantine (multer temp storage — never commit)
+apps/backend/quarantine/
+
 # Logs
 *.log
 npm-debug.log*

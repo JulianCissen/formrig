@@ -101,6 +101,7 @@ apps/
 packages/
   shared/       Shared domain types (compiled, watched by watcher sidecar)
   sdk/          Plugin SDK (compiled, watched by watcher sidecar)
+  dev-fixtures/ Mock user definitions for local development (dev only, never in production)
 plugins/
   form/         Form-type plugins (demo-form bundled by moduul)
   storage/      Storage-engine plugins (MinIO)

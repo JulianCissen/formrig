@@ -1,0 +1,23 @@
+<main id="main-content">
+  <mat-card appearance="raised">
+    <mat-card-content>
+      <mat-icon aria-hidden="true" class="debug-icon">bug_report</mat-icon>
+      <h1 tabindex="-1">FormRig</h1>
+      <p class="subtitle">Development environment</p>
+      <mat-divider />
+      <p class="sign-in-label" aria-hidden="true">Sign in as</p>
+      <ul role="list">
+        @for (user of MOCK_USERS; track user.id) {
+          <li>
+            <button class="user-btn" matRipple (click)="selectUser(user.id)">
+              <span class="avatar" aria-hidden="true">
+                <mat-icon>person</mat-icon>
+              </span>
+              <span class="user-id">{{ user.id }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </mat-card-content>
+  </mat-card>
+</main>

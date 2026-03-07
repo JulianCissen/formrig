@@ -6,6 +6,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, scan, map } from 'rxjs/operators';
+import { NgComponentOutlet } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,16 +15,20 @@ import { AppBottomNavComponent } from './bottom-nav/app-bottom-nav.component';
 import { NavRailItemComponent } from '../shared/nav-rail-item/nav-rail-item.component';
 import { routeFadeAnimation } from './app-shell.animations';
 import { navItems } from './nav-items';
+import { MatDividerModule } from '@angular/material/divider';
+import { DevUserSwitcherComponent } from '../dev-auth/dev-auth-features';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
   imports: [
     RouterOutlet,
+    NgComponentOutlet,
     MatToolbarModule,
     MatSidenavModule,
     MatIconModule,
     MatButtonModule,
+    MatDividerModule,
     AppBottomNavComponent,
     NavRailItemComponent,
   ],
@@ -32,6 +37,9 @@ import { navItems } from './nav-items';
   styleUrl: './app-shell.component.scss',
 })
 export class AppShellComponent {
+  /** Null in prod (via file replacement stub), component class in dev */
+  readonly devUserSwitcher = DevUserSwitcherComponent;
+
   private readonly router = inject(Router);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly destroyRef = inject(DestroyRef);

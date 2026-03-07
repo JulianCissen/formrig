@@ -15,7 +15,8 @@
       "@formrig/shared": ["packages/shared/src/index.ts"],
       "@formrig/shared/*": ["packages/shared/src/*"],
       "@formrig/sdk": ["packages/sdk/src/index.ts"],
-      "@formrig/sdk/*": ["packages/sdk/src/*"]
+      "@formrig/sdk/*": ["packages/sdk/src/*"],
+      "@formrig/dev-fixtures": ["packages/dev-fixtures/src/index.ts"]
     }
   },
   "exclude": [

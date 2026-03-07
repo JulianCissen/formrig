@@ -26,6 +26,7 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@formrig/dev-fixtures": "*",
     "@angular-devkit/build-angular": "^21.1.5",
     "@angular/cli": "^21.1.5",
     "@angular/compiler-cli": "^21.1.5",

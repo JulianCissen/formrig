@@ -1,6 +1,8 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  globalSetup: './jest.global-setup.js',
+  globalTeardown: './jest.global-teardown.js',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],

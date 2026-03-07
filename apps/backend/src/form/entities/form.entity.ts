@@ -1,6 +1,7 @@
 // apps/backend/src/form/entities/form.entity.ts
-import { Entity, Property, OneToMany, Collection } from '@mikro-orm/core';
+import { Entity, Property, OneToMany, Collection, ManyToOne } from '@mikro-orm/core';
 import { BaseEntity } from '../../common/base.entity';
+import { User } from '../../dev-auth/entities/user.entity';
 import { FileRecord } from './file-record.entity';
 
 @Entity({ tableName: 'forms' })
@@ -20,6 +21,9 @@ export class Form extends BaseEntity {
   /** ISO timestamp set when the form is submitted. Null until submission. */
   @Property({ type: 'timestamptz', nullable: true })
   submittedAt: Date | null = null;
+
+  @ManyToOne(() => User, { fieldName: 'owner_id', nullable: false })
+  owner!: User;
 
   @OneToMany(() => FileRecord, r => r.form)
   fileRecords = new Collection<FileRecord>(this);

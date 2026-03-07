@@ -38,6 +38,16 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                },
+                {
+                  "replace": "src/app/dev-auth/dev-auth-features.ts",
+                  "with": "src/app/dev-auth/dev-auth-features.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

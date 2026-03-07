@@ -1,0 +1,52 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  border: none;
+  cursor: pointer;
+  font: var(--mat-sys-label-small);
+  font-weight: 500;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-tertiary);
+    outline-offset: 2px;
+  }
+}
+
+.chip-bug-icon {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+}
+
+.chip-label {
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.no-user {
+    opacity: 0.6;
+  }
+}
+
+.active-user {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.active-icon {
+  color: var(--mat-sys-primary);
+}
+
+.sign-out-item {
+  color: var(--mat-sys-error);
+}
+
+.sign-out-icon {
+  color: var(--mat-sys-error);
+}

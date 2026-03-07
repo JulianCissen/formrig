@@ -9,8 +9,40 @@
 
 ## Tech Stack
 
-{Add your tech stack here — or it'll be determined during /architect for greenfield projects}
+- **Backend:** NestJS (Node.js), MikroORM, PostgreSQL
+- **Frontend:** Angular 19+, Angular Material 3, SCSS
+- **Shared packages:** TypeScript workspace packages (`@formrig/shared`, `@formrig/sdk`, `@formrig/dev-fixtures`)
+- **File storage:** MinIO (S3-compatible), plugin-based storage engine
+- **Plugin system:** Form-type plugins and storage-engine plugins bundled with [@moduul](https://github.com/JulianCissen/moduul)
+- **Infrastructure:** Docker Compose for local development; all services containerised
+- **Testing:** Jest (backend + shared packages)
 
 ## Project Structure
 
-{Add key directory descriptions here once the project is initialized}
+```
+apps/
+  backend/      NestJS API — entities, modules, controllers, migrations
+  frontend/     Angular SPA — Material 3 UI, standalone components, signal-based state
+packages/
+  shared/       @formrig/shared — domain types, DTOs, validation utils (used in prod)
+  sdk/          @formrig/sdk — plugin SDK types and base classes
+  dev-fixtures/ @formrig/dev-fixtures — mock user definitions for local dev only (never in prod)
+plugins/
+  form/         Form-type plugins (bundled with moduul)
+  storage/      Storage-engine plugins (MinIO)
+scripts/
+  dev.sh        All developer lifecycle commands (up, down, fresh, logs, …)
+```
+
+**Key backend directories:**
+- `apps/backend/src/common/` — `BaseEntity` (UUID PK, createdAt, updatedAt)
+- `apps/backend/src/dev-auth/` — dev-only user middleware; not loaded in production
+- `apps/backend/src/form/` — form CRUD, validation, file handling
+- `apps/backend/src/file-storage/` — plugin-based file pipeline (antivirus, quarantine)
+- `apps/backend/src/migrations/` — MikroORM migrations
+
+**Key frontend directories:**
+- `apps/frontend/src/app/dev-auth/` — dev-only auth (guard, interceptor, switcher, login) — compiled out of production bundles via `angular.json` `fileReplacements`
+- `apps/frontend/src/app/app-shell/` — main layout component (toolbar, nav)
+- `apps/frontend/src/app/pages/` — route page components
+- `apps/frontend/src/environments/` — `environment.ts` (dev) / `environment.prod.ts` (prod)
