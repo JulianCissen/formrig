@@ -5,6 +5,7 @@
   [info]="field().info"
   [dirtyFieldIds]="dirtyFieldIds"
   [validationState]="validationState">
+  @if (!displayMode()) {
   <div
     class="file-upload-zone"
     [class.is-drag-over]="dragOverFieldId() === field().id"
@@ -33,8 +34,12 @@
       (change)="onFileChange($event, field().id)"
     />
   </div>
+  }
   <!-- always-present aria-live region (screen readers require this to be in the DOM before announcements) -->
   <div aria-live="polite" aria-atomic="false" class="visually-hidden"></div>
+  @if (displayMode()) {
+    <hr class="file-list-separator" aria-hidden="true">
+  }
   <ul class="file-list" aria-label="Uploaded files">
     @for (entry of uploadEntries().get(field().id) ?? []; track entry.clientId) {
       <li class="file-entry"
@@ -69,12 +74,14 @@
                     (click)="openFile(entry)">
               <mat-icon>file_download</mat-icon>
             </button>
+            @if (!displayMode()) {
             <button mat-icon-button
                     type="button"
                     [attr.aria-label]="'Delete ' + entry.filename"
                     (click)="deleteUploadedFile(field().id, entry)">
-              <mat-icon>delete</mat-icon>
+              <mat-icon aria-hidden="true">delete</mat-icon>
             </button>
+            }
           }
           @if (entry.status === 'error') {
             <mat-icon class="file-entry__error-indicator" color="warn" aria-hidden="true">error_outline</mat-icon>
@@ -88,6 +95,10 @@
           }
         </span>
       </li>
+    } @empty {
+      @if (displayMode()) {
+        <li class="file-list__empty"><em>No files uploaded</em></li>
+      }
     }
   </ul>
 </app-field-plain-wrapper>

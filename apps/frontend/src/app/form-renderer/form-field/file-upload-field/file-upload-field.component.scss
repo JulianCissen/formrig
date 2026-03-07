@@ -124,3 +124,24 @@
   font-size: 0.75rem;
   color: var(--mat-sys-error);
 }
+
+.file-list-separator {
+  border: none;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  margin: var(--space-2) 0;
+}
+
+.file-list__empty {
+  font-family: var(--mat-sys-body-large-font);
+  font-size: var(--mat-sys-body-large-size);
+  font-weight: var(--mat-sys-body-large-weight);
+  line-height: var(--mat-sys-body-large-line-height);
+  letter-spacing: var(--mat-sys-body-large-tracking);
+  list-style: none;
+  padding: var(--space-2) var(--space-3);
+
+  em {
+    font-style: italic;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

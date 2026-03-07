@@ -1,4 +1,4 @@
-import { Component, Input, signal, Signal, WritableSignal, input } from '@angular/core';
+import { Component, Input, computed, signal, Signal, WritableSignal, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -20,6 +20,8 @@ import { FieldPlainWrapperComponent } from '../wrappers/field-plain-wrapper.comp
 })
 export class FileUploadFieldComponent {
   readonly field = input.required<Extract<FieldDto, { type: 'file-upload' }>>();
+  readonly readonly = input<boolean>(false);
+  readonly displayMode = computed(() => this.readonly() || this.field().disabled);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
   @Input() validationState: Signal<Map<string, string[]>> = signal(new Map<string, string[]>());

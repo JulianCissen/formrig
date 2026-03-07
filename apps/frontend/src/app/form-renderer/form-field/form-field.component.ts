@@ -30,6 +30,7 @@ import { DatePickerFieldComponent } from './date-picker-field/date-picker-field.
 })
 export class FormFieldComponent {
   readonly field = input.required<FieldDto>();
+  readonly readonly = input<boolean>(false);
 
   @Input() uploadEntries!: Signal<Map<string, FileUploadEntry[]>>;
   @Input() dragOverFieldId!: WritableSignal<string | null>;

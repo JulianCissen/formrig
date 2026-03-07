@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, Input, OnInit, ViewChild, computed, effect, inject, input, isDevMode, signal, Signal } from '@angular/core';
+import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
 import { formatIsoDate } from './date-format.util';
 import { FormrigDateAdapter, DISPLAY_FORMAT_TOKEN } from './date-format-adapter';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +25,7 @@ import { FieldDto } from '@formrig/shared';
     MatIconModule,
     MatTooltipModule,
     ReactiveFormsModule,
+    FieldDisplayValueComponent,
   ],
   templateUrl: './date-picker-field.component.html',
   styleUrl: './date-picker-field.component.scss',
@@ -41,10 +43,18 @@ import { FieldDto } from '@formrig/shared';
 })
 export class DatePickerFieldComponent implements OnInit, AfterViewInit {
   readonly field = input.required<Extract<FieldDto, { type: 'date-picker' }>>();
+  readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
   @Input() validationState: Signal<Map<string, string[]>> = signal(new Map<string, string[]>());
+  @Input() currentValues: Signal<Record<string, unknown>> = signal({});
   @Input() onBlur: (fieldId: string) => void = () => {};
+
+  readonly displayMode = computed(() => this.readonly() || this.field().disabled);
+  readonly displayValue = computed((): string | null => {
+    const raw = this.currentValues()[this.field().id] as string | null;
+    return raw ? formatIsoDate(raw, this.activeFormat()) : null;
+  });
 
   @ViewChild('inputRef') private inputRef!: ElementRef<HTMLInputElement>;
 

@@ -23,6 +23,12 @@
   @let form = formDef()!;
 
   <div class="form-panel">
+    @if (effectiveReadonly()) {
+      <div class="readonly-banner" role="note" aria-label="This form has been submitted and is read-only">
+        <mat-icon aria-hidden="true">lock_outline</mat-icon>
+        <span>Submitted — view only</span>
+      </div>
+    }
     @if ((form.steps?.length ?? 0) > 0) {
       <!-- BRANCH A: STEPPER -->
       <div class="stepper-container">
@@ -47,6 +53,7 @@
                     <app-form-field
                       [@fadeIn]
                       [field]="field"
+                      [readonly]="effectiveReadonly()"
                       [uploadEntries]="uploadEntries"
                       [dragOverFieldId]="dragOverFieldId"
                       [onFileChange]="onFileChange.bind(this)"
@@ -79,22 +86,32 @@
                     <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">
                       {{ submitErrors().join('. ') }}
                     </span>
-                    <span
-                      [matTooltip]="submitTooltip()"
-                      [matTooltipDisabled]="!submitDisabled()"
-                      matTooltipClass="multiline-tooltip"
-                    >
-                      <button
-                        matButton="filled"
-                        type="button"
-                        [disabled]="submitDisabled()"
-                        [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
-                        (click)="onSubmitClicked()"
+                    @if (!effectiveReadonly()) {
+                      <span
+                        [matTooltip]="submitTooltip()"
+                        [matTooltipDisabled]="!submitDisabled()"
+                        matTooltipClass="multiline-tooltip"
                       >
-                        Submit
-                        <mat-icon aria-hidden="true">send</mat-icon>
-                      </button>
-                    </span>
+                        <button
+                          matButton="filled"
+                          type="button"
+                          [disabled]="submitDisabled()"
+                          [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
+                          (click)="onSubmitClicked()"
+                        >
+                          Submit
+                          <mat-icon aria-hidden="true">send</mat-icon>
+                        </button>
+                      </span>
+                    } @else {
+                      <div class="form-actions__confirmation" role="status" aria-live="polite">
+                        <mat-icon class="confirmation-icon" aria-hidden="true">check_circle</mat-icon>
+                        <div class="confirmation-text">
+                          <p class="confirmation-heading">Response submitted</p>
+                          <p class="confirmation-body">Your answers have been recorded.</p>
+                        </div>
+                      </div>
+                    }
                   }
                 </div>
               </form>
@@ -112,6 +129,7 @@
             <app-form-field
               [@fadeIn]
               [field]="field"
+              [readonly]="effectiveReadonly()"
               [uploadEntries]="uploadEntries"
               [dragOverFieldId]="dragOverFieldId"
               [onFileChange]="onFileChange.bind(this)"
@@ -130,20 +148,30 @@
         }
         <div class="form-actions">
           <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">{{ submitErrors().slice(0, 5).join('. ') }}</span>
-          <span
-            [matTooltip]="submitTooltip()"
-            [matTooltipDisabled]="!submitDisabled()"
-            matTooltipClass="multiline-tooltip">
-            <button
-              matButton="filled"
-              type="button"
-              [disabled]="submitDisabled()"
-              [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
-              (click)="onSubmitClicked()">
-              Submit
-              <mat-icon aria-hidden="true">send</mat-icon>
-            </button>
-          </span>
+          @if (!effectiveReadonly()) {
+            <span
+              [matTooltip]="submitTooltip()"
+              [matTooltipDisabled]="!submitDisabled()"
+              matTooltipClass="multiline-tooltip">
+              <button
+                matButton="filled"
+                type="button"
+                [disabled]="submitDisabled()"
+                [attr.aria-describedby]="submitDisabled() ? 'submit-errors-live' : null"
+                (click)="onSubmitClicked()">
+                Submit
+                <mat-icon aria-hidden="true">send</mat-icon>
+              </button>
+            </span>
+          } @else {
+            <div class="form-actions__confirmation" role="status" aria-live="polite">
+              <mat-icon class="confirmation-icon" aria-hidden="true">check_circle</mat-icon>
+              <div class="confirmation-text">
+                <p class="confirmation-heading">Response submitted</p>
+                <p class="confirmation-body">Your answers have been recorded.</p>
+              </div>
+            </div>
+          }
         </div>
       </form>
     }

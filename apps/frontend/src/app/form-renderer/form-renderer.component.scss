@@ -116,3 +116,58 @@
 .error-counter {
   color: var(--mat-sys-error);
 }
+
+// ── Read-only banner ─────────────────────────────────────────────────────────
+
+.readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+  margin-bottom: var(--space-5);
+  width: 100%;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// ── Submission confirmation region ───────────────────────────────────────────
+
+.form-actions__confirmation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .confirmation-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .confirmation-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--mat-sys-tertiary);
+  }
+
+  .confirmation-heading {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+  }
+
+  .confirmation-body {
+    margin: 0;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

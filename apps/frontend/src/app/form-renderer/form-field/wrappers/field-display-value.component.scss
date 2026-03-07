@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.field-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.form-field__label {
+  display: block;
+  font-family: var(--mat-sys-label-large-font);
+  font-size: var(--mat-sys-label-large-size);
+  font-weight: var(--mat-sys-label-large-weight);
+  line-height: var(--mat-sys-label-large-line-height);
+  letter-spacing: var(--mat-sys-label-large-tracking);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.field-display-value {
+  font-family: var(--mat-sys-body-large-font);
+  font-size: var(--mat-sys-body-large-size);
+  font-weight: var(--mat-sys-body-large-weight);
+  line-height: var(--mat-sys-body-large-line-height);
+  letter-spacing: var(--mat-sys-body-large-tracking);
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface-container-lowest);
+  border-radius: var(--radius-xs);
+  padding: var(--space-2) var(--space-3);
+  min-height: 44px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.field-display-value--empty em {
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}

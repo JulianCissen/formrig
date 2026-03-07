@@ -5,6 +5,7 @@
   @case ('text') {
     <app-text-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
       [currentValues]="currentValues"
@@ -14,6 +15,7 @@
   @case ('textarea') {
     <app-textarea-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
       [currentValues]="currentValues"
@@ -23,14 +25,17 @@
   @case ('select') {
     <app-select-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
+      [currentValues]="currentValues"
       [onBlur]="onBlur" />
   }
 
   @case ('multi-select') {
     <app-multi-select-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
       [currentValues]="currentValues"
@@ -40,22 +45,27 @@
   @case ('radio') {
     <app-radio-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
+      [currentValues]="currentValues"
       [onBlur]="onBlur" />
   }
 
   @case ('checkbox') {
     <app-checkbox-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
+      [currentValues]="currentValues"
       [onBlur]="onBlur" />
   }
 
   @case ('file-upload') {
     <app-file-upload-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
       [uploadEntries]="uploadEntries"
@@ -72,8 +82,10 @@
   @case ('date-picker') {
     <app-date-picker-field
       [field]="$any(f)"
+      [readonly]="readonly()"
       [dirtyFieldIds]="dirtyFieldIds"
       [validationState]="validationState"
+      [currentValues]="currentValues"
       [onBlur]="onBlur" />
   }
 

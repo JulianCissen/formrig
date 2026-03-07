@@ -7,5 +7,6 @@ export interface FormDetailDto extends FormDefinitionDto {
   title:       string;
   createdAt:   string;  // ISO-8601
   updatedAt:   string;
+  submittedAt: string | null;
   fileRecords: FileRecordDto[];
 }

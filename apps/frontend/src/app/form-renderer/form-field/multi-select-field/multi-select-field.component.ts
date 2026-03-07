@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal, Signal, input } from '@angular/core';
+import { Component, Input, computed, inject, signal, Signal, input } from '@angular/core';
 import { AbstractControl, ControlContainer, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FieldDto } from '@formrig/shared';
+import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
 
 @Component({
   selector: 'app-multi-select-field',
@@ -24,6 +25,7 @@ import { FieldDto } from '@formrig/shared';
     MatButtonModule,
     MatTooltipModule,
     ReactiveFormsModule,
+    FieldDisplayValueComponent,
   ],
   templateUrl: './multi-select-field.component.html',
   styleUrl: './multi-select-field.component.scss',
@@ -33,11 +35,18 @@ export class MultiSelectFieldComponent {
   private readonly controlContainer = inject(ControlContainer);
 
   readonly field = input.required<Extract<FieldDto, { type: 'multi-select' }>>();
+  readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
   @Input() validationState: Signal<Map<string, string[]>> = signal(new Map<string, string[]>());
   @Input() currentValues: Signal<Record<string, unknown>> = signal({});
   @Input() onBlur: (fieldId: string) => void = () => {};
+
+  readonly displayMode = computed(() => this.readonly() || this.field().disabled);
+  readonly displayValue = computed((): string[] => {
+    const v = this.currentValues()[this.field().id];
+    return Array.isArray(v) ? v : [];
+  });
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
   readonly chipInputText = signal<Record<string, string>>({});

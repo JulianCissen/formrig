@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, inject, signal, WritableSignal, computed, ViewChild, ViewChildren, QueryList, ElementRef, effect, untracked } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, inject, input, signal, WritableSignal, computed, ViewChild, ViewChildren, QueryList, ElementRef, effect, untracked } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,7 +20,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse }                                       from '@angular/common/http';
 import { Subject, Subscription, EMPTY, Observable }              from 'rxjs';
-import { debounceTime, map, startWith, switchMap, tap, catchError, concatMap } from 'rxjs/operators';
+import { debounceTime, filter, map, startWith, switchMap, tap, catchError, concatMap } from 'rxjs/operators';
 import { Router }                                                  from '@angular/router';
 import { FormApiService }                                          from '../services/form-api.service';
 import { AUTOSAVE_DELAY_MS }                                        from '../tokens/autosave.token';
@@ -86,6 +86,17 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   readonly isDirty = signal(false);
   pendingSave: { fieldId: string; value: unknown } | null = null;
   flatGroup: FormGroup | null = null;
+
+  // Signal input — external readonly activation (AC-6)
+  readonly readonly = input<boolean>(false);
+
+  // Internal post-submission state (AC-7)
+  private readonly _submittedSignal = signal<boolean>(false);
+
+  // Combined effective read-only state
+  readonly effectiveReadonly = computed<boolean>(() =>
+    this.readonly() || this._submittedSignal()
+  );
 
   // ── Validation & conditional-rendering signals ────────────────────────────
 
@@ -290,6 +301,11 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         void this.liveAnnouncer.announce(response.filename + ' uploaded', 'polite');
       }),
       catchError((err: HttpErrorResponse) => {
+        if (err?.status === 409) {
+          this.snackBar.open('This form has already been submitted.', 'Dismiss', { duration: 4000 });
+          this.updateEntry(fieldId, entry.clientId, { status: 'error', errorMessage: 'Form already submitted.' });
+          return EMPTY;
+        }
         const msg = err?.status === 422 ? 'File rejected by the server.' : 'Upload failed.';
         this.updateEntry(fieldId, entry.clientId, { status: 'error', errorMessage: msg });
         void this.liveAnnouncer.announce('Upload failed: ' + entry.file!.name, 'assertive');
@@ -325,7 +341,11 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         }
         this.uploadEntries.set(updated);
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        if (err?.status === 409) {
+          this.snackBar.open('This form has already been submitted.', 'Dismiss', { duration: 4000 });
+          return;
+        }
         this.snackBar.open('Could not delete file. Try again.', 'Dismiss', { duration: 4000 });
       },
     });
@@ -348,6 +368,10 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           return;
         }
         this.formDef.set(result.data);
+        // Restore read-only state from server if form was already submitted (AC-11)
+        if (raw.submittedAt) {
+          this._submittedSignal.set(true);
+        }
         if ((result.data.steps?.length ?? 0) > 0) {
           this.stepGroups = this.buildStepGroups(result.data.steps!);
           this.setupStepperAutosave();
@@ -404,8 +428,10 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
     // Autosave pipeline
     this.autosaveSub = this.autosave$.pipe(
+      filter(() => !this.effectiveReadonly()),
       tap(p => { this.pendingSave = p; }),
       debounceTime(this.autosaveDelay),
+      filter(() => !this.effectiveReadonly()),
       tap(() => { this.pendingSave = null; this.autosaveStatus.set('saving'); }),
       switchMap(({ fieldId, value }) =>
         this.api.patchFormField(this.formId, fieldId, value).pipe(
@@ -414,7 +440,11 @@ export class FormRendererComponent implements OnInit, OnDestroy {
             this.autosaveStatus.set('saved');
             setTimeout(() => { if (this.autosaveStatus() === 'saved') this.autosaveStatus.set('idle'); }, 2000);
           }),
-          catchError(() => {
+          catchError((err: HttpErrorResponse) => {
+            if (err?.status === 409) {
+              this.snackBar.open('This form has already been submitted.', 'Dismiss', { duration: 4000 });
+              return EMPTY;
+            }
             this.autosaveStatus.set('error');
             return EMPTY;
           }),
@@ -494,35 +524,36 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     switch (field.type) {
       case 'checkbox':
         return new FormControl(
-          { value: (field.value as boolean | undefined) ?? false, disabled: field.disabled },
+          (field.value as boolean | undefined) ?? false,
           []
         );
       case 'select': {
         return new FormControl(
-          { value: (field as { value?: string }).value ?? '', disabled: field.disabled },
+          (field as { value?: string }).value ?? '',
           []
         );
       }
       case 'multi-select': {
         const raw = (field as { value?: string[] }).value;
         return new FormControl(
-          { value: Array.isArray(raw) ? raw : [], disabled: field.disabled },
+          Array.isArray(raw) ? raw : [],
           []
         );
       }
       case 'radio':
         return new FormControl<string | null>(
-          { value: (field as { value?: string | null }).value ?? null, disabled: field.disabled ?? false },
+          (field as { value?: string | null }).value ?? null,
           []
         );
       case 'date-picker':
         return new FormControl<string | null>(
-          { value: (field as { value?: string | null }).value ?? null, disabled: field.disabled ?? false },
+          (field as { value?: string | null }).value ?? null,
           { updateOn: 'blur' }
         );
       default:
+        // text and textarea
         return new FormControl(
-          { value: (field as { value?: string }).value ?? '', disabled: field.disabled },
+          (field as { value?: string }).value ?? '',
           []
         );
     }
@@ -604,12 +635,14 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     if (this.submitDisabled()) return;
     this.api.submitForm(this.formId).subscribe({
       next: (res) => {
-        console.log('Form submitted at', res.submittedAt);
+        this._submittedSignal.set(true);
         this.snackBar.open('Form submitted successfully!', 'Dismiss', { duration: 4000 });
       },
       error: (err: HttpErrorResponse) => {
-        console.error('Form submission failed', err);
-        if (err.status === 422 && Array.isArray(err.error?.errors)) {
+        if (err.status === 409) {
+          this._submittedSignal.set(true);
+          this.snackBar.open('This form has already been submitted.', 'Dismiss', { duration: 4000 });
+        } else if (err.status === 422 && Array.isArray(err.error?.errors)) {
           const msgs = (err.error.errors as { fieldId: string; violations: string[] }[])
             .flatMap((e) => e.violations.map((v) => `${e.fieldId}: ${v}`))
             .slice(0, 5)

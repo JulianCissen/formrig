@@ -1,0 +1,13 @@
+<div class="field-display">
+  <span class="form-field__label" [id]="fieldId() + '-label'">{{ label() }}</span>
+  <p class="field-display-value"
+     [class.field-display-value--empty]="isEmpty()"
+     [id]="fieldId() + '-display'"
+     [attr.aria-labelledby]="fieldId() + '-label'">
+    @if (isEmpty()) {
+      <em>No answer</em>
+    } @else {
+      {{ displayText() }}
+    }
+  </p>
+</div>

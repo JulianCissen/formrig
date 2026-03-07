@@ -1,3 +1,10 @@
+@if (displayMode()) {
+  <app-field-display-value
+    [fieldId]="field().id"
+    [label]="field().label"
+    [value]="displayValue()"
+    [displayType]="'text'" />
+} @else {
 <mat-form-field
   appearance="outline"
   subscriptSizing="dynamic"
@@ -52,3 +59,4 @@
   }
 
 </mat-form-field>
+}

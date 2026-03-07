@@ -157,6 +157,7 @@ export class FormService {
       title:       plugin.definition.title ?? loaded.manifest.name,
       createdAt:   form.createdAt.toISOString(),
       updatedAt:   form.updatedAt.toISOString(),
+      submittedAt: form.submittedAt?.toISOString() ?? null,
       id:          definition.id,
       fields:      flatFieldDtos,
       fileRecords: fileRecordDtos,
@@ -190,6 +191,7 @@ export class FormService {
     // Ownership check — throws 404 if form not found or wrong owner.
     // Pass the verified entity to buildFlatFieldDtos to avoid a second unscoped DB fetch.
     const ownedForm = await this.findOwnedForm(id, owner);
+    if (ownedForm.submittedAt !== null) throw new ConflictException('Form has already been submitted.');
 
     // Hard validation — resolve live field definitions and enforce type/constraint caps.
     const { fieldMap, form } = await this.buildFlatFieldDtos(id, ownedForm);
@@ -281,6 +283,7 @@ export class FormService {
     owner: User,
   ): Promise<{ id: string; fieldId: string; filename: string; mimeType: string; size: number; url: string }> {
     const form = await this.findOwnedForm(formId, owner);
+    if (form.submittedAt !== null) throw new ConflictException('Form has already been submitted.');
 
     const filename = generateFilename(meta.originalName, 0);
 
@@ -322,7 +325,8 @@ export class FormService {
   async deleteFileRecord(formId: string, fileId: string, owner: User): Promise<void> {
     // Two-step: findOwnedForm enforces form ownership (404 for absent/wrong-owner);
     // file lookup is then scoped to that form. Security-equivalent to a single combined query.
-    await this.findOwnedForm(formId, owner);
+    const form = await this.findOwnedForm(formId, owner);
+    if (form.submittedAt !== null) throw new ConflictException('Form has already been submitted.');
     const record = await this.fileRepo.findOne({ id: fileId, form: { id: formId } });
     if (!record) throw new NotFoundException(`File "${fileId}" not found`);
 

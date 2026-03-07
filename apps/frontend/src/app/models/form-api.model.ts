@@ -17,6 +17,8 @@ export interface FormDetail extends FormSummary {
   formId?: string;
   /** File records persisted for this form (wire format: fileId = record UUID). */
   fileRecords?: { fileId: string; fieldId: string; filename: string; mimeType: string; size: number; url: string }[];
+  /** ISO timestamp of submission; null if not yet submitted. */
+  submittedAt: string | null;
 }
 
 export interface CreateFormPayload {

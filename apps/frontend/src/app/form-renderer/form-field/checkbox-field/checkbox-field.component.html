@@ -1,3 +1,10 @@
+@if (displayMode()) {
+  <app-field-display-value
+    [fieldId]="field().id"
+    [label]="field().label"
+    [value]="displayValue()"
+    [displayType]="'text'" />
+} @else {
 <app-field-plain-wrapper
   [fieldId]="field().id"
   [label]="''"
@@ -12,3 +19,4 @@
     {{ field().label }}
   </mat-checkbox>
 </app-field-plain-wrapper>
+}
