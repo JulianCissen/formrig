@@ -23,7 +23,7 @@ import { FormTypeSummary }                    from '../../models/form-api.model'
       <div class="create-form">
 
         <div class="type-section">
-          <span class="section-label">Form type</span>
+          <span class="section-label">Choose a form type</span>
 
           <!-- Loading -->
           @if (typesLoading()) {
@@ -48,20 +48,20 @@ import { FormTypeSummary }                    from '../../models/form-api.model'
           <!-- Type cards list -->
           @if (!typesLoading() && !typesError() && types().length > 0) {
             <div class="type-cards-list">
-              @for (t of types(); track t.name) {
+              @for (t of types(); track t.identifier) {
                 <div class="type-card"
-                     [class.type-card--selected]="selectedType()?.name === t.name"
+                     [class.type-card--selected]="selectedType()?.identifier === t.identifier"
                      (click)="selectType(t)"
                      (keydown.enter)="selectType(t)"
                      (keydown.space)="selectType(t); $event.preventDefault()"
                      role="button"
                      tabindex="0"
-                     [attr.aria-pressed]="selectedType()?.name === t.name">
+                     [attr.aria-pressed]="selectedType()?.identifier === t.identifier">
                   <div class="type-card-icon-area">
                     <mat-icon aria-hidden="true">description</mat-icon>
                   </div>
                   <div class="type-card-content">
-                    <div class="type-card-name">{{ t.name }}</div>
+                    <div class="type-card-name">{{ t.title }}</div>
                     <div class="type-card-description">{{ t.description }}</div>
                   </div>
                   <span class="version-badge">{{ t.version }}</span>
@@ -82,11 +82,10 @@ import { FormTypeSummary }                    from '../../models/form-api.model'
                   (click)="submit()">
             @if (saving()) {
               <mat-spinner diameter="18" />
-              <span>Creating…</span>
             } @else {
-              <mat-icon>add</mat-icon>
-              <span>Create form</span>
+              <mat-icon aria-hidden="true">add</mat-icon>
             }
+            <span>{{ saving() ? 'Creating…' : 'Create form' }}</span>
           </button>
         </div>
 
@@ -136,7 +135,7 @@ export class CreateFormPage implements OnInit {
     this.submitError.set(null);
     this.saving.set(true);
 
-    this.api.createForm({ pluginId: selected.name }).subscribe({
+    this.api.createForm({ pluginId: selected.identifier }).subscribe({
       next:  (form) => this.router.navigate(['/form', form.id]),
       error: (err)  => {
         this.saving.set(false);

@@ -146,7 +146,7 @@ export class FormService {
     return {
       formId:      form.id,
       pluginId:    form.pluginId,
-      title:       loaded.manifest.name,
+      title:       plugin.definition.title ?? loaded.manifest.name,
       createdAt:   form.createdAt.toISOString(),
       updatedAt:   form.updatedAt.toISOString(),
       id:          definition.id,

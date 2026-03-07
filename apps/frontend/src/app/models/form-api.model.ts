@@ -39,7 +39,8 @@ export interface FileRecordResponse {
 }
 
 export interface FormTypeSummary {
-  name:        string;
+  identifier:  string;
+  title:       string;
   description: string;
   version:     string;
 }
