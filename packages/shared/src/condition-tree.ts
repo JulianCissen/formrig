@@ -84,3 +84,37 @@ export function evaluateConditionTree(
     case 'XOR': return results.filter(Boolean).length === 1;
   }
 }
+
+// ── evaluateRuntimeConditionTree ─────────────────────────────────────────────
+/**
+ * Evaluates a runtime ConditionTree (with Rule class instances on leaves) against
+ * a map of current field values.
+ *
+ * Use this variant when the tree comes from plugin code / BaseField instances.
+ * For serialised ConditionTreeDto values, use evaluateConditionTree instead.
+ *
+ * @param tree   The runtime condition tree to evaluate.
+ * @param values A map of fieldId → current value for all fields in the form.
+ * @returns      true if the condition is satisfied, false otherwise.
+ */
+export function evaluateRuntimeConditionTree(
+  tree: ConditionTree,
+  values: Record<string, unknown>,
+  _depth = 0,
+): boolean {
+  if (_depth > MAX_CONDITION_TREE_DEPTH) {
+    throw new Error('ConditionTree exceeds maximum nesting depth');
+  }
+  if ('rule' in tree) {
+    // Leaf node — rule is already a Rule instance, call matches() directly
+    const value = values[tree.fieldId] ?? null;
+    return tree.rule.matches(value, values);
+  }
+  // Group node
+  const results = tree.children.map(child => evaluateRuntimeConditionTree(child, values, _depth + 1));
+  switch (tree.operator) {
+    case 'AND': return results.every(Boolean);
+    case 'OR':  return results.some(Boolean);
+    case 'XOR': return results.filter(Boolean).length === 1;
+  }
+}

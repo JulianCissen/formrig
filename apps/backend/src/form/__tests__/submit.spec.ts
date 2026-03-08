@@ -1,6 +1,8 @@
 import { UnprocessableEntityException, ConflictException } from '@nestjs/common';
 import { FormService } from '../form.service';
 import type { FieldDto } from '@formrig/shared';
+import { EqualsRule } from '@formrig/shared';
+import type { ConditionTree } from '@formrig/shared';
 import type { Form } from '../entities/form.entity';
 import type { User } from '../../dev-auth/entities/user.entity';
 
@@ -261,6 +263,98 @@ describe('FormService.submitForm', () => {
       );
       expect(body.errors).toHaveLength(1);
       expect(emMock.flush).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('visibility conditions — visibleWhen', () => {
+    /** Builds a visibleWhen ConditionTree (runtime) that matches when 'trigger-0' equals the given expected value. */
+    function visibleWhenEquals(fieldId: string, expected: string): ConditionTree {
+      return { fieldId, rule: new EqualsRule({ expected }) };
+    }
+
+    it('skips soft validation for a required field when its visibleWhen condition evaluates to false (field is hidden)', async () => {
+      const { svc, emMock } = buildService();
+      const form = buildFormStub();
+      // trigger-0 = 'No' → hiddenField-1 is hidden (visibleWhen expects 'Yes') → required rule must be skipped
+      const fieldMap = new Map<string, FieldDto>([
+        ['trigger-0', textField({ id: 'trigger-0', value: 'No' })],
+        [
+          'hidden-field-1',
+          {
+            ...textField({ id: 'hidden-field-1', required: true, value: '' }),
+            visibleWhen: visibleWhenEquals('trigger-0', 'Yes'),
+          } as unknown as FieldDto,
+        ],
+      ]);
+      jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
+
+      await expect(svc.submitForm('form-1', mockUser)).resolves.toMatchObject({
+        submittedAt: expect.any(String),
+      });
+      expect(emMock.flush).toHaveBeenCalledTimes(1);
+    });
+
+    it('runs soft validation for a required field when its visibleWhen condition evaluates to true (field is visible)', async () => {
+      const { svc, emMock } = buildService();
+      const form = buildFormStub();
+      // trigger-0 = 'Yes' → visibleField-1 is visible → required rule fires on empty value
+      const fieldMap = new Map<string, FieldDto>([
+        ['trigger-0', textField({ id: 'trigger-0', value: 'Yes' })],
+        [
+          'visible-field-1',
+          {
+            ...textField({ id: 'visible-field-1', required: true, value: '' }),
+            visibleWhen: visibleWhenEquals('trigger-0', 'Yes'),
+          } as unknown as FieldDto,
+        ],
+      ]);
+      jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
+
+      let err!: UnprocessableEntityException;
+      try {
+        await svc.submitForm('form-1', mockUser);
+      } catch (e) {
+        err = e as UnprocessableEntityException;
+      }
+
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      const body = err.getResponse() as { message: string; errors: { fieldId: string; violations: string[] }[] };
+      expect(body.message).toBe('Soft validation failed');
+      expect(body.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ fieldId: 'visible-field-1' })]),
+      );
+      expect(emMock.flush).not.toHaveBeenCalled();
+    });
+
+    it('skips validation for a hidden field but still validates visible fields in the same form', async () => {
+      const { svc } = buildService();
+      const form = buildFormStub();
+      // trigger-0 = 'No' → hidden-field-1 is hidden, required-field-2 is always visible and required
+      const fieldMap = new Map<string, FieldDto>([
+        ['trigger-0', textField({ id: 'trigger-0', value: 'No' })],
+        [
+          'hidden-field-1',
+          {
+            ...textField({ id: 'hidden-field-1', required: true, value: '' }),
+            visibleWhen: visibleWhenEquals('trigger-0', 'Yes'),
+          } as unknown as FieldDto,
+        ],
+        ['required-field-2', textField({ id: 'required-field-2', required: true, value: '' })],
+      ]);
+      jest.spyOn(svc as any, 'buildFlatFieldDtos').mockResolvedValue({ fieldMap, form });
+
+      let err!: UnprocessableEntityException;
+      try {
+        await svc.submitForm('form-1', mockUser);
+      } catch (e) {
+        err = e as UnprocessableEntityException;
+      }
+
+      expect(err).toBeInstanceOf(UnprocessableEntityException);
+      const body = err.getResponse() as { message: string; errors: { fieldId: string; violations: string[] }[] };
+      // Only the always-visible required field should appear in errors
+      expect(body.errors).toHaveLength(1);
+      expect(body.errors[0].fieldId).toBe('required-field-2');
     });
   });
 });

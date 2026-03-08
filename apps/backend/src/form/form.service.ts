@@ -4,7 +4,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { PluginService }           from '../plugin/plugin.service';
 import { FormEventContext, FileMeta } from '@formrig/sdk';
-import { BaseField, FieldDto, StepDto, getEffectiveRules } from '@formrig/shared';
+import { BaseField, FieldDto, StepDto, getEffectiveRules, evaluateRuntimeConditionTree } from '@formrig/shared';
 import { User }        from '../dev-auth/entities/user.entity';
 import { Form }       from './entities/form.entity';
 import { FileRecord } from './entities/file-record.entity';
@@ -239,7 +239,7 @@ export class FormService {
     const { fieldMap, form } = await this.buildFlatFieldDtos(id, ownedForm);
 
     if (form.submittedAt !== null) {
-      throw new ConflictException('Form already submitted');
+      throw new ConflictException('Form has already been submitted.');
     }
 
     // Build allValues map: slug → current value (used for cross-field rule evaluation)
@@ -252,6 +252,12 @@ export class FormService {
 
     for (const [, fieldDto] of fieldMap.entries()) {
       if (fieldDto.type === 'file-upload') continue;
+
+      // Skip soft validation for fields hidden by a visibility condition
+      const visibleWhen = (fieldDto as unknown as BaseField).visibleWhen;
+      if (visibleWhen !== undefined && !evaluateRuntimeConditionTree(visibleWhen, allValues)) {
+        continue;
+      }
 
       const rules = getEffectiveRules(fieldDto, allValues);
       for (const rule of rules) {

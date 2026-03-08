@@ -21,7 +21,7 @@ export type { RuleDto } from './rule-dto';
 // Condition tree
 export {
   MAX_CONDITION_TREE_DEPTH,
-  ConditionLeafDtoSchema, ConditionTreeDtoSchema, evaluateConditionTree,
+  ConditionLeafDtoSchema, ConditionTreeDtoSchema, evaluateConditionTree, evaluateRuntimeConditionTree,
 } from './condition-tree';
 export type {
   ConditionOperator, ConditionLeaf, ConditionGroup, ConditionTree,

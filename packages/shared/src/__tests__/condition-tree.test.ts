@@ -1,5 +1,6 @@
-import { evaluateConditionTree } from '../condition-tree';
+import { evaluateConditionTree, evaluateRuntimeConditionTree, MAX_CONDITION_TREE_DEPTH } from '../condition-tree';
 import { ruleFromDto, type RuleDto } from '../rule-dto';
+import { EqualsRule } from '../rule';
 
 // ── evaluateConditionTree ────────────────────────────────────────────────────
 
@@ -158,5 +159,100 @@ describe('ruleFromDto — factory produces correct instances', () => {
     expect(rule.matches(true)).toBe(true);
     expect(rule.matches(false)).toBe(false);
     expect(rule.matches(1)).toBe(false);
+  });
+});
+
+// ── evaluateRuntimeConditionTree ─────────────────────────────────────────────
+
+describe('evaluateRuntimeConditionTree — single leaf', () => {
+  const rule = new EqualsRule({ expected: 'a' });
+  const leaf = { fieldId: 'f1', rule };
+
+  it('matches when value equals expected', () => {
+    expect(evaluateRuntimeConditionTree(leaf, { f1: 'a' })).toBe(true);
+  });
+
+  it('does not match when value differs', () => {
+    expect(evaluateRuntimeConditionTree(leaf, { f1: 'b' })).toBe(false);
+  });
+
+  it('does not match when value is missing (null substituted)', () => {
+    expect(evaluateRuntimeConditionTree(leaf, {})).toBe(false);
+  });
+});
+
+describe('evaluateRuntimeConditionTree — AND group', () => {
+  const leaf1 = { fieldId: 'f1', rule: new EqualsRule({ expected: 'yes' }) };
+  const leaf2 = { fieldId: 'f2', rule: new EqualsRule({ expected: 42 }) };
+  const andTree = { operator: 'AND' as const, children: [leaf1, leaf2] };
+
+  it('returns true when all children match', () => {
+    expect(evaluateRuntimeConditionTree(andTree, { f1: 'yes', f2: 42 })).toBe(true);
+  });
+
+  it('returns false when one child does not match', () => {
+    expect(evaluateRuntimeConditionTree(andTree, { f1: 'yes', f2: 99 })).toBe(false);
+  });
+});
+
+describe('evaluateRuntimeConditionTree — OR group', () => {
+  const leaf1 = { fieldId: 'f1', rule: new EqualsRule({ expected: 'yes' }) };
+  const leaf2 = { fieldId: 'f2', rule: new EqualsRule({ expected: 'yes' }) };
+  const orTree = { operator: 'OR' as const, children: [leaf1, leaf2] };
+
+  it('returns true when one child matches', () => {
+    expect(evaluateRuntimeConditionTree(orTree, { f1: 'yes', f2: 'no' })).toBe(true);
+  });
+
+  it('returns false when no children match', () => {
+    expect(evaluateRuntimeConditionTree(orTree, { f1: 'no', f2: 'no' })).toBe(false);
+  });
+});
+
+describe('evaluateRuntimeConditionTree — XOR group', () => {
+  const leaf1 = { fieldId: 'f1', rule: new EqualsRule({ expected: 'yes' }) };
+  const leaf2 = { fieldId: 'f2', rule: new EqualsRule({ expected: 'yes' }) };
+  const xorTree = { operator: 'XOR' as const, children: [leaf1, leaf2] };
+
+  it('returns true when exactly one child matches', () => {
+    expect(evaluateRuntimeConditionTree(xorTree, { f1: 'yes', f2: 'no' })).toBe(true);
+  });
+
+  it('returns false when both children match', () => {
+    expect(evaluateRuntimeConditionTree(xorTree, { f1: 'yes', f2: 'yes' })).toBe(false);
+  });
+
+  it('returns false when neither child matches', () => {
+    expect(evaluateRuntimeConditionTree(xorTree, { f1: 'no', f2: 'no' })).toBe(false);
+  });
+});
+
+describe('evaluateRuntimeConditionTree — nested group', () => {
+  // AND( leaf(f1 == 'yes'), OR( leaf(f2 == 'a'), leaf(f3 == 'b') ) )
+  const leaf1 = { fieldId: 'f1', rule: new EqualsRule({ expected: 'yes' }) };
+  const leaf2 = { fieldId: 'f2', rule: new EqualsRule({ expected: 'a' }) };
+  const leaf3 = { fieldId: 'f3', rule: new EqualsRule({ expected: 'b' }) };
+  const orGroup = { operator: 'OR' as const, children: [leaf2, leaf3] };
+  const andTree = { operator: 'AND' as const, children: [leaf1, orGroup] };
+
+  it('returns true when AND leaf matches and OR sub-group has at least one match', () => {
+    expect(evaluateRuntimeConditionTree(andTree, { f1: 'yes', f2: 'a', f3: 'x' })).toBe(true);
+  });
+
+  it('returns false when AND leaf does not match even if OR is satisfied', () => {
+    expect(evaluateRuntimeConditionTree(andTree, { f1: 'no', f2: 'a', f3: 'x' })).toBe(false);
+  });
+
+  it('returns false when OR sub-group is not satisfied even if AND leaf matches', () => {
+    expect(evaluateRuntimeConditionTree(andTree, { f1: 'yes', f2: 'x', f3: 'x' })).toBe(false);
+  });
+});
+
+describe('evaluateRuntimeConditionTree — depth limit', () => {
+  it('throws when _depth exceeds MAX_CONDITION_TREE_DEPTH', () => {
+    const leaf = { fieldId: 'f1', rule: new EqualsRule({ expected: 'a' }) };
+    expect(() =>
+      evaluateRuntimeConditionTree(leaf, { f1: 'a' }, MAX_CONDITION_TREE_DEPTH + 1),
+    ).toThrow('ConditionTree exceeds maximum nesting depth');
   });
 });
