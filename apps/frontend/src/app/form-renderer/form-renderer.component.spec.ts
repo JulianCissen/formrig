@@ -1,3 +1,4 @@
+import "@angular/compiler";
 /**
  * Unit tests for FormRendererComponent — effectiveReadonly logic and autosave gate.
  *
@@ -13,7 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { signal, computed } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { filter, take, toArray } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 
 // ── Inline pure helpers ──────────────────────────────────────────────────────
 

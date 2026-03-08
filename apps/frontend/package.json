@@ -5,7 +5,8 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --poll 500",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "test": "vitest run"
   },
   "private": true,
   "dependencies": {
@@ -30,6 +31,9 @@
     "@angular-devkit/build-angular": "^21.1.5",
     "@angular/cli": "^21.1.5",
     "@angular/compiler-cli": "^21.1.5",
-    "typescript": "~5.9.3"
+    "@types/node": "^22.0.0",
+    "jsdom": "^25.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.0.0"
   }
 }
