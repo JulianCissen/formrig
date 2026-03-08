@@ -5,21 +5,6 @@
 } @else if (error()) {
   <p role="alert" class="form-error">{{ error() }}</p>
 } @else {
-  <div class="autosave-bar" role="status" aria-live="polite">
-    @if (autosaveStatus() === 'saving') { <span>Saving…</span> }
-    @if (autosaveStatus() === 'saved')  {
-      <span class="autosave-saved">
-        <mat-icon aria-hidden="true">check_circle</mat-icon>
-        Saved
-      </span>
-    }
-    @if (autosaveStatus() === 'error')  {
-      <span class="autosave-error">
-        <mat-icon aria-hidden="true">error_outline</mat-icon>
-        Save failed
-      </span>
-    }
-  </div>
   @let form = formDef()!;
 
   <div class="form-panel">
@@ -71,6 +56,20 @@
                   }
                 }
                 <div class="form-actions">
+                  <div class="autosave-status" aria-hidden="true">
+                    <span
+                      class="autosave-status__saving"
+                      [class.is-active]="autosaveStatus() === 'saving'">
+                      <mat-icon aria-hidden="true">sync</mat-icon>
+                      Saving…
+                    </span>
+                    <span
+                      class="autosave-status__saved"
+                      [class.is-active]="autosaveStatus() === 'saved'">
+                      <mat-icon aria-hidden="true">check_circle</mat-icon>
+                      Saved
+                    </span>
+                  </div>
                   @if (i > 0) {
                     <button matButton="outlined" type="button" matStepperPrevious>
                       <mat-icon aria-hidden="true">arrow_back</mat-icon>
@@ -84,7 +83,7 @@
                     </button>
                   } @else {
                     <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">
-                      {{ submitErrors().join('. ') }}
+                      {{ submitErrors().slice(0, 5).join('. ') }}
                     </span>
                     @if (!effectiveReadonly()) {
                       <span
@@ -147,6 +146,20 @@
           }
         }
         <div class="form-actions">
+          <div class="autosave-status" aria-hidden="true">
+            <span
+              class="autosave-status__saving"
+              [class.is-active]="autosaveStatus() === 'saving'">
+              <mat-icon aria-hidden="true">sync</mat-icon>
+              Saving…
+            </span>
+            <span
+              class="autosave-status__saved"
+              [class.is-active]="autosaveStatus() === 'saved'">
+              <mat-icon aria-hidden="true">check_circle</mat-icon>
+              Saved
+            </span>
+          </div>
           <span id="submit-errors-live" aria-live="polite" class="cdk-visually-hidden">{{ submitErrors().slice(0, 5).join('. ') }}</span>
           @if (!effectiveReadonly()) {
             <span

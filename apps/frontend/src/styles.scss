@@ -139,3 +139,11 @@ mat-stepper {
   // `--mat-stepper-line-color-done` token in this version. This is a known gap;
   // revisit when Angular Material adds per-state connector tokens.
 }
+
+// Autosave error snackbar — error-container surface treatment
+// Must be global: MatSnackBar renders in the CDK overlay outside component style encapsulation.
+.autosave-error-snackbar {
+  --mdc-snackbar-container-color: var(--mat-sys-error-container);
+  --mdc-snackbar-supporting-text-color: var(--mat-sys-on-error-container);
+  --mat-snack-bar-button-color: var(--mat-sys-on-error-container);
+}

@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule, MatSnackBar, MatSnackBarRef, SimpleSnackBar } from '@angular/material/snack-bar';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -83,6 +83,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   private readonly autosave$ = new Subject<{ fieldId: string; value: unknown }>();
   private autosaveSub?: Subscription;
   autosaveStatus = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  private _errorSnackbarRef: MatSnackBarRef<SimpleSnackBar> | null = null;
   readonly isDirty = signal(false);
   pendingSave: { fieldId: string; value: unknown } | null = null;
   flatGroup: FormGroup | null = null;
@@ -207,6 +208,43 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         }
       }
     });
+  });
+
+  private readonly _autosaveErrorEffect = effect(() => {
+    const status = this.autosaveStatus();
+
+    if (status === 'error') {
+      // Guard: do not stack snackbars if signal emits 'error' multiple times
+      if (this._errorSnackbarRef) return;
+
+      this._errorSnackbarRef = untracked(() =>
+        this.snackBar.open(
+          'Save failed. Your changes may not be saved.',
+          'Dismiss',
+          {
+            duration: 0,             // AC-3: no auto-dismiss
+            politeness: 'assertive', // AC-4: aria-live="assertive" via Material LiveAnnouncer
+            panelClass: ['autosave-error-snackbar'],
+          }
+        )
+      );
+
+      // AC-8: reset status to idle when user explicitly dismisses
+      this._errorSnackbarRef.onAction().subscribe(() => {
+        untracked(() => this.autosaveStatus.set('idle'));
+        // _errorSnackbarRef will be nulled in afterDismissed() below
+      });
+
+      // Clean up ref after any dismissal (programmatic or user-initiated)
+      this._errorSnackbarRef.afterDismissed().subscribe(() => {
+        this._errorSnackbarRef = null;
+      });
+
+    } else {
+      // Status moved away from 'error' without user dismissal (e.g. retry succeeded)
+      untracked(() => this._errorSnackbarRef?.dismiss());
+      // afterDismissed() clears the ref
+    }
   });
 
   private collectAllControls(): Map<string, AbstractControl> {
@@ -454,6 +492,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._errorSnackbarRef?.dismiss();
     this.autosaveSub?.unsubscribe();
     this.uploadQueueSub?.unsubscribe();
   }

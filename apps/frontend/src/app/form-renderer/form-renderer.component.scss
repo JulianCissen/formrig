@@ -75,46 +75,70 @@
   margin-bottom: var(--space-8);
 }
 
-// ── Autosave bar ─────────────────────────────────────────────────────────────
+// ── Autosave status indicator ────────────────────────────────────────────────
+//
+// Always-present first flex child of .form-actions.
+// Fixed dimensions reserve layout space; child spans are position:absolute
+// so state transitions cause zero layout reflow (AC-5).
 
-.autosave-bar {
-  font-size: var(--mat-sys-body-small-size);
+.autosave-status {
+  position: relative;
+  min-width: 80px;    // Wide enough for "⟳ Saving…" and "✓ Saved" at Body Small
+  height: 20px;       // Matches Body Small line-height with 14 px icon
+  margin-right: auto; // Pushes action buttons to the right edge of the row
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.autosave-status__saving,
+.autosave-status__saved {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+  font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
-  min-height: 1.2rem;
-  margin-bottom: var(--space-3);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.autosave-saved {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--mat-sys-tertiary, var(--mat-sys-on-surface-variant));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease;
 
   mat-icon {
     font-size: 14px;
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
   }
 }
 
-.autosave-error {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--mat-sys-error);
-
-  mat-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-  }
+// Saved uses tertiary colour — consistent with existing codebase convention
+.autosave-status__saved {
+  color: var(--mat-sys-tertiary);
 }
 
-.error-counter {
-  color: var(--mat-sys-error);
+// Active state: fade in
+.autosave-status__saving.is-active,
+.autosave-status__saved.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+// Spinning icon for saving state
+.autosave-status__saving.is-active mat-icon {
+  animation: autosave-spin 1.2s linear infinite;
+}
+
+@keyframes autosave-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// Respect reduced-motion preference — text label alone conveys state
+@media (prefers-reduced-motion: reduce) {
+  .autosave-status__saving.is-active mat-icon {
+    animation: none;
+  }
 }
 
 // ── Read-only banner ─────────────────────────────────────────────────────────
