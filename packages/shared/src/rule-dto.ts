@@ -5,7 +5,8 @@ import { EqualsRule, NotEqualsRule, IsEmptyRule, IsNotEmptyRule,
          MinLengthRule, MaxLengthRule, MinCountRule, MaxCountRule,
          IsTrueRule, IsFalseRule,
          EqualsFieldRule, ComesAfterFieldRule, ComesBeforeFieldRule,
-         OlderThanRule, YoungerThanRule, BeforeStaticDateRule, AfterStaticDateRule } from './rule';
+         OlderThanRule, YoungerThanRule, BeforeStaticDateRule, AfterStaticDateRule,
+         MinValueRule, MaxValueRule } from './rule';
 import type { Rule } from './rule';
 
 /** Optional custom error message field present on every rule DTO variant. */
@@ -31,8 +32,10 @@ export const RuleDtoSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('younger-than'),       years: z.number().int().positive(), ...m }),
   z.object({ type: z.literal('before-static-date'), date: z.string(), ...m }),
   z.object({ type: z.literal('after-static-date'),  date: z.string(), ...m }),
+  z.object({ type: z.literal('min-value'),          min: z.number().int(),  ...m }),
+  z.object({ type: z.literal('max-value'),          max: z.number().int(),  ...m }),
 ]);
-// 19 members. RequiredRule is intentionally omitted — it is never serialised.
+// 21 members. RequiredRule is intentionally omitted — it is never serialised.
 
 export type RuleDto = z.infer<typeof RuleDtoSchema>;
 
@@ -64,5 +67,7 @@ function buildRule(dto: RuleDto): Rule {
     case 'younger-than':         return new YoungerThanRule({ years: dto.years });
     case 'before-static-date':   return new BeforeStaticDateRule({ date: dto.date });
     case 'after-static-date':    return new AfterStaticDateRule({ date: dto.date });
+    case 'min-value':            return new MinValueRule({ min: dto.min });
+    case 'max-value':            return new MaxValueRule({ max: dto.max });
   }
 }

@@ -6,10 +6,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FieldDto } from '@formrig/shared';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 
 @Component({
-  selector: 'app-text-field',
+  selector: 'app-textarea-field',
   standalone: true,
   imports: [
     MatFormFieldModule,
@@ -20,12 +20,12 @@ import { FieldDisplayValueComponent } from '../wrappers/field-display-value.comp
     ReactiveFormsModule,
     FieldDisplayValueComponent,
   ],
-  templateUrl: './text-field.component.html',
-  styleUrl: './text-field.component.scss',
+  templateUrl: './textarea-field.component.html',
+  styleUrl: './textarea-field.component.scss',
   viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
-export class TextFieldComponent {
-  readonly field = input.required<Extract<FieldDto, { type: 'text' }>>();
+export class TextareaFieldComponent {
+  readonly field = input.required<Extract<FieldDto, { type: 'textarea' }>>();
   readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());

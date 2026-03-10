@@ -1,25 +1,31 @@
 import { Component, Input, computed, inject, signal, Signal, input } from '@angular/core';
 import { ControlContainer, ReactiveFormsModule } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FieldDto } from '@formrig/shared';
-import { FieldPlainWrapperComponent } from '../wrappers/field-plain-wrapper.component';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 
 @Component({
-  selector: 'app-checkbox-field',
+  selector: 'app-text-field',
   standalone: true,
   imports: [
-    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
     ReactiveFormsModule,
-    FieldPlainWrapperComponent,
     FieldDisplayValueComponent,
   ],
-  templateUrl: './checkbox-field.component.html',
-  styleUrl: './checkbox-field.component.scss',
+  templateUrl: './text-field.component.html',
+  styleUrl: './text-field.component.scss',
   viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
-export class CheckboxFieldComponent {
-  readonly field = input.required<Extract<FieldDto, { type: 'checkbox' }>>();
+export class TextFieldComponent {
+  readonly field = input.required<Extract<FieldDto, { type: 'text' }>>();
   readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
@@ -28,8 +34,5 @@ export class CheckboxFieldComponent {
   @Input() onBlur: (fieldId: string) => void = () => {};
 
   readonly displayMode = computed(() => this.readonly() || this.field().disabled);
-  readonly displayValue = computed((): string | null => {
-    const v = this.currentValues()[this.field().id];
-    return v === true ? 'Yes' : v === false ? 'No' : null;
-  });
+  readonly displayValue = computed(() => String(this.currentValues()[this.field().id] ?? ''));
 }

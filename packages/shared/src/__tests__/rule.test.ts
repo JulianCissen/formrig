@@ -19,6 +19,8 @@ import {
   YoungerThanRule,
   BeforeStaticDateRule,
   AfterStaticDateRule,
+  MinValueRule,
+  MaxValueRule,
 } from '../rule';
 
 // ── EqualsRule ───────────────────────────────────────────────────────────────
@@ -263,6 +265,12 @@ describe('RequiredRule', () => {
   it('fails for undefined on array field', () => {
     expect(new RequiredRule({ fieldType: 'multi-select' }).matches(undefined)).toBe(false);
   });
+  it('fails for null on number field', () => {
+    expect(new RequiredRule({ fieldType: 'number' }).matches(null)).toBe(false);
+  });
+  it('passes for zero on number field — zero is a valid entered integer', () => {
+    expect(new RequiredRule({ fieldType: 'number' }).matches(0)).toBe(true);
+  });
 });
 
 // ── OlderThanRule ──────────────────────────────────────────────────────────────
@@ -349,4 +357,34 @@ describe('AfterStaticDateRule', () => {
   it('returns false for non-date string', () => expect(rule.matches('hello')).toBe(false));
   it('returns false for number', () => expect(rule.matches(42)).toBe(false));
   it('returns correct error message', () => expect(rule.errorMessage()).toBe('Must be after 2024-06-15'));
+});
+
+// ── MinValueRule ──────────────────────────────────────────────────────────────
+
+describe('MinValueRule', () => {
+  const rule = new MinValueRule({ min: 5 });
+
+  it('passes for integer at the bound (value === min)', () => expect(rule.matches(5)).toBe(true));
+  it('passes for integer above the bound', () => expect(rule.matches(10)).toBe(true));
+  it('fails for integer below the bound', () => expect(rule.matches(4)).toBe(false));
+  it('fails for null', () => expect(rule.matches(null)).toBe(false));
+  it('fails for float 1.5', () => expect(rule.matches(1.5)).toBe(false));
+  it('fails for Infinity', () => expect(rule.matches(Infinity)).toBe(false));
+  it('fails for NaN', () => expect(rule.matches(NaN)).toBe(false));
+  it('returns correct default error message', () => expect(rule.errorMessage()).toBe('Must be at least 5'));
+});
+
+// ── MaxValueRule ──────────────────────────────────────────────────────────────
+
+describe('MaxValueRule', () => {
+  const rule = new MaxValueRule({ max: 10 });
+
+  it('passes for integer at the bound (value === max)', () => expect(rule.matches(10)).toBe(true));
+  it('passes for integer below the bound', () => expect(rule.matches(5)).toBe(true));
+  it('fails for integer above the bound', () => expect(rule.matches(11)).toBe(false));
+  it('fails for null', () => expect(rule.matches(null)).toBe(false));
+  it('fails for float 1.5', () => expect(rule.matches(1.5)).toBe(false));
+  it('fails for Infinity', () => expect(rule.matches(Infinity)).toBe(false));
+  it('fails for NaN', () => expect(rule.matches(NaN)).toBe(false));
+  it('returns correct default error message', () => expect(rule.errorMessage()).toBe('Must be at most 10'));
 });

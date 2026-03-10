@@ -1,35 +1,25 @@
 import { Component, Input, computed, inject, signal, Signal, input } from '@angular/core';
 import { ControlContainer, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatRadioModule } from '@angular/material/radio';
 import { FieldDto } from '@formrig/shared';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldPlainWrapperComponent } from '../../wrappers/field-plain-wrapper.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 
 @Component({
-  selector: 'app-select-field',
+  selector: 'app-radio-field',
   standalone: true,
   imports: [
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
+    MatRadioModule,
     ReactiveFormsModule,
+    FieldPlainWrapperComponent,
     FieldDisplayValueComponent,
   ],
-  templateUrl: './select-field.component.html',
-  styleUrl: './select-field.component.scss',
+  templateUrl: './radio-field.component.html',
+  styleUrl: './radio-field.component.scss',
   viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
-export class SelectFieldComponent {
-  readonly field = input.required<Extract<FieldDto, { type: 'select' }>>();
+export class RadioFieldComponent {
+  readonly field = input.required<Extract<FieldDto, { type: 'radio' }>>();
   readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());

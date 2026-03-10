@@ -3,8 +3,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FieldDto } from '@formrig/shared';
-import { FileUploadEntry } from '../../file-upload-entry.model';
-import { FieldPlainWrapperComponent } from '../wrappers/field-plain-wrapper.component';
+import { FileUploadEntry } from '../../../file-upload-entry.model';
+import { FieldPlainWrapperComponent } from '../../wrappers/field-plain-wrapper.component';
 
 @Component({
   selector: 'app-file-upload-field',

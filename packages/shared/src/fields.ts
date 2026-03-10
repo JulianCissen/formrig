@@ -507,3 +507,50 @@ export class DatePickerField extends BaseField {
     this.displayFormat = displayFormat;
   }
 }
+
+/**
+ * Integer number input field.
+ *
+ * Maps to `<input type="text" inputmode="numeric">` in the Angular frontend.
+ * The `type` literal `'number'` is used as the `@switch` discriminator in templates.
+ * Value is stored as an integer or null (never a float).
+ */
+export class NumberField extends BaseField {
+  /** Discriminator — always `'number'`. */
+  readonly type = 'number' as const;
+
+  /** Soft validation: minimum allowed integer value. Generates a MinValueRule. */
+  min?: number;
+
+  /** Soft validation: maximum allowed integer value. Generates a MaxValueRule. */
+  max?: number;
+
+  public value: number | null;
+
+  /**
+   * @param label       Human-readable label (passed to BaseField).
+   * @param value       Current integer value or null. Default: null.
+   * @param required    Inherited from BaseField. Default: false.
+   * @param disabled    Inherited from BaseField. Default: false.
+   * @param hint        Optional persistent hint text.
+   * @param info        Optional tooltip info text.
+   * @param rules       Optional validation rules.
+   * @param visibleWhen Optional visibility condition.
+   * @param min         Soft validation: minimum allowed integer value.
+   * @param max         Soft validation: maximum allowed integer value.
+   */
+  constructor({
+    label, value = null, required = false, disabled = false,
+    hint, info, rules, visibleWhen,
+    min, max,
+  }: {
+    label: string; value?: number | null; required?: boolean; disabled?: boolean;
+    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    min?: number; max?: number;
+  }) {
+    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    this.value = value;
+    this.min = min;
+    this.max = max;
+  }
+}

@@ -27,11 +27,12 @@ import { AUTOSAVE_DELAY_MS }                                        from '../tok
 import { FieldDto, FormDefinitionDto, FormDefinitionDtoSchema, StepDto, evaluateConditionTree, getEffectiveRules } from '@formrig/shared';
 import { FileUploadEntry } from './file-upload-entry.model';
 import { FormFieldComponent } from './form-field/form-field.component';
+import { NumberFieldComponent } from './form-field/fields/number-field/number-field.component';
 
 @Component({
   selector: 'app-form-renderer',
   standalone: true,
-  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, MatTooltipModule, ReactiveFormsModule, FormFieldComponent],
+  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, MatTooltipModule, ReactiveFormsModule, FormFieldComponent, NumberFieldComponent],
   templateUrl: './form-renderer.component.html',
   styleUrl: './form-renderer.component.scss',
   animations: [
@@ -503,15 +504,15 @@ export class FormRendererComponent implements OnInit, OnDestroy {
       for (const group of this.stepGroups) Object.assign(result, group.value);
       return result;
     };
-    this.currentValues.set(mergeStepValues());
+    this.currentValues.set(this.convertFormValues(mergeStepValues()));
     for (const group of this.stepGroups) {
       this.autosaveSub!.add(
-        group.valueChanges.subscribe(() => this.currentValues.set(mergeStepValues())),
+        group.valueChanges.subscribe(() => this.currentValues.set(this.convertFormValues(mergeStepValues()))),
       );
       for (const [fieldId, control] of Object.entries(group.controls)) {
-        this.autosaveSub!.add(control.valueChanges.subscribe((value) => {
+        this.autosaveSub!.add(control.valueChanges.subscribe((rawValue) => {
           this.isDirty.set(true);
-          this.autosave$.next({ fieldId, value });
+          this.autosave$.next({ fieldId, value: this.toFieldPatchValue(fieldId, rawValue) });
         }));
       }
     }
@@ -523,12 +524,12 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     this.autosaveSub!.add(
       this.flatGroup.valueChanges.pipe(
         startWith(this.flatGroup.value),
-      ).subscribe(v => this.currentValues.set(v as Record<string, unknown>)),
+      ).subscribe(v => this.currentValues.set(this.convertFormValues(v as Record<string, unknown>))),
     );
     for (const [fieldId, control] of Object.entries(this.flatGroup.controls)) {
-      this.autosaveSub!.add(control.valueChanges.subscribe((value) => {
+      this.autosaveSub!.add(control.valueChanges.subscribe((rawValue) => {
         this.isDirty.set(true);
-        this.autosave$.next({ fieldId, value });
+        this.autosave$.next({ fieldId, value: this.toFieldPatchValue(fieldId, rawValue) });
       }));
     }
   }
@@ -589,6 +590,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           (field as { value?: string | null }).value ?? null,
           { updateOn: 'blur' }
         );
+      case 'number': {
+        const numVal = (field as { value?: number | null }).value;
+        return new FormControl<string>(
+          numVal != null ? String(numVal) : '',
+          { nonNullable: true }
+        );
+      }
       default:
         // text and textarea
         return new FormControl(
@@ -596,6 +604,33 @@ export class FormRendererComponent implements OnInit, OnDestroy {
           []
         );
     }
+  }
+
+  private convertFormValues(rawValues: Record<string, unknown>): Record<string, unknown> {
+    const fields = [
+      ...(this.formDef()?.fields ?? []),
+      ...(this.formDef()?.steps?.flatMap(s => s.fields) ?? []),
+    ];
+    const result: Record<string, unknown> = { ...rawValues };
+    for (const field of fields) {
+      if (field.type === 'number' && field.id in result) {
+        const v = result[field.id];
+        result[field.id] = (v === '' || v == null) ? null : parseInt(String(v), 10);
+      }
+    }
+    return result;
+  }
+
+  private toFieldPatchValue(fieldId: string, rawValue: unknown): unknown {
+    const fields = [
+      ...(this.formDef()?.fields ?? []),
+      ...(this.formDef()?.steps?.flatMap(s => s.fields) ?? []),
+    ];
+    const field = fields.find(f => f.id === fieldId);
+    if (field?.type === 'number') {
+      return (rawValue === '' || rawValue == null) ? null : parseInt(String(rawValue), 10);
+    }
+    return rawValue;
   }
 
   onStepChange(event: StepperSelectionEvent): void {

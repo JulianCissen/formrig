@@ -35,24 +35,39 @@
               <form [formGroup]="stepGroups[i]">
                 @for (field of step.fields; track field.id) {
                   @if (visibleFieldIds().has(field.id)) {
-                    <app-form-field
-                      [@fadeIn]
-                      [field]="field"
-                      [readonly]="effectiveReadonly()"
-                      [uploadEntries]="uploadEntries"
-                      [dragOverFieldId]="dragOverFieldId"
-                      [onFileChange]="onFileChange.bind(this)"
-                      [onDragOver]="onDragOver.bind(this)"
-                      [onDragLeave]="onDragLeave.bind(this)"
-                      [onDrop]="onDrop.bind(this)"
-                      [openFile]="openFile.bind(this)"
-                      [dismissError]="dismissError.bind(this)"
-                      [deleteUploadedFile]="deleteUploadedFile.bind(this)"
-                      [dirtyFieldIds]="dirtyFieldIds"
-                      [validationState]="validationState"
-                      [currentValues]="currentValues"
-                      [onBlur]="markFieldDirty.bind(this)"
-                    />
+                    @switch (field.type) {
+                      @case ('number') {
+                        <app-number-field
+                          [@fadeIn]
+                          [field]="$any(field)"
+                          [readonly]="effectiveReadonly()"
+                          [currentValues]="currentValues"
+                          [control]="$any(stepGroups[i].controls[field.id])"
+                          [dirtyFieldIds]="dirtyFieldIds"
+                          [validationState]="validationState"
+                          [onBlur]="markFieldDirty.bind(this)" />
+                      }
+                      @default {
+                        <app-form-field
+                          [@fadeIn]
+                          [field]="field"
+                          [readonly]="effectiveReadonly()"
+                          [uploadEntries]="uploadEntries"
+                          [dragOverFieldId]="dragOverFieldId"
+                          [onFileChange]="onFileChange.bind(this)"
+                          [onDragOver]="onDragOver.bind(this)"
+                          [onDragLeave]="onDragLeave.bind(this)"
+                          [onDrop]="onDrop.bind(this)"
+                          [openFile]="openFile.bind(this)"
+                          [dismissError]="dismissError.bind(this)"
+                          [deleteUploadedFile]="deleteUploadedFile.bind(this)"
+                          [dirtyFieldIds]="dirtyFieldIds"
+                          [validationState]="validationState"
+                          [currentValues]="currentValues"
+                          [onBlur]="markFieldDirty.bind(this)"
+                        />
+                      }
+                    }
                   }
                 }
                 <div class="form-actions">
@@ -125,24 +140,39 @@
       <form class="form-body" [formGroup]="flatGroup!">
         @for (field of form.fields; track field.id) {
           @if (visibleFieldIds().has(field.id)) {
-            <app-form-field
-              [@fadeIn]
-              [field]="field"
-              [readonly]="effectiveReadonly()"
-              [uploadEntries]="uploadEntries"
-              [dragOverFieldId]="dragOverFieldId"
-              [onFileChange]="onFileChange.bind(this)"
-              [onDragOver]="onDragOver.bind(this)"
-              [onDragLeave]="onDragLeave.bind(this)"
-              [onDrop]="onDrop.bind(this)"
-              [openFile]="openFile.bind(this)"
-              [dismissError]="dismissError.bind(this)"
-              [deleteUploadedFile]="deleteUploadedFile.bind(this)"
-              [dirtyFieldIds]="dirtyFieldIds"
-              [validationState]="validationState"
-              [currentValues]="currentValues"
-              [onBlur]="markFieldDirty.bind(this)"
-            />
+            @switch (field.type) {
+              @case ('number') {
+                <app-number-field
+                  [@fadeIn]
+                  [field]="$any(field)"
+                  [readonly]="effectiveReadonly()"
+                  [currentValues]="currentValues"
+                  [control]="$any(flatGroup!.controls[field.id])"
+                  [dirtyFieldIds]="dirtyFieldIds"
+                  [validationState]="validationState"
+                  [onBlur]="markFieldDirty.bind(this)" />
+              }
+              @default {
+                <app-form-field
+                  [@fadeIn]
+                  [field]="field"
+                  [readonly]="effectiveReadonly()"
+                  [uploadEntries]="uploadEntries"
+                  [dragOverFieldId]="dragOverFieldId"
+                  [onFileChange]="onFileChange.bind(this)"
+                  [onDragOver]="onDragOver.bind(this)"
+                  [onDragLeave]="onDragLeave.bind(this)"
+                  [onDrop]="onDrop.bind(this)"
+                  [openFile]="openFile.bind(this)"
+                  [dismissError]="dismissError.bind(this)"
+                  [deleteUploadedFile]="deleteUploadedFile.bind(this)"
+                  [dirtyFieldIds]="dirtyFieldIds"
+                  [validationState]="validationState"
+                  [currentValues]="currentValues"
+                  [onBlur]="markFieldDirty.bind(this)"
+                />
+              }
+            }
           }
         }
         <div class="form-actions">

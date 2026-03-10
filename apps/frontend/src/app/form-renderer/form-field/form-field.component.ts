@@ -2,14 +2,15 @@ import { Component, Input, inject, input, signal, Signal, WritableSignal } from 
 import { ControlContainer } from '@angular/forms';
 import { FieldDto } from '@formrig/shared';
 import { FileUploadEntry } from '../file-upload-entry.model';
-import { TextFieldComponent } from './text-field/text-field.component';
-import { TextareaFieldComponent } from './textarea-field/textarea-field.component';
-import { SelectFieldComponent } from './select-field/select-field.component';
-import { MultiSelectFieldComponent } from './multi-select-field/multi-select-field.component';
-import { RadioFieldComponent } from './radio-field/radio-field.component';
-import { CheckboxFieldComponent } from './checkbox-field/checkbox-field.component';
-import { FileUploadFieldComponent } from './file-upload-field/file-upload-field.component';
-import { DatePickerFieldComponent } from './date-picker-field/date-picker-field.component';
+import { TextFieldComponent } from './fields/text-field/text-field.component';
+import { TextareaFieldComponent } from './fields/textarea-field/textarea-field.component';
+import { SelectFieldComponent } from './fields/select-field/select-field.component';
+import { MultiSelectFieldComponent } from './fields/multi-select-field/multi-select-field.component';
+import { RadioFieldComponent } from './fields/radio-field/radio-field.component';
+import { CheckboxFieldComponent } from './fields/checkbox-field/checkbox-field.component';
+import { FileUploadFieldComponent } from './fields/file-upload-field/file-upload-field.component';
+import { DatePickerFieldComponent } from './fields/date-picker-field/date-picker-field.component';
+import { NumberFieldComponent } from './fields/number-field/number-field.component';
 
 @Component({
   selector: 'app-form-field',
@@ -23,6 +24,7 @@ import { DatePickerFieldComponent } from './date-picker-field/date-picker-field.
     CheckboxFieldComponent,
     FileUploadFieldComponent,
     DatePickerFieldComponent,
+    NumberFieldComponent,
   ],
   templateUrl: './form-field.component.html',
   styleUrl: './form-field.component.scss',

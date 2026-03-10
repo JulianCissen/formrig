@@ -170,3 +170,77 @@ describe('DatePickerFieldDtoSchema (via FieldDtoSchema)', () => {
     expect(FieldDtoSchema.safeParse({ ...base, displayFormat: '' }).success).toBe(false);
   });
 });
+
+// ── NumberFieldDtoSchema (via FieldDtoSchema discriminated union) ────────────────
+
+describe('NumberFieldDtoSchema (via FieldDtoSchema)', () => {
+  const base = { id: 'n1', type: 'number' as const, label: 'Count', required: false, disabled: false };
+
+  it('type \'number\' is accepted by the discriminated union', () => {
+    expect(FieldDtoSchema.safeParse({ ...base }).success).toBe(true);
+  });
+
+  it('value defaults to null when omitted', () => {
+    const result = FieldDtoSchema.safeParse({ ...base });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.value).toBeNull();
+  });
+
+  it('parses explicit null value', () => {
+    const result = FieldDtoSchema.safeParse({ ...base, value: null });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.value).toBeNull();
+  });
+
+  it('parses valid integer value', () => {
+    const result = FieldDtoSchema.safeParse({ ...base, value: 42 });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.value).toBe(42);
+  });
+
+  it('rejects float value', () => {
+    expect(FieldDtoSchema.safeParse({ ...base, value: 1.5 }).success).toBe(false);
+  });
+
+  it('parses valid integer min', () => {
+    const result = FieldDtoSchema.safeParse({ ...base, min: 0 });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.min).toBe(0);
+  });
+
+  it('parses valid integer max', () => {
+    const result = FieldDtoSchema.safeParse({ ...base, max: 100 });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.max).toBe(100);
+  });
+
+  it('min accepts negative integer', () => {
+    expect(FieldDtoSchema.safeParse({ ...base, min: -50 }).success).toBe(true);
+  });
+
+  it('max accepts negative integer', () => {
+    expect(FieldDtoSchema.safeParse({ ...base, max: -1 }).success).toBe(true);
+  });
+
+  it('omits min (optional)', () => {
+    const result = FieldDtoSchema.safeParse({ ...base });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.min).toBeUndefined();
+  });
+
+  it('omits max (optional)', () => {
+    const result = FieldDtoSchema.safeParse({ ...base });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') expect(result.data.max).toBeUndefined();
+  });
+
+  it('parses with all fields: value, min, max', () => {
+    const result = FieldDtoSchema.safeParse({ ...base, value: 5, min: 0, max: 10 });
+    expect(result.success).toBe(true);
+    if (result.success && result.data.type === 'number') {
+      expect(result.data.value).toBe(5);
+      expect(result.data.min).toBe(0);
+      expect(result.data.max).toBe(10);
+    }
+  });
+});

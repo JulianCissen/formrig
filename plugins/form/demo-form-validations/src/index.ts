@@ -1,5 +1,5 @@
 import {
-  TextField, RadioField, CheckboxField, MultiSelectField, TextareaField, SelectField,
+  TextField, RadioField, CheckboxField, MultiSelectField, TextareaField, SelectField, NumberField,
   EqualsRule, IsTrueRule, MatchesPatternRule,
 } from '@formrig/shared';
 import type { FormStep } from '@formrig/shared';
@@ -23,11 +23,10 @@ const applyingAs = new RadioField({
 // Index 1: text — required, minCharacters + maxCharacters soft validation
 const fullName = new TextField({ label: 'Full name', value: '', required: true, minCharacters: 2, maxCharacters: 50 });
 
-// Index 2: text — only visible when 'Team' is selected (conditional rendering)
-const teamSize = new TextField({
+// Index 2: number — only visible when 'Team' is selected; min: 1 enforces at least one member
+const teamSize = new NumberField({
   label: 'Team size',
-  value: '',
-  pattern: '^[1-9][0-9]*$', // positive integer only — pattern validation demo
+  min: 1,
   visibleWhen: {
     fieldId: fieldSlug('Applying as (Individual or Team)', 0),
     rule: new EqualsRule({ expected: 'Team' }),

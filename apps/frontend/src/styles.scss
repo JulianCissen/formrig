@@ -147,3 +147,11 @@ mat-stepper {
   --mdc-snackbar-supporting-text-color: var(--mat-sys-on-error-container);
   --mat-snack-bar-button-color: var(--mat-sys-on-error-container);
 }
+
+// In dark mode, error-container is a very dark tone that blends into the background.
+// Switch to error/on-error (light coral / dark red) for a clearly visible panel.
+html.dark .autosave-error-snackbar {
+  --mdc-snackbar-container-color: var(--mat-sys-error);
+  --mdc-snackbar-supporting-text-color: var(--mat-sys-on-error);
+  --mat-snack-bar-button-color: var(--mat-sys-on-error);
+}

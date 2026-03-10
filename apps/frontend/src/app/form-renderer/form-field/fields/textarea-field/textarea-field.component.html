@@ -14,12 +14,13 @@
 
   <mat-label>{{ field().label }}</mat-label>
 
-  <input matInput
-         [formControlName]="field().id"
-         [id]="'field-' + field().id"
-         [required]="field().required"
-         [attr.aria-describedby]="field().maxCharacters ? field().id + '-char-count' : (field().hint ? field().id + '-hint' : null)"
-         (blur)="onBlur(field().id)" />
+  <textarea matInput
+            [formControlName]="field().id"
+            [id]="'field-' + field().id"
+            [rows]="field().rows"
+            [required]="field().required"
+            [attr.aria-describedby]="(field().hint && field().maxCharacters) ? (field().id + '-hint ' + field().id + '-char-count') : (field().maxCharacters ? field().id + '-char-count' : (field().hint ? field().id + '-hint' : null))"
+            (blur)="onBlur(field().id)"></textarea>
 
   @if (dirtyFieldIds().has(field().id) && (validationState().get(field().id)?.length ?? 0) > 0) {
     <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>

@@ -1,5 +1,5 @@
 import type { FieldDto } from './form-definition-dto';
-import { Rule, RequiredRule, MinLengthRule, MaxLengthRule, MatchesPatternRule, MinCountRule, MaxCountRule } from './rule';
+import { Rule, RequiredRule, MinLengthRule, MaxLengthRule, MatchesPatternRule, MinCountRule, MaxCountRule, MinValueRule, MaxValueRule } from './rule';
 import { ruleFromDto } from './rule-dto';
 
 /**
@@ -41,6 +41,13 @@ export function getEffectiveRules(
       rules.push(new MinCountRule({ min: field.minSelected }));
     if (field.maxSelected != null)
       rules.push(new MaxCountRule({ max: field.maxSelected }));
+  }
+
+  if (field.type === 'number') {
+    if (field.min != null)
+      rules.push(new MinValueRule({ min: field.min }));
+    if (field.max != null)
+      rules.push(new MaxValueRule({ max: field.max }));
   }
 
   // 3. Generic rules[] entries

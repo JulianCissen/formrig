@@ -147,6 +147,30 @@ export class IsFalseRule extends Rule {
   protected defaultErrorMessage(): string { return 'Must be false'; }
 }
 
+// ── Number range checks ─────────────────────────────────────────────────────
+
+export class MinValueRule extends Rule {
+  readonly type = 'min-value' as const;
+  private readonly min: number;
+  constructor({ min }: { min: number }) { super(); this.min = min; }
+  matches(value: unknown): boolean {
+    return typeof value === 'number' && Number.isFinite(value) &&
+           Number.isInteger(value) && value >= this.min;
+  }
+  protected defaultErrorMessage(): string { return `Must be at least ${this.min}`; }
+}
+
+export class MaxValueRule extends Rule {
+  readonly type = 'max-value' as const;
+  private readonly max: number;
+  constructor({ max }: { max: number }) { super(); this.max = max; }
+  matches(value: unknown): boolean {
+    return typeof value === 'number' && Number.isFinite(value) &&
+           Number.isInteger(value) && value <= this.max;
+  }
+  protected defaultErrorMessage(): string { return `Must be at most ${this.max}`; }
+}
+
 // ── Cross-field rules ────────────────────────────────────────────────────────
 
 export class EqualsFieldRule extends Rule {

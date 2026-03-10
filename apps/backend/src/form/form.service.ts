@@ -414,7 +414,7 @@ export class FormService {
       label:    f.label,
       required: f.required,
       disabled: f.disabled,
-      ...('value'        in f ? { value:        (f as Record<string, unknown>)['value'] as string | boolean | string[] } : {}),
+      ...('value'        in f ? { value:        (f as Record<string, unknown>)['value'] as string | boolean | string[] | number | null } : {}),
       ...('options'      in f ? { options:      (f as Record<string, unknown>)['options'] as string[] }      : {}),
       ...('multiple'     in f ? { multiple:     (f as Record<string, unknown>)['multiple'] as boolean }      : {}),
       ...('rows'         in f ? { rows:         (f as Record<string, unknown>)['rows'] as number }           : {}),
@@ -430,6 +430,8 @@ export class FormService {
       ...('pattern'       in f ? { pattern:       (f as Record<string, unknown>)['pattern'] as string }         : {}),
       ...('minSelected'   in f ? { minSelected:   (f as Record<string, unknown>)['minSelected'] as number }     : {}),
       ...('maxSelected'   in f ? { maxSelected:   (f as Record<string, unknown>)['maxSelected'] as number }     : {}),
+      ...(f.type === 'number' && 'min' in f ? { min: (f as Record<string, unknown>)['min'] as number } : {}),
+      ...(f.type === 'number' && 'max' in f ? { max: (f as Record<string, unknown>)['max'] as number } : {}),
       ...('hint'          in f ? { hint:          (f as unknown as Record<string, unknown>)['hint'] as string }             : {}),
       ...('info'          in f ? { info:          (f as unknown as Record<string, unknown>)['info'] as string }             : {}),
     }) as FieldDto;

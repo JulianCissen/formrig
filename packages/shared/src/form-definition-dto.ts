@@ -95,6 +95,13 @@ const DatePickerFieldDtoSchema = BaseFieldDtoSchema.extend({
   }
 });
 
+const NumberFieldDtoSchema = BaseFieldDtoSchema.extend({
+  type:  z.literal('number'),
+  value: z.number().int().nullable().default(null),
+  min:   z.number().int().optional(),
+  max:   z.number().int().optional(),
+});
+
 // FileUploadField intentionally omits `value` — files are uploaded separately via
 // POST /api/forms/:id/files and are not stored in the scalar values JSONB map.
 // The `multiple` flag IS present (needed by the file input element in the renderer).
@@ -117,6 +124,7 @@ export const FieldDtoSchema = z.discriminatedUnion('type', [
   TextareaFieldDtoSchema,
   FileUploadFieldDtoSchema,
   DatePickerFieldDtoSchema,
+  NumberFieldDtoSchema,
 ]);
 
 /** TypeScript type for a serialised field. Narrowable via field.type discriminant. */

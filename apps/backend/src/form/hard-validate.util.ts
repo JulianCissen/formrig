@@ -86,6 +86,13 @@ export function hardValidate(field: FieldDto, value: unknown): void {
       break;
     }
 
+    case 'number': {
+      if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || !Number.isSafeInteger(value))) {
+        throw new BadRequestException(`Field "${field.id}" must be a safe integer or null`);
+      }
+      break;
+    }
+
     case 'file-upload': {
       throw new BadRequestException(`Field "${field.id}" is a file-upload field and cannot be set via PATCH`);
     }

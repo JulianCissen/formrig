@@ -89,6 +89,16 @@
       [onBlur]="onBlur" />
   }
 
+  @case ('number') {
+    <app-number-field
+      [field]="$any(f)"
+      [readonly]="readonly()"
+      [dirtyFieldIds]="dirtyFieldIds"
+      [validationState]="validationState"
+      [currentValues]="currentValues"
+      [onBlur]="onBlur" />
+  }
+
   @default {
     <p class="form-field--unsupported">Field not supported</p>
   }

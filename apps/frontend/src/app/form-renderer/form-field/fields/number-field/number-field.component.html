@@ -1,0 +1,55 @@
+@if (displayMode()) {
+  <app-field-display-value
+    [fieldId]="field().id"
+    [label]="field().label"
+    [value]="displayValue()"
+    [displayType]="'text'" />
+} @else if (control) {
+  <mat-form-field
+    appearance="outline"
+    subscriptSizing="dynamic"
+    class="form-field"
+    [class.ng-invalid]="hasError()"
+    [class.ng-dirty]="dirtyFieldIds().has(field().id)">
+
+    <mat-label>{{ field().label }}</mat-label>
+
+    <input matInput
+           [formControl]="$any(control)"
+           [id]="'field-' + field().id"
+           [required]="field().required"
+           type="text"
+           inputmode="numeric"
+           [attr.aria-describedby]="combinedHint() ? field().id + '-hint' : null"
+           (input)="filterInput($event)"
+           (blur)="onBlur(field().id)" />
+
+    @if (hasError()) {
+      <mat-icon matSuffix aria-hidden="true" class="field-error-icon">error_outline</mat-icon>
+    }
+
+    @if (field().info) {
+      <button
+        type="button"
+        matIconButton
+        matSuffix
+        [matTooltip]="field().info!"
+        matTooltipPosition="above"
+        [attr.aria-label]="'More information about ' + field().label"
+        class="field-info-btn">
+        <mat-icon aria-hidden="true">info_outline</mat-icon>
+      </button>
+    }
+
+    @if (combinedHint()) {
+      <mat-hint [id]="field().id + '-hint'">{{ combinedHint() }}</mat-hint>
+    }
+
+    @if (hasError()) {
+      <mat-error [id]="field().id + '-errors'">
+        {{ (validationState().get(field().id) ?? []).join(' \u00b7 ') }}
+      </mat-error>
+    }
+
+  </mat-form-field>
+}

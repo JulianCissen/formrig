@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, Input, OnInit, ViewChild, computed, effect, inject, input, isDevMode, signal, Signal } from '@angular/core';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 import { formatIsoDate } from './date-format.util';
 import { FormrigDateAdapter, DISPLAY_FORMAT_TOKEN } from './date-format-adapter';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

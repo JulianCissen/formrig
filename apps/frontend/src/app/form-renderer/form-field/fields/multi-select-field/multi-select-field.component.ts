@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FieldDto } from '@formrig/shared';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 
 @Component({
   selector: 'app-multi-select-field',

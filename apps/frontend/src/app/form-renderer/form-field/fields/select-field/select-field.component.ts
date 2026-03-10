@@ -1,25 +1,35 @@
 import { Component, Input, computed, inject, signal, Signal, input } from '@angular/core';
 import { ControlContainer, ReactiveFormsModule } from '@angular/forms';
-import { MatRadioModule } from '@angular/material/radio';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FieldDto } from '@formrig/shared';
-import { FieldPlainWrapperComponent } from '../wrappers/field-plain-wrapper.component';
-import { FieldDisplayValueComponent } from '../wrappers/field-display-value.component';
+import { FieldDisplayValueComponent } from '../../wrappers/field-display-value.component';
 
 @Component({
-  selector: 'app-radio-field',
+  selector: 'app-select-field',
   standalone: true,
   imports: [
-    MatRadioModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
     ReactiveFormsModule,
-    FieldPlainWrapperComponent,
     FieldDisplayValueComponent,
   ],
-  templateUrl: './radio-field.component.html',
-  styleUrl: './radio-field.component.scss',
+  templateUrl: './select-field.component.html',
+  styleUrl: './select-field.component.scss',
   viewProviders: [{ provide: ControlContainer, useFactory: () => inject(ControlContainer, { skipSelf: true }) }],
 })
-export class RadioFieldComponent {
-  readonly field = input.required<Extract<FieldDto, { type: 'radio' }>>();
+export class SelectFieldComponent {
+  readonly field = input.required<Extract<FieldDto, { type: 'select' }>>();
   readonly readonly = input<boolean>(false);
 
   @Input() dirtyFieldIds: Signal<Set<string>> = signal(new Set<string>());
