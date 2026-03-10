@@ -4,6 +4,7 @@
   display: block;
   width: 100%;
   padding: var(--space-5) var(--space-6);
+  position: relative;
 }
 
 .form-loading {
@@ -193,5 +194,71 @@
     margin: 0;
     font: var(--mat-sys-body-small);
     color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// ── AI Chat Card ─────────────────────────────────────────────────────────────
+// Angular animations drive all flip transitions — no backface-visibility or
+// preserve-3d required. Each face rotates a quarter-turn independently.
+
+.card-container {
+  position: relative;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  perspective: 1200px;
+  min-height: 400px;
+}
+
+.chat-toggle {
+  position: absolute;
+  top: var(--space-3, 12px);
+  right: var(--space-3, 12px);
+  z-index: 10;
+}
+
+.card-face {
+  width: 100%;
+}
+
+.card-face--front {
+  position: relative;
+}
+
+.card-face--back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Disable interactions on whichever face is aria-hidden (driven by chatMode signal)
+.card-face[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+// Increase form-panel top padding to clear the 48dp toggle button
+// The toggle is at top: 12px, is 48px tall — bottom at 60px.
+// Add 8px breathing room: padding-top = 12 + 48 + 8 = 68px.
+.card-face--front .form-panel {
+  padding-top: 68px;
+}
+
+// ── Coach mark highlight ring ─────────────────────────────────────────────────
+button.chat-toggle.coach-mark-active {
+  box-shadow:
+    0 0 0 3px var(--mat-sys-primary),
+    0 0 0 6px color-mix(in srgb, var(--mat-sys-primary) 30%, transparent);
+  animation: coach-mark-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes coach-mark-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.chat-toggle.coach-mark-active {
+    animation: none;
   }
 }

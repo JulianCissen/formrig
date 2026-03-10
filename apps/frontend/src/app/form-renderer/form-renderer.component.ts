@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener, Input, Output, EventEmitter, inject, input, signal, WritableSignal, computed, ViewChild, ViewChildren, QueryList, ElementRef, effect, untracked } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { trigger, state, transition, style, animate } from '@angular/animations';
 import { A11yModule, LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,11 +28,15 @@ import { FieldDto, FormDefinitionDto, FormDefinitionDtoSchema, StepDto, evaluate
 import { FileUploadEntry } from './file-upload-entry.model';
 import { FormFieldComponent } from './form-field/form-field.component';
 import { NumberFieldComponent } from './form-field/fields/number-field/number-field.component';
+import { FormChatComponent } from './form-chat/form-chat.component';
+import { AppSettingsService } from '../app-settings/app-settings.service';
+import { CoachMarkService } from '../services/coach-mark.service';
+import { ChatToggleCoachMarkComponent } from './coach-mark/chat-toggle-coach-mark.component';
 
 @Component({
   selector: 'app-form-renderer',
   standalone: true,
-  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, MatTooltipModule, ReactiveFormsModule, FormFieldComponent, NumberFieldComponent],
+  imports: [A11yModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatButtonModule, MatRadioModule, MatCheckboxModule, MatSelectModule, MatAutocompleteModule, MatIconModule, MatProgressBarModule, MatSnackBarModule, MatStepperModule, MatTooltipModule, ReactiveFormsModule, FormFieldComponent, NumberFieldComponent, FormChatComponent, ChatToggleCoachMarkComponent],
   templateUrl: './form-renderer.component.html',
   styleUrl: './form-renderer.component.scss',
   animations: [
@@ -45,6 +49,28 @@ import { NumberFieldComponent } from './form-field/fields/number-field/number-fi
         animate('150ms ease-out', style({ opacity: 0 })),
       ]),
     ]),
+    // Card-flip: two independent quarter-turn triggers — no backface-visibility needed.
+    // form→chat: front folds right (0→+90°), back enters from left (−90°→0°) after 300ms.
+    // chat→form: back folds left  (0→−90°), front enters from right (+90°→0°) after 300ms.
+    // Both halves rotate in the same angular direction, avoiding the bounce/reversal artefact.
+    trigger('cardFront', [
+      state('form', style({ transform: 'rotateY(0deg)' })),
+      state('chat', style({ transform: 'rotateY(90deg)' })),
+      transition('form => chat', animate('300ms ease-in')),
+      transition('chat => form', [
+        style({ transform: 'rotateY(90deg)' }),
+        animate('300ms 300ms ease-out', style({ transform: 'rotateY(0deg)' })),
+      ]),
+    ]),
+    trigger('cardBack', [
+      state('form', style({ transform: 'rotateY(-90deg)' })),
+      state('chat', style({ transform: 'rotateY(0deg)' })),
+      transition('form => chat', [
+        style({ transform: 'rotateY(-90deg)' }),
+        animate('300ms 300ms ease-out', style({ transform: 'rotateY(0deg)' })),
+      ]),
+      transition('chat => form', animate('300ms ease-in')),
+    ]),
   ],
 })
 export class FormRendererComponent implements OnInit, OnDestroy {
@@ -54,6 +80,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   private readonly autosaveDelay  = inject(AUTOSAVE_DELAY_MS);
   private readonly bp             = inject(BreakpointObserver);
   private readonly snackBar       = inject(MatSnackBar);
+  protected readonly _appSettings = inject(AppSettingsService);
 
   private isWide = toSignal(
     this.bp.observe('(min-width: 960px)')
@@ -67,6 +94,30 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
   @ViewChild('stepper') stepper!: MatStepper;
   @ViewChildren('stepContent') stepContents!: QueryList<ElementRef<HTMLElement>>;
+
+  // ── AI Chat Flip ──────────────────────────────────────────────────────────
+  readonly chatMode = signal<boolean>(
+    this._appSettings.aiEnabled() && this._appSettings.defaultInterface() === 'chat'
+  );
+  private _focusFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  @ViewChild('chatToggleBtn') chatToggleBtnEl?: ElementRef<HTMLButtonElement>;
+  @ViewChild('formChatRef') formChatRef!: FormChatComponent;
+
+  // ── Coach mark ────────────────────────────────────────────────────────────
+  @ViewChild('backChatToggleBtn') backChatToggleBtnEl?: ElementRef<HTMLButtonElement>;
+  private readonly _coachMark = inject(CoachMarkService);
+  private readonly _showCoachMark = signal<boolean>(false);
+  protected readonly showCoachMark = this._showCoachMark.asReadonly();
+  private _coachMarkStarted = false;
+  private _coachMarkTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly _coachMarkEffect = effect(() => {
+    const loaded = !this.loading();
+    const aiEnabled = this._appSettings.aiEnabled();
+    if (loaded && aiEnabled && !this._coachMarkStarted && this._coachMark.shouldShow('chatToggle')) {
+      this._coachMarkStarted = true;
+      this._coachMarkTimer = setTimeout(() => this._showCoachMark.set(true), 1000);
+    }
+  });
 
   @Output() readonly titleLoaded = new EventEmitter<string>();
 
@@ -492,10 +543,47 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
+  toggleChat(): void {
+    this.chatMode.update(v => !v);
+    clearTimeout(this._focusFallbackTimer ?? undefined);
+    this._focusFallbackTimer = setTimeout(() => this._moveFocus(), 650);
+  }
+
+  private _moveFocus(): void {
+    if (this.chatMode()) {
+      this.formChatRef?.focus();
+    } else {
+      // chatToggleBtnEl is inside the front face; guard against it being
+      // unavailable during the transition or in reduced-motion environments.
+      if (this.chatToggleBtnEl?.nativeElement) {
+        this.chatToggleBtnEl.nativeElement.focus();
+      }
+    }
+  }
+
+  protected onToggleChatClicked(): void {
+    if (this._showCoachMark()) {
+      this._showCoachMark.set(false);
+      this._coachMark.markShown('chatToggle');
+    }
+    this.toggleChat();
+  }
+
+  protected onCoachMarkDismissed(): void {
+    this._showCoachMark.set(false);
+    this._coachMark.markShown('chatToggle');
+    const btn = this.chatMode()
+      ? this.backChatToggleBtnEl?.nativeElement
+      : this.chatToggleBtnEl?.nativeElement;
+    btn?.focus();
+  }
+
   ngOnDestroy(): void {
     this._errorSnackbarRef?.dismiss();
     this.autosaveSub?.unsubscribe();
     this.uploadQueueSub?.unsubscribe();
+    clearTimeout(this._focusFallbackTimer ?? undefined);
+    clearTimeout(this._coachMarkTimer ?? undefined);
   }
 
   private setupStepperAutosave(): void {

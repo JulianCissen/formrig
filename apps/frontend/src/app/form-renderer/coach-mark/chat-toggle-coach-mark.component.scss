@@ -1,0 +1,103 @@
+:host {
+  /* Anchored inside .card-container — positioned directly below the toggle button. */
+  /* Button: top: var(--space-3,12px), 48px tall → bottom at 60px. Add 8px gap = 68px. */
+  position: absolute;
+  top: calc(var(--space-3, 12px) + 48px + 8px);
+  right: var(--space-3, 12px);
+  z-index: 1000;
+  display: block;
+  --_anim-duration: 220ms;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    --_anim-duration: 0ms;
+  }
+}
+
+.coach-mark-panel {
+  --_caret-center-from-right: 20px; /* half of 40px mat-icon-button visual container */
+
+  position: relative;
+  width: 300px;
+  max-width: calc(100vw - 16px);
+
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5, 24px);
+
+  box-shadow: 0 4px 16px rgba(0 0 0 / 15%);
+
+  animation: coach-mark-in var(--_anim-duration) cubic-bezier(0, 0, 0.2, 1) both;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: calc(var(--_caret-center-from-right) - 7px);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid var(--mat-sys-outline-variant);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: calc(var(--_caret-center-from-right) - 6px);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--mat-sys-surface-container-high);
+  }
+}
+
+@keyframes coach-mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.coach-mark-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.coach-mark-icon {
+  color: var(--mat-sys-primary);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.coach-mark-title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
+
+.coach-mark-body {
+  margin: 0 0 var(--space-4, 20px);
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.5;
+}
+
+.coach-mark-footer {
+  display: flex;
+  justify-content: flex-end;
+}

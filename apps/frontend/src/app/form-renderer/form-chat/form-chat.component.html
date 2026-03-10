@@ -1,0 +1,36 @@
+<div class="chat-header" aria-hidden="true"></div>
+
+<div
+  class="chat-log"
+  role="log"
+  aria-live="polite"
+  aria-label="Chat messages"
+>
+  <div class="message-bubble assistant-bubble">
+    <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+    <p>Hi! I'm your AI assistant. Ask me anything about this form.</p>
+  </div>
+</div>
+
+<div class="chat-input-row" role="group" aria-label="Send a message">
+  <mat-form-field appearance="outline" class="chat-input-field">
+    <input
+      matInput
+      #chatInputEl
+      [value]="messageText()"
+      (input)="messageText.set($any($event.target).value)"
+      (keydown.enter)="sendMessage()"
+      placeholder="Ask a question..."
+      aria-label="Chat message input"
+    />
+  </mat-form-field>
+  <button
+    matIconButton
+    [disabled]="!messageText()"
+    (click)="sendMessage()"
+    aria-label="Send message"
+    type="button"
+  >
+    <mat-icon>send</mat-icon>
+  </button>
+</div>

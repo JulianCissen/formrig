@@ -6,6 +6,7 @@ import { PluginModule }       from './plugin/plugin.module';
 import { FileStorageModule }  from './file-storage/file-storage.module';
 import { FormModule }         from './form/form.module';
 import { DevAuthModule }      from './dev-auth/dev-auth.module';
+import { AppSettingsModule }  from './app-settings/app-settings.module';
 import { BaseEntity }         from './common/base.entity';
 import { Form }               from './form/entities/form.entity';
 import { FileRecord }         from './form/entities/file-record.entity';
@@ -39,6 +40,7 @@ import { MikroOrmLogger }     from './common/mikro-orm-logger';
     PluginModule,
     FileStorageModule,
     FormModule,
+    AppSettingsModule,
     ...(process.env.NODE_ENV !== 'production' ? [DevAuthModule] : []),
   ],
 })

@@ -1,0 +1,65 @@
+// ─── Shared gate shell ────────────────────────────────────────────────────────
+
+.gate-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--mat-sys-background);
+}
+
+
+// ─── Loading state ────────────────────────────────────────────────────────────
+
+.gate-status-line {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+
+// ─── Error state ─────────────────────────────────────────────────────────────
+
+.error-card {
+  max-width: 400px;
+  min-width: 280px;
+  width: calc(100% - 32px);
+  border-radius: var(--mat-sys-shape-extra-large);
+  background: var(--mat-sys-surface-container);
+}
+
+.error-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.error-icon {
+  color: var(--mat-sys-error);
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+}
+
+.error-heading {
+  margin: 0;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-headline-small);
+}
+
+.error-body {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.retry-btn {
+  margin-top: var(--space-2);
+  min-width: 120px;
+}

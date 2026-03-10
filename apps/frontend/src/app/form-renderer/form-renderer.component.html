@@ -7,9 +7,25 @@
 } @else {
   @let form = formDef()!;
 
-  <div class="form-panel">
-    @if (effectiveReadonly()) {
-      <div class="readonly-banner" role="note" aria-label="This form has been submitted and is read-only">
+  <div class="card-container">
+      <div class="card-face card-face--front" [@cardFront]="chatMode() ? 'chat' : 'form'" [attr.aria-hidden]="chatMode() || null">
+      @if(_appSettings.aiEnabled()) {
+        <button
+          class="chat-toggle"
+          matIconButton
+          #chatToggleBtn
+          [class.coach-mark-active]="showCoachMark()"
+          (click)="onToggleChatClicked()"
+          aria-label="Open AI chat assistant"
+          matTooltip="Switch to AI chat"
+          type="button"
+        >
+          <mat-icon>smart_toy</mat-icon>
+        </button>
+      }
+        <div class="form-panel">
+          @if (effectiveReadonly()) {
+            <div class="readonly-banner" role="note" aria-label="This form has been submitted and is read-only">
         <mat-icon aria-hidden="true">lock_outline</mat-icon>
         <span>Submitted — view only</span>
       </div>
@@ -217,6 +233,28 @@
           }
         </div>
       </form>
+    }
+        </div>
+      </div>
+      <div class="card-face card-face--back" [@cardBack]="chatMode() ? 'chat' : 'form'" [attr.aria-hidden]="!chatMode() || null">
+      @if(_appSettings.aiEnabled()) {
+        <button
+          class="chat-toggle"
+          matIconButton
+          #backChatToggleBtn
+          [class.coach-mark-active]="showCoachMark()"
+          (click)="onToggleChatClicked()"
+          aria-label="Back to form"
+          matTooltip="Switch to form"
+          type="button"
+        >
+          <mat-icon>edit_note</mat-icon>
+        </button>
+      }
+        <app-form-chat [active]="chatMode()" #formChatRef />
+      </div>
+    @if (showCoachMark()) {
+      <app-chat-toggle-coach-mark [chatMode]="chatMode()" (dismissed)="onCoachMarkDismissed()" />
     }
   </div>
 }

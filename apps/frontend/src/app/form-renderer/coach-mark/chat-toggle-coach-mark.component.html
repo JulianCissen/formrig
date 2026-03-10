@@ -1,0 +1,34 @@
+<div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="coach-mark-title"
+  class="coach-mark-panel"
+  cdkTrapFocus
+  [cdkTrapFocusAutoCapture]="true"
+>
+  <div class="coach-mark-header">
+    <mat-icon class="coach-mark-icon" aria-hidden="true">smart_toy</mat-icon>
+    <h2 id="coach-mark-title" class="coach-mark-title">Chat with AI</h2>
+  </div>
+  @if (chatMode()) {
+    <p class="coach-mark-body">
+      Use this button to fill the form yourself instead of chatting with the AI assistant.
+    </p>
+  } @else {
+    <p class="coach-mark-body">
+      Use this button to switch between filling the form yourself
+      and chatting with an AI assistant.
+    </p>
+  }
+  <div class="coach-mark-footer">
+    <button
+      matButton="filled"
+      class="coach-mark-dismiss"
+      type="button"
+      aria-label="Got it, dismiss this hint"
+      (click)="dismiss()"
+    >
+      Got it
+    </button>
+  </div>
+</div>
