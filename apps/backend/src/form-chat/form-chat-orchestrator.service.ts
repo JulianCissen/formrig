@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager, LockMode } from '@mikro-orm/core';
 import { FormEventContext } from '@formrig/sdk';
 import { FormService } from '../form/form.service';
 import { PluginService } from '../plugin/plugin.service';
@@ -22,6 +23,7 @@ export class FormChatOrchestratorService {
     private readonly pluginService: PluginService,
     private readonly conversationService: FormConversationService,
     private readonly flowService: FormChatFlowService,
+    private readonly em: EntityManager,
   ) {}
 
   async handleSync(
@@ -50,16 +52,20 @@ export class FormChatOrchestratorService {
 
     const allFields = ctx.fields.map((f, index) => this.formService.serialiseField(f, index));
 
-    // 4. Find or create conversation
-    const conversation = await this.conversationService.findOrCreate(form, user.id);
+    // 4. Find or create conversation, acquire pessimistic lock, and run sync
+    const result = await this.em.transactional(async () => {
+      const conversation = await this.conversationService.findOrCreate(form, user.id);
+      await this.em.lock(conversation, LockMode.PESSIMISTIC_WRITE);
 
-    // 5. Form name
-    const formName = plugin.definition.title ?? manifest.name;
+      // 5. Form name
+      const formName = plugin.definition.title ?? manifest.name;
 
-    // 6. Delegate to flow service
-    const { messages } = await this.flowService.processSync(conversation, form, allFields, formName);
+      // 6. Delegate to flow service
+      const { messages } = await this.flowService.processSync(conversation, form, allFields, formName);
+      return { messages };
+    });
 
-    return { messages };
+    return result;
   }
 
   async handleTurn(

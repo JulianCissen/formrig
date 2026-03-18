@@ -41,6 +41,8 @@ export class FormChatComponent {
   readonly loadFailed = signal<boolean>(false);
 
   private _conversationLoaded = false;
+  private _syncInProgress = false;
+  private _syncDone = false;
 
   @ViewChild('chatInputEl') chatInputEl!: ElementRef<HTMLInputElement>;
   @ViewChild('chatLog') chatLogEl!: ElementRef<HTMLElement>;
@@ -69,7 +71,7 @@ export class FormChatComponent {
     let _previousActive = false;
     effect(() => {
       const current = this.active();
-      if (current && !_previousActive && this._conversationLoaded && !this.completed()) {
+      if (current && !_previousActive && this._conversationLoaded && !this.completed() && !this._syncDone) {
         this._doSync();
       }
       _previousActive = current;
@@ -100,15 +102,20 @@ export class FormChatComponent {
   }
 
   private _doSync(): void {
+    if (this._syncInProgress) return;
+    this._syncInProgress = true;
     this.loading.set(true);
     this._chatService.postSync(this.formId()).subscribe({
       next: (res) => {
         for (const msg of res.messages) {
           this.messages.update(m => [...m, { role: 'assistant', content: msg }]);
         }
+        this._syncDone = true;
+        this._syncInProgress = false;
         this.loading.set(false);
       },
       error: () => {
+        this._syncInProgress = false;
         this.loading.set(false);
       },
     });

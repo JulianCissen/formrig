@@ -4,13 +4,14 @@ import { EntityRepository } from '@mikro-orm/core';
 import { FieldDto } from '@formrig/shared';
 import { LlmService, LlmMessage } from './llm.service';
 import { FormChatPrompt } from './entities/form-chat-prompt.entity';
-import { buildExtractionSchema } from './utils/rule-to-json-schema.util';
+import { buildExtractionSchema, buildSingleItemExtractionSchema } from './utils/rule-to-json-schema.util';
 import { renderTemplate } from './utils/render-template.util';
 import { PROMPT_DEFAULTS } from './utils/prompt-defaults';
 import { CONTEXT_WINDOW_SIZE } from './constants';
 
 export type IntentType =
   | 'ANSWER'
+  | 'ARRAY_DONE'
   | 'ANSWER_OTHER_FIELD'
   | 'CLARIFICATION_QUESTION'
   | 'GIBBERISH'
@@ -30,6 +31,7 @@ const INTENT_CLASSIFICATION_SCHEMA: Record<string, unknown> = {
       type: 'string',
       enum: [
         'ANSWER',
+        'ARRAY_DONE',
         'ANSWER_OTHER_FIELD',
         'CLARIFICATION_QUESTION',
         'GIBBERISH',
@@ -109,8 +111,11 @@ export class NluService {
     fieldDto: FieldDto,
     collectedValues: Record<string, unknown>,
     messages: LlmMessage[],
+    singleItem = false,
   ): Promise<unknown> {
-    const schema = buildExtractionSchema(fieldDto, collectedValues);
+    const schema = singleItem
+      ? buildSingleItemExtractionSchema(fieldDto)
+      : buildExtractionSchema(fieldDto, collectedValues);
     if (schema === null) return null;
 
     const prompt = await this.loadPrompt('nlu.value_extraction');

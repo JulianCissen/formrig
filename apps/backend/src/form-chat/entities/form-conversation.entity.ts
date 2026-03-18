@@ -5,7 +5,7 @@ import { Form } from '../../form/entities/form.entity';
 @Entity({ tableName: 'form_conversations' })
 export class FormConversation extends BaseEntity {
 
-  @OneToOne(() => Form, f => f.conversation, { fieldName: 'form_id', unique: true, nullable: false, deleteRule: 'cascade' })
+  @OneToOne(() => Form, f => f.conversation, { owner: true, fieldName: 'form_id', unique: true, nullable: false, deleteRule: 'cascade' })
   form!: Form;
 
   @Property({ type: 'jsonb', nullable: false, default: '[]' })

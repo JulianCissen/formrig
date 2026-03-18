@@ -32,6 +32,6 @@ export class Form extends BaseEntity {
   @OneToMany(() => FileRecord, r => r.form)
   fileRecords = new Collection<FileRecord>(this);
 
-  @OneToOne(() => FormConversation, c => c.form, { nullable: true, orphanRemoval: true })
+  @OneToOne(() => FormConversation, { mappedBy: 'form', nullable: true, orphanRemoval: true })
   conversation: FormConversation | null = null;
 }

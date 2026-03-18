@@ -70,7 +70,41 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'The field "{{fieldLabel}}" was previously skipped but still needs to be filled in. ' +
     'Re-ask for this field in a natural, friendly way, noting that it was skipped earlier.',
 
-  'nlu.intent_classification':        'Classify the intent of the following user message for field {{fieldLabel}}: {{message}}',
+  'nlu.intent_classification':
+    'You are a form-filling AI assistant. Classify the intent of the user\'s latest message.\n\n' +
+    'Current field being collected: "{{fieldLabel}}"\n' +
+    'User message: "{{message}}"\n' +
+    'Available fields (fieldId: label): {{visibleFields}}\n\n' +
+    'Classify the intent as EXACTLY ONE of the following values:\n\n' +
+    '- ANSWER: The user is directly answering the currently-asked field "{{fieldLabel}}", providing a value relevant to it.\n' +
+    '- ARRAY_DONE: The user signals they have finished adding items to a multi-value field and want to move on. ' +
+      'Look for phrases like "that\'s all", "done", "nothing else", "no more", "that\'s it".\n' +
+    '- ANSWER_OTHER_FIELD: The user is answering a DIFFERENT field than the current one (identifiable from the available fields list). ' +
+      'Populate targetFieldId with the matching fieldId.\n' +
+    '- CORRECTION: The user wants to CHANGE a previously-given answer. ' +
+      'Look for words or phrases such as "change", "update", "actually", "instead", "wrong", "meant", "not X but Y", "I said the wrong". ' +
+      'Populate targetFieldId with the fieldId that best matches what the user wants to correct.\n' +
+    '- CLARIFICATION_QUESTION: The user is asking a question about the form, a field, or the instructions — not providing a value.\n' +
+    '- SKIP_REQUEST: The user explicitly wants to skip or defer the current field ("skip", "not sure", "pass", "come back to it").\n' +
+    '- GIBBERISH: The message is random, incoherent, or bears no relation to the form.\n' +
+    '- OFF_TOPIC: The user has gone off-topic with a coherent but unrelated message (jokes, small talk, questions irrelevant to this form).\n\n' +
+    'Rules for targetFieldId:\n' +
+    '- Only populate targetFieldId for CORRECTION and ANSWER_OTHER_FIELD.\n' +
+    '- Match the user\'s field reference against the fieldId values in the available fields list. Use the exact fieldId string.\n' +
+    '- If you cannot confidently identify the specific field, omit targetFieldId entirely.\n' +
+    '- NEVER fabricate a fieldId that is not in the available fields list.\n\n' +
+    'Examples:\n\n' +
+    'User: "Change my answer to the skills field to Frontend and Backend"\n' +
+    '→ { "intent": "CORRECTION", "targetFieldId": "<skills-field-id>" }\n\n' +
+    'User: "Actually, I meant John not Jane for my name"\n' +
+    '→ { "intent": "CORRECTION", "targetFieldId": "<name-field-id>" }\n\n' +
+    'User: "I gave the wrong company earlier — it should be Acme"\n' +
+    '→ { "intent": "CORRECTION", "targetFieldId": "<company-field-id>" }\n\n' +
+    'User: "That\'s all the skills I have"\n' +
+    '→ { "intent": "ARRAY_DONE" }\n\n' +
+    'User: "Frontend"\n' +
+    '→ { "intent": "ANSWER" }   (when collecting a multi-select field)\n\n' +
+    'Respond with valid JSON only. Required field: intent.',
   'nlu.value_extraction':             'Extract the value for {{fieldLabel}} from: {{message}}',
   'nlu.file_association':             'Which file-upload field does this attachment belong to? Fields: {{fields}}',
 
@@ -83,4 +117,15 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'You are an AI assistant helping a user fill out a form. Summarise the conversation so far: ' +
     'which fields have been collected and what values were given. ' +
     'Be concise — this summary will replace the full conversation history for the remainder of the session.',
+
+  'nlg.array_accumulation_ask_more':
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
+    'The user just provided "{{newValue}}" for the field "{{fieldLabel}}". ' +
+    'Confirm this value has been noted, then ask in a friendly, conversational way whether they would like to add another value or if that is everything.',
+
+  'nlg.array_accumulation_done':
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
+    'The user has finished providing values for "{{fieldLabel}}". ' +
+    'The collected values are: {{accumulatedValues}}. ' +
+    'Confirm the complete list was recorded, then transition naturally to the rest of the conversation.',
 };

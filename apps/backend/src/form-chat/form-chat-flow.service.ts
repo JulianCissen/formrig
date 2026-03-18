@@ -11,6 +11,7 @@ import { Form } from '../form/entities/form.entity';
 import { ChatTurnRequestDto } from './dto/chat-turn-request.dto';
 import { ChatTurnResponseDto } from './dto/chat-turn-response.dto';
 import { hardValidate } from '../form/hard-validate.util';
+import { isArrayField } from './utils/rule-to-json-schema.util';
 
 @Injectable()
 export class FormChatFlowService {
@@ -81,6 +82,42 @@ export class FormChatFlowService {
 
     switch (intent) {
       case 'ANSWER': {
+        // ── ARRAY FIELD PATH ──────────────────────────────────────────────
+        if (isArrayField(currentField)) {
+          const existingArray: string[] =
+            Array.isArray(form.values[currentField.id])
+              ? (form.values[currentField.id] as string[])
+              : [];
+
+          const extractedItem = await this.nluService.extractValue(
+            dto.message!,
+            currentField,
+            form.values,
+            historyMessages,
+            true,
+          );
+
+          if (extractedItem === null) {
+            reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
+          } else {
+            const newArray = [...existingArray, extractedItem as string];
+            form.values = { ...form.values, [currentField.id]: newArray };
+            form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(
+              (id) => id !== currentField!.id,
+            );
+            updatedValuesThisTurn[currentField.id] = newArray;
+            this.em.persist(form);
+            reply = await this.nlgService.arrayAccumulationAskMore(
+              currentField,
+              extractedItem as string,
+              formName,
+              historyMessages,
+            );
+          }
+          break;
+        }
+
+        // ── SCALAR FIELD PATH ─────────────────────────────────────────────
         const extractedValue = await this.nluService.extractValue(
           dto.message!,
           currentField,
@@ -287,6 +324,58 @@ export class FormChatFlowService {
             );
             const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
             reply = `${confirmMsg}\n\n${resolved.reply}`;
+            currentFieldId = resolved.currentFieldId;
+            resultStatus = resolved.status;
+          }
+        }
+        break;
+      }
+
+      case 'ARRAY_DONE': {
+        if (!isArrayField(currentField)) {
+          reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
+          break;
+        }
+
+        const existingArray: string[] =
+          Array.isArray(form.values[currentField.id])
+            ? (form.values[currentField.id] as string[])
+            : [];
+
+        if (existingArray.length === 0) {
+          // No values collected yet — treat as skip
+          skippedFieldIds = [...skippedFieldIds, currentField.id];
+          const slotResult = this.stateMachine.getNextSlot(allFields, form.values, {
+            skippedFieldIds,
+            unconfirmedFieldIds: form.unconfirmedFieldIds,
+          });
+          const skipMsg = await this.nlgService.skipAcknowledgement(
+            currentField, currentField.required, formName, historyMessages,
+          );
+          const resolved = await this.resolveSlotResult(
+            slotResult, formName, historyMessages, conversation, skippedFieldIds,
+          );
+          reply = `${skipMsg}\n\n${resolved.reply}`;
+          currentFieldId = resolved.currentFieldId;
+          resultStatus = resolved.status;
+        } else {
+          const arrayErrors = this.validate(currentField, existingArray, form.values);
+          if (arrayErrors.length > 0) {
+            reply = await this.nlgService.validationErrorReprompt(
+              currentField, arrayErrors, formName, historyMessages,
+            );
+          } else {
+            const slotResult = this.stateMachine.getNextSlot(allFields, form.values, {
+              skippedFieldIds,
+              unconfirmedFieldIds: form.unconfirmedFieldIds,
+            });
+            const doneMsg = await this.nlgService.arrayAccumulationDone(
+              currentField, existingArray, formName, historyMessages,
+            );
+            const resolved = await this.resolveSlotResult(
+              slotResult, formName, historyMessages, conversation, skippedFieldIds,
+            );
+            reply = `${doneMsg}\n\n${resolved.reply}`;
             currentFieldId = resolved.currentFieldId;
             resultStatus = resolved.status;
           }

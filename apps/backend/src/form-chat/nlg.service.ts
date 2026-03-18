@@ -277,6 +277,46 @@ export class NlgService {
     return this.llmService.chat(llmMessages);
   }
 
+  async arrayAccumulationAskMore(
+    field: FieldDto,
+    newValue: string,
+    formName: string,
+    messages: LlmMessage[],
+  ): Promise<string> {
+    const system = await this.buildSystemContent('nlg.array_accumulation_ask_more', {
+      fieldLabel: field.label,
+      newValue,
+      formName,
+    });
+    const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
+    const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
+    const llmMessages: LlmMessage[] = [
+      { role: 'system', content: system.content },
+      ...windowed,
+    ];
+    return this.llmService.chat(llmMessages);
+  }
+
+  async arrayAccumulationDone(
+    field: FieldDto,
+    accumulatedValues: string[],
+    formName: string,
+    messages: LlmMessage[],
+  ): Promise<string> {
+    const system = await this.buildSystemContent('nlg.array_accumulation_done', {
+      fieldLabel: field.label,
+      accumulatedValues: accumulatedValues.join(', '),
+      formName,
+    });
+    const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
+    const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
+    const llmMessages: LlmMessage[] = [
+      { role: 'system', content: system.content },
+      ...windowed,
+    ];
+    return this.llmService.chat(llmMessages);
+  }
+
   async welcome(formName: string, messages: LlmMessage[]): Promise<string> {
     const system = await this.buildSystemContent('nlg.welcome', { formName });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
