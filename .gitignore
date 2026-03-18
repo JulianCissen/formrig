@@ -33,5 +33,4 @@ apps/backend/quarantine/
 npm-debug.log*
 
 # IDE
-.vscode/
 .idea/
