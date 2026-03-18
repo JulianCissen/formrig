@@ -251,7 +251,12 @@
           <mat-icon>edit_note</mat-icon>
         </button>
       }
-        <app-form-chat [active]="chatMode()" #formChatRef />
+        <app-form-chat
+          [active]="chatMode()"
+          [formId]="formId"
+          (valuesUpdated)="onChatValuesUpdated($event)"
+          #formChatRef
+        />
       </div>
     @if (showCoachMark()) {
       <app-chat-toggle-coach-mark [chatMode]="chatMode()" (dismissed)="onCoachMarkDismissed()" />

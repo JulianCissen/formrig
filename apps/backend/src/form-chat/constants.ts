@@ -1,0 +1,2 @@
+export const CONTEXT_WINDOW_SIZE = 20;
+export const COMPACTION_THRESHOLD = 30;

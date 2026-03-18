@@ -76,20 +76,19 @@ services:
       - .:/app
       - nm_root_be:/app/node_modules
       - nm_be_app:/app/apps/backend/node_modules
+    env_file:
+      - path: ./apps/backend/.env
+        required: false
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "1"
       CHOKIDAR_INTERVAL: "1000"
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
-      POSTGRES_USER: ${POSTGRES_USER:-formrig}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-formrig}
-      POSTGRES_DB: ${POSTGRES_DB:-formrig}
       MINIO_ENDPOINT: minio
       MINIO_PORT: "9000"
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       PLUGIN_FOLDER: /app/plugins/form
+      FILE_STORAGE_PLUGIN_FOLDER: /app/plugins/storage/minio
 
   frontend:
     image: formrig-frontend:dev

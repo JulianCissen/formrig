@@ -29,7 +29,7 @@ export class FormService {
   ) {}
 
   /** Generates a URL-safe slug from a field label, suffixed with the field index for guaranteed uniqueness. */
-  private static fieldSlug(label: string, index: number): string {
+  public static fieldSlug(label: string, index: number): string {
     const base = label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     return base + '-' + index;
   }
@@ -64,7 +64,28 @@ export class FormService {
       throw new NotFoundException(`Plugin "${dto.pluginId}" is not loaded`);
     }
 
-    const form = this.formRepo.create({ pluginId: dto.pluginId, values: {}, owner, createdAt: new Date(), updatedAt: new Date() });
+    const sourceFields = (plugin.plugin.definition.steps?.length ?? 0) > 0
+      ? plugin.plugin.definition.steps!.flatMap(s => s.fields)
+      : (plugin.plugin.definition.fields ?? []);
+
+    const clonedFields = sourceFields.map(f =>
+      Object.assign(Object.create(Object.getPrototypeOf(f)), f)
+    );
+    const ctx: FormEventContext = { fields: clonedFields };
+    await plugin.plugin.events.created(ctx);
+
+    const initialValues: Record<string, unknown> = {};
+    ctx.fields.forEach((field, index) => {
+      const slug = FormService.fieldSlug(field.label, index);
+      if ((field as unknown as Record<string, unknown>)['value'] !== undefined) {
+        initialValues[slug] = (field as unknown as Record<string, unknown>)['value'];
+      }
+      if (field.type === 'checkbox' && initialValues[slug] === undefined) {
+        initialValues[slug] = false;
+      }
+    });
+
+    const form = this.formRepo.create({ pluginId: dto.pluginId, values: initialValues, unconfirmedFieldIds: Object.keys(initialValues), owner, createdAt: new Date(), updatedAt: new Date() });
     this.em.persist(form);
     await this.em.flush();
 
@@ -221,11 +242,14 @@ export class FormService {
     if ('fieldId' in dto) {
       // single-field: file-upload case already returned early above
       form.values = { ...form.values, [dto.fieldId]: dto.value };
+      form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(id => id !== dto.fieldId);
     } else {
       const filteredValues = Object.fromEntries(
         Object.entries(dto.values).filter(([slug]) => fieldMap.get(slug)?.type !== 'file-upload'),
       );
       form.values = { ...form.values, ...filteredValues };
+      const patchedKeys = Object.keys(filteredValues);
+      form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(id => !patchedKeys.includes(id));
     }
 
     await this.em.flush();
@@ -291,6 +315,15 @@ export class FormService {
     const form = await this.findOwnedForm(formId, owner);
     if (form.submittedAt !== null) throw new ConflictException('Form has already been submitted.');
 
+    const { fieldMap } = await this.buildFlatFieldDtos(formId, form);
+    const uploadFieldDto = fieldMap.get(fieldId);
+    if (!uploadFieldDto) {
+      throw new BadRequestException(`Field "${fieldId}" does not exist on this form`);
+    }
+    if (uploadFieldDto.type !== 'file-upload') {
+      throw new BadRequestException(`Field "${fieldId}" is not a file-upload field`);
+    }
+
     const filename = generateFilename(meta.originalName, 0);
 
     const record = this.fileRepo.create({
@@ -304,6 +337,7 @@ export class FormService {
       updatedAt:  new Date(),
     });
     this.em.persist(record);
+    form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(id => id !== fieldId);
     await this.em.flush();
 
     const url = `/api/forms/${formId}/files/${record.id}/download`;
@@ -407,7 +441,7 @@ export class FormService {
     };
   }
 
-  private serialiseField(f: BaseField, index: number): FieldDto {
+  public serialiseField(f: BaseField, index: number): FieldDto {
     return ({  // cast needed: spread-built object does not narrow to discriminated union member
       id:       FormService.fieldSlug(f.label, index),
       type:     f.type,

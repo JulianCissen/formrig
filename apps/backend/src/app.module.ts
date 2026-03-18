@@ -5,12 +5,15 @@ import { PostgreSqlDriver }   from '@mikro-orm/postgresql';
 import { PluginModule }       from './plugin/plugin.module';
 import { FileStorageModule }  from './file-storage/file-storage.module';
 import { FormModule }         from './form/form.module';
+import { FormChatModule }     from './form-chat/form-chat.module';
 import { DevAuthModule }      from './dev-auth/dev-auth.module';
 import { AppSettingsModule }  from './app-settings/app-settings.module';
 import { BaseEntity }         from './common/base.entity';
 import { Form }               from './form/entities/form.entity';
 import { FileRecord }         from './form/entities/file-record.entity';
 import { User }               from './dev-auth/entities/user.entity';
+import { FormConversation }   from './form-chat/entities/form-conversation.entity';
+import { FormChatPrompt }     from './form-chat/entities/form-chat-prompt.entity';
 import { MikroOrmLogger }     from './common/mikro-orm-logger';
 
 @Module({
@@ -24,7 +27,7 @@ import { MikroOrmLogger }     from './common/mikro-orm-logger';
         dbName:   cfg.get('POSTGRES_DB',       'formrig'),
         user:     cfg.get('POSTGRES_USER',     'formrig'),
         password: cfg.get('POSTGRES_PASSWORD', 'formrig'),
-        entities:  [BaseEntity, Form, FileRecord, User],
+        entities:  [BaseEntity, Form, FileRecord, User, FormConversation, FormChatPrompt],
         migrations: {
           path:          './src/migrations',
           pathTs:        './src/migrations',
@@ -40,6 +43,7 @@ import { MikroOrmLogger }     from './common/mikro-orm-logger';
     PluginModule,
     FileStorageModule,
     FormModule,
+    FormChatModule,
     AppSettingsModule,
     ...(process.env.NODE_ENV !== 'production' ? [DevAuthModule] : []),
   ],

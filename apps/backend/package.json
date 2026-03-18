@@ -20,6 +20,8 @@
   "dependencies": {
     "@formrig/sdk": "*",
     "@formrig/shared": "*",
+    "@langchain/core": "^1.1.32",
+    "@langchain/openai": "^1.2.13",
     "@mikro-orm/core": "^6.6.7",
     "@mikro-orm/migrations": "^6.6.7",
     "@mikro-orm/nestjs": "^6.1.1",

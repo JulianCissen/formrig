@@ -2,14 +2,41 @@
 
 <div
   class="chat-log"
+  #chatLog
   role="log"
   aria-live="polite"
   aria-label="Chat messages"
 >
-  <div class="message-bubble assistant-bubble">
-    <mat-icon aria-hidden="true">auto_awesome</mat-icon>
-    <p>Hi! I'm your AI assistant. Ask me anything about this form.</p>
-  </div>
+  @for (msg of messages(); track $index) {
+    @if (msg.role === 'assistant') {
+      <div class="message-bubble assistant-bubble">
+        <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+        <div class="msg-content" [innerHTML]="renderMarkdown(msg.content)"></div>
+      </div>
+    } @else if (msg.role === 'user') {
+      <div class="message-bubble user-bubble">
+        <p>{{ msg.content }}</p>
+      </div>
+    } @else {
+      <div class="message-bubble error-bubble" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <p>{{ msg.content }}</p>
+      </div>
+    }
+  }
+  @if (loading()) {
+    <div class="message-bubble assistant-bubble loading-bubble" aria-label="Assistant is typing">
+      <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+      <p>…</p>
+    </div>
+  }
+  @if (loadFailed()) {
+    <div class="message-bubble error-bubble" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p>Could not load the conversation. Please try again.</p>
+      <button mat-button (click)="retryLoad()" aria-label="Retry loading chat conversation" type="button">Retry</button>
+    </div>
+  }
 </div>
 
 <div class="chat-input-row" role="group" aria-label="Send a message">
@@ -22,11 +49,13 @@
       (keydown.enter)="sendMessage()"
       placeholder="Ask a question..."
       aria-label="Chat message input"
+      maxlength="10000"
+      [disabled]="loading() || completed()"
     />
   </mat-form-field>
   <button
     matIconButton
-    [disabled]="!messageText()"
+    [disabled]="!messageText() || loading() || completed()"
     (click)="sendMessage()"
     aria-label="Send message"
     type="button"
@@ -34,3 +63,4 @@
     <mat-icon>send</mat-icon>
   </button>
 </div>
+

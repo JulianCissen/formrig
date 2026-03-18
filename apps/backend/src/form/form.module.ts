@@ -11,5 +11,6 @@ import { FileRecord }      from './entities/file-record.entity';
   imports:     [MikroOrmModule.forFeature([Form, FileRecord]), PluginModule, FileStorageModule],
   providers:   [FormService],
   controllers: [FormsController],
+  exports:     [FormService, PluginModule],
 })
 export class FormModule {}

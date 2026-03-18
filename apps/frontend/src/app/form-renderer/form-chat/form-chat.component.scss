@@ -73,3 +73,43 @@
 button[matIconButton][disabled] {
   opacity: 0.38;
 }
+
+.user-bubble {
+  background: var(--mat-sys-primary-container);
+  align-self: flex-end;
+  border-radius: 18px 18px 4px 18px;
+
+  p {
+    margin: 0;
+    color: var(--mat-sys-on-primary-container);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.error-bubble {
+  background: var(--mat-sys-error-container);
+  align-self: flex-start;
+  border-radius: 18px 18px 18px 4px;
+
+  mat-icon {
+    color: var(--mat-sys-error);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--mat-sys-on-error-container);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.loading-bubble {
+  opacity: 0.7;
+}
+

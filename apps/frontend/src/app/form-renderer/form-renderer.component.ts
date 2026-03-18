@@ -561,6 +561,26 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected onChatValuesUpdated(values: Record<string, unknown>): void {
+    if (this.flatGroup) {
+      this.flatGroup.patchValue(values, { emitEvent: false });
+      this.currentValues.set(this.convertFormValues(this.flatGroup.value as Record<string, unknown>));
+    } else if (this.stepGroups.length > 0) {
+      for (const group of this.stepGroups) {
+        const patch: Record<string, unknown> = {};
+        for (const key of Object.keys(group.controls)) {
+          if (key in values) patch[key] = values[key];
+        }
+        if (Object.keys(patch).length > 0) {
+          group.patchValue(patch, { emitEvent: false });
+        }
+      }
+      const merged: Record<string, unknown> = {};
+      for (const group of this.stepGroups) Object.assign(merged, group.value);
+      this.currentValues.set(this.convertFormValues(merged));
+    }
+  }
+
   protected onToggleChatClicked(): void {
     if (this._showCoachMark()) {
       this._showCoachMark.set(false);

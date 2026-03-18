@@ -1,8 +1,9 @@
 // apps/backend/src/form/entities/form.entity.ts
-import { Entity, Property, OneToMany, Collection, ManyToOne } from '@mikro-orm/core';
+import { Entity, Property, OneToMany, OneToOne, Collection, ManyToOne } from '@mikro-orm/core';
 import { BaseEntity } from '../../common/base.entity';
 import { User } from '../../dev-auth/entities/user.entity';
 import { FileRecord } from './file-record.entity';
+import { FormConversation } from '../../form-chat/entities/form-conversation.entity';
 
 @Entity({ tableName: 'forms' })
 export class Form extends BaseEntity {
@@ -18,6 +19,9 @@ export class Form extends BaseEntity {
   @Property({ type: 'jsonb', default: '{}' })
   values: Record<string, unknown> = {};
 
+  @Property({ type: 'jsonb', default: '[]' })
+  unconfirmedFieldIds: string[] = [];
+
   /** ISO timestamp set when the form is submitted. Null until submission. */
   @Property({ type: 'timestamptz', nullable: true })
   submittedAt: Date | null = null;
@@ -27,4 +31,7 @@ export class Form extends BaseEntity {
 
   @OneToMany(() => FileRecord, r => r.form)
   fileRecords = new Collection<FileRecord>(this);
+
+  @OneToOne(() => FormConversation, c => c.form, { nullable: true, orphanRemoval: true })
+  conversation: FormConversation | null = null;
 }

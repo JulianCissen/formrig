@@ -10,11 +10,52 @@ import "@angular/compiler";
  * Run with `npx vitest run` once vitest / @analogjs/vitest-angular is configured.
  */
 
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 import { signal, computed } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { TestBed } from '@angular/core/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+import { FormRendererComponent } from './form-renderer.component';
+
+// Initialise the Angular testing environment once for the whole file.
+// Guard with try/catch so the file can be reloaded by vitest's HMR without crashing.
+//
+// Also patch globalThis.fetch to return empty responses for Angular component
+// template/style file URLs.  TestBed.compileComponents() internally calls
+// resolveComponentResources(fetch), which tries to load file:// URLs for every
+// templateUrl/styleUrl it finds — a protocol Node's fetch does not support.
+// Intercepting those requests with a stub Response unblocks JIT compilation while
+// leaving all other fetch traffic (e.g. HTTP API calls in integration tests) intact.
+beforeAll(() => {
+  const origFetch = globalThis.fetch;
+  (globalThis as any).fetch = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
+    if (/\.(html|s?css)(\?|#|$)/i.test(url)) {
+      return new Response('', { status: 200 });
+    }
+    return origFetch(input as any, init);
+  };
+
+  try {
+    TestBed.initTestEnvironment(
+      BrowserDynamicTestingModule,
+      platformBrowserDynamicTesting(),
+      { teardown: { destroyAfterEach: true } },
+    );
+  } catch {
+    // Already initialised — harmless to ignore.
+  }
+});
 
 // ── Inline pure helpers ──────────────────────────────────────────────────────
 
@@ -139,5 +180,70 @@ describe('buildControl', () => {
     // Documents what buildControl used to do — kept here as a regression marker.
     const old = new FormControl({ value: '', disabled: true });
     expect(old.disabled).toBe(true);
+  });
+});
+
+// ── Tests — onChatValuesUpdated ──────────────────────────────────────────────
+//
+// Strategy: use Object.create(FormRendererComponent.prototype) to build a minimal
+// stub that exercises the actual method body without spinning up TestBed or loading
+// Angular templates/styles (which fail in the vitest/jsdom environment).
+// Only the fields read by onChatValuesUpdated() and convertFormValues() are set.
+
+describe('onChatValuesUpdated()', () => {
+  /**
+   * Build a stub that shares the component prototype so the actual
+   * onChatValuesUpdated() method is invoked via the prototype chain.
+   */
+  function buildStub() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stub = Object.create(FormRendererComponent.prototype) as any;
+    stub.currentValues = signal<Record<string, unknown>>({});
+    // convertFormValues reads formDef().fields — signal(null) produces [] via optional chaining
+    stub.formDef = signal(null);
+    stub.flatGroup = null;
+    stub.stepGroups = [];
+    return stub;
+  }
+
+  it('flat layout — patches the matching control and updates currentValues (AC-13, AC-15)', () => {
+    const stub = buildStub();
+    stub.flatGroup = new FormGroup({
+      'field-a': new FormControl(''),
+      'field-b': new FormControl('initial'),
+    });
+
+    stub.onChatValuesUpdated({ 'field-a': 'hello' });
+
+    expect(stub.flatGroup.get('field-a')?.value).toBe('hello');
+    expect(stub.flatGroup.get('field-b')?.value).toBe('initial'); // untouched
+    expect(stub.currentValues()).toMatchObject({ 'field-a': 'hello', 'field-b': 'initial' });
+  });
+
+  it('stepped layout — patches the correct step group and updates merged currentValues (AC-13, AC-15)', () => {
+    const stub = buildStub();
+    stub.stepGroups = [
+      new FormGroup({ 'field-a': new FormControl('') }),
+      new FormGroup({ 'field-b': new FormControl('') }),
+    ];
+
+    stub.onChatValuesUpdated({ 'field-b': 'world' });
+
+    expect(stub.stepGroups[0].get('field-a')?.value).toBe(''); // untouched
+    expect(stub.stepGroups[1].get('field-b')?.value).toBe('world');
+    expect(stub.currentValues()).toMatchObject({ 'field-a': '', 'field-b': 'world' });
+  });
+
+  it('emitEvent:false — valueChanges does not fire during patch (AC-14)', () => {
+    const stub = buildStub();
+    const flatGroup = new FormGroup({ 'field-a': new FormControl('') });
+    stub.flatGroup = flatGroup;
+
+    const emitted: unknown[] = [];
+    flatGroup.valueChanges.subscribe(v => emitted.push(v));
+
+    stub.onChatValuesUpdated({ 'field-a': 'silent' });
+
+    expect(emitted).toHaveLength(0);
   });
 });
