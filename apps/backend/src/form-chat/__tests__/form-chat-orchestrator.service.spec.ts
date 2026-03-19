@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { EntityManager } from '@mikro-orm/core';
 import { FormChatOrchestratorService } from '../form-chat-orchestrator.service';
 import { Form } from '../../form/entities/form.entity';
 import { FormConversation } from '../entities/form-conversation.entity';
@@ -95,15 +96,22 @@ function makeService(overrides: {
   const processSyncMock = jest.fn().mockResolvedValue(flowResult);
   const flowService = { processTurn: processTurnMock, processSync: processSyncMock };
 
+  const em = {
+    transactional: jest.fn().mockImplementation((cb: () => Promise<unknown>) => cb()),
+    lock: jest.fn().mockResolvedValue(undefined),
+  } as unknown as EntityManager;
+
   const svc = new FormChatOrchestratorService(
     formService as any,
     pluginService as any,
     conversationService as any,
     flowService as any,
+    em,
   );
 
   return {
     svc,
+    em,
     formService,
     pluginService,
     conversationService,

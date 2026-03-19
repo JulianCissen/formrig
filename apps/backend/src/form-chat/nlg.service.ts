@@ -61,6 +61,13 @@ export class NlgService {
     return { content, contextWindowSize: taskPrompt.contextWindowSize };
   }
 
+  private buildOptionsVar(field: FieldDto): string {
+    if ('options' in field && Array.isArray(field.options) && field.options.length > 0) {
+      return '\nAvailable options:\n' + field.options.map((o: string) => `- ${o}`).join('\n');
+    }
+    return '';
+  }
+
   async firstAsk(field: FieldDto, formName: string, messages: LlmMessage[]): Promise<string> {
     const system = await this.buildSystemContent('nlg.first_ask', {
       fieldLabel: field.label,
@@ -69,6 +76,7 @@ export class NlgService {
       required: String(field.required),
       hint: field.hint ?? '',
       info: field.info ?? '',
+      options: this.buildOptionsVar(field),
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
@@ -87,6 +95,7 @@ export class NlgService {
       required: String(field.required),
       hint: field.hint ?? '',
       info: field.info ?? '',
+      options: this.buildOptionsVar(field),
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
@@ -105,6 +114,7 @@ export class NlgService {
       required: String(newField.required),
       hint: newField.hint ?? '',
       info: newField.info ?? '',
+      options: this.buildOptionsVar(newField),
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);

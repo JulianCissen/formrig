@@ -1,5 +1,5 @@
 import { FieldDto } from '@formrig/shared';
-import { buildExtractionSchema } from '../utils/rule-to-json-schema.util';
+import { buildExtractionSchema } from '../utils/input-to-json-schema.util';
 
 function makeField(overrides: Partial<FieldDto> & { type: FieldDto['type'] }): FieldDto {
   return {

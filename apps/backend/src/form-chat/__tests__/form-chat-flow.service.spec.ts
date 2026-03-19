@@ -73,6 +73,8 @@ function makeService(overrides: {
   const cyclingReaskMock = jest.fn().mockResolvedValue('Cycling reask message.');
   const stateChangeMock = jest.fn().mockResolvedValue('State change message.');
   const welcomeMock = jest.fn().mockResolvedValue('Welcome to Demo Form!');
+  const arrayAccumulationDoneMock = jest.fn().mockResolvedValue('Great, I have noted all your skills.');
+  const arrayAccumulationAskMoreMock = jest.fn().mockResolvedValue('Got it! Would you like to add another?');
 
   const nlgService = {
     firstAsk: firstAskMock,
@@ -89,6 +91,8 @@ function makeService(overrides: {
     cyclingReask: cyclingReaskMock,
     stateChange: stateChangeMock,
     welcome: welcomeMock,
+    arrayAccumulationDone: arrayAccumulationDoneMock,
+    arrayAccumulationAskMore: arrayAccumulationAskMoreMock,
     ...overrides.nlgOverrides,
   };
 
@@ -124,6 +128,8 @@ function makeService(overrides: {
     correctionConfirmedMock,
     stateChangeMock,
     welcomeMock,
+    arrayAccumulationDoneMock,
+    arrayAccumulationAskMoreMock,
     saveMock,
     persistMock,
   };
@@ -262,6 +268,97 @@ describe('FormChatFlowService.processTurn()', () => {
       );
 
       expect(form.unconfirmedFieldIds).not.toContain('name-0');
+    });
+
+    it('extracts multiple values at once when LLM returns an array for a multi-select field', async () => {
+      const currentField = makeField({
+        id: 'skills-0',
+        label: 'Skills',
+        type: 'multi-select',
+        options: ['JavaScript', 'Python', 'React'],
+        required: false,
+      });
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc, arrayAccumulationAskMoreMock } = makeService({
+        classifyIntentResult: { intent: 'ANSWER' },
+        extractValueResult: ['JavaScript', 'Python', 'React'],
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        [currentField],
+        currentField,
+        { message: 'JavaScript, Python, React' },
+        FORM_NAME,
+      );
+
+      expect(form.values['skills-0']).toEqual(['JavaScript', 'Python', 'React']);
+      expect(result.updatedValues['skills-0']).toEqual(['JavaScript', 'Python', 'React']);
+      expect(arrayAccumulationAskMoreMock).toHaveBeenCalledWith(
+        currentField,
+        'JavaScript, Python, React',
+        FORM_NAME,
+        expect.any(Array),
+      );
+    });
+
+    it('deduplicates items already present when LLM returns overlapping values for a multi-select field', async () => {
+      const currentField = makeField({
+        id: 'skills-0',
+        label: 'Skills',
+        type: 'multi-select',
+        options: ['JavaScript', 'Python', 'React'],
+        required: false,
+      });
+      const form = makeForm({ 'skills-0': ['JavaScript'] });
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'ANSWER' },
+        extractValueResult: ['JavaScript', 'Python'],
+      });
+
+      await svc.processTurn(
+        conversation,
+        form,
+        [currentField],
+        currentField,
+        { message: 'JavaScript and Python' },
+        FORM_NAME,
+      );
+
+      expect(form.values['skills-0']).toEqual(['JavaScript', 'Python']);
+    });
+
+    it('calls gibberishReply and does not store a value when extractValue returns a plain string for a multi-select field', async () => {
+      const currentField = makeField({
+        id: 'skills-0',
+        label: 'Skills',
+        type: 'multi-select',
+        options: ['JavaScript', 'Python', 'React'],
+        required: false,
+      });
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc, gibberishReplyMock, arrayAccumulationAskMoreMock } = makeService({
+        classifyIntentResult: { intent: 'ANSWER' },
+        extractValueResult: 'JavaScript',
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        [currentField],
+        currentField,
+        { message: 'JavaScript' },
+        FORM_NAME,
+      );
+
+      expect(gibberishReplyMock).toHaveBeenCalled();
+      expect(arrayAccumulationAskMoreMock).not.toHaveBeenCalled();
+      expect(form.values['skills-0']).toBeUndefined();
+      expect(result.updatedValues).toEqual({});
     });
   });
 
@@ -868,6 +965,215 @@ describe('FormChatFlowService.processTurn()', () => {
       expect(formCompleteMock).toHaveBeenCalled();
       expect(result.status).toBe('COMPLETED');
       expect(result.currentFieldId).toBeNull();
+    });
+  });
+
+  describe('two-message returns (split ack + next-field)', () => {
+    it('SKIP_REQUEST returns messages with exactly 2 entries: skip ack then next-field question', async () => {
+      const currentField = makeField({ id: 'name-0', label: 'Full Name', required: true });
+      const nextField = makeField({ id: 'email-1', label: 'Email', required: true });
+      const allFields = [currentField, nextField];
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'SKIP_REQUEST' },
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        currentField,
+        { message: 'skip' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages[0]).toBe('Okay, skipping that.');
+      expect(result.messages[1]).toBe('Please tell me your email.');
+      // conversation.messages: user + 2 assistant entries
+      const assistantMsgs = conversation.messages.filter((m) => m.role === 'assistant');
+      expect(assistantMsgs).toHaveLength(2);
+      expect(assistantMsgs[0].content).toBe('Okay, skipping that.');
+      expect(assistantMsgs[1].content).toBe('Please tell me your email.');
+    });
+
+    it('CORRECTION confirmed path returns messages with exactly 2 entries: correction ack then next-field question', async () => {
+      const prevField = makeField({ id: 'name-0', label: 'Full Name' });
+      // cursor stays on currentField (email-1) after correction — second message is its re-ask
+      const currentField = makeField({ id: 'email-1', label: 'Email' });
+      const allFields = [prevField, currentField];
+      const form = makeForm({ 'name-0': 'Wrong Name' });
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'CORRECTION', targetFieldId: 'name-0' },
+        extractValueResult: 'Correct Name',
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        currentField,
+        { message: 'Actually my name is Correct Name' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages[0]).toBe('Correction noted!');
+      expect(result.messages[1]).toBe('Please tell me your email.');
+      const assistantMsgs = conversation.messages.filter((m) => m.role === 'assistant');
+      expect(assistantMsgs).toHaveLength(2);
+      expect(assistantMsgs[0].content).toBe('Correction noted!');
+      expect(assistantMsgs[1].content).toBe('Please tell me your email.');
+    });
+
+    it('CORRECTION validation-error path returns messages with exactly 1 entry (unchanged)', async () => {
+      const prevField = makeField({ id: 'age-0', label: 'Age', type: 'number' });
+      const currentField = makeField({ id: 'email-1', label: 'Email' });
+      const allFields = [prevField, currentField];
+      const form = makeForm({ 'age-0': 42 });
+      const conversation = makeConversation();
+      const { svc, validationErrorRepromptMock } = makeService({
+        classifyIntentResult: { intent: 'CORRECTION', targetFieldId: 'age-0' },
+        extractValueResult: 'not-a-number',
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        currentField,
+        { message: 'change age to not-a-number' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(1);
+      expect(validationErrorRepromptMock).toHaveBeenCalled();
+    });
+
+    it('FILE_UPLOAD Outcome C returns messages with exactly 2 entries: upload ack then next-field question', async () => {
+      const fileField = makeField({ id: 'doc-0', label: 'Document', type: 'file-upload' });
+      const nextField = makeField({ id: 'name-1', label: 'Full Name', type: 'text' });
+      const allFields = [fileField, nextField];
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc, identifyFileUploadTargetMock } = makeService({});
+      identifyFileUploadTargetMock.mockResolvedValueOnce({ confidence: 'high', targetFieldId: 'doc-0' });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        fileField,
+        { attachmentFileIds: ['new-file-uuid'], message: '' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages[0]).toBe('Got it! Now, what is your email?');
+      expect(result.messages[1]).toBe('Please tell me your email.');
+      const assistantMsgs = conversation.messages.filter((m) => m.role === 'assistant');
+      expect(assistantMsgs).toHaveLength(2);
+      expect(assistantMsgs[0].content).toBe('Got it! Now, what is your email?');
+      expect(assistantMsgs[1].content).toBe('Please tell me your email.');
+    });
+
+    it('ARRAY_DONE done path returns messages with exactly 2 entries: array-done ack then next-field question', async () => {
+      const currentField = makeField({ id: 'skills-0', label: 'Skills', type: 'multi-select', options: ['React', 'Angular'], required: false });
+      const nextField = makeField({ id: 'name-1', label: 'Full Name', type: 'text' });
+      const allFields = [currentField, nextField];
+      const form = makeForm({ 'skills-0': ['React'] });
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'ARRAY_DONE' },
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        currentField,
+        { message: "that's all" },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages[0]).toBe('Great, I have noted all your skills.');
+      expect(result.messages[1]).toBe('Please tell me your email.');
+      const assistantMsgs = conversation.messages.filter((m) => m.role === 'assistant');
+      expect(assistantMsgs).toHaveLength(2);
+      expect(assistantMsgs[0].content).toBe('Great, I have noted all your skills.');
+      expect(assistantMsgs[1].content).toBe('Please tell me your email.');
+    });
+
+    it('ARRAY_DONE empty/skip path returns messages with exactly 2 entries: skip ack then next-field question', async () => {
+      const currentField = makeField({ id: 'skills-0', label: 'Skills', type: 'multi-select', options: ['React', 'Angular'], required: false });
+      const nextField = makeField({ id: 'name-1', label: 'Full Name', type: 'text' });
+      const allFields = [currentField, nextField];
+      const form = makeForm(); // no values for skills-0 → empty array path
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'ARRAY_DONE' },
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        allFields,
+        currentField,
+        { message: "that's all" },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages[0]).toBe('Okay, skipping that.');
+      expect(result.messages[1]).toBe('Please tell me your email.');
+      const assistantMsgs = conversation.messages.filter((m) => m.role === 'assistant');
+      expect(assistantMsgs).toHaveLength(2);
+      expect(assistantMsgs[0].content).toBe('Okay, skipping that.');
+      expect(assistantMsgs[1].content).toBe('Please tell me your email.');
+    });
+
+    it('ANSWER intent still returns messages with exactly 1 entry (unchanged)', async () => {
+      const currentField = makeField({ id: 'name-0' });
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'ANSWER' },
+        extractValueResult: 'John Doe',
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        [currentField],
+        currentField,
+        { message: 'John Doe' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(1);
+    });
+
+    it('GIBBERISH intent still returns messages with exactly 1 entry (unchanged)', async () => {
+      const currentField = makeField({ id: 'name-0' });
+      const form = makeForm();
+      const conversation = makeConversation();
+      const { svc } = makeService({
+        classifyIntentResult: { intent: 'GIBBERISH' },
+      });
+
+      const result = await svc.processTurn(
+        conversation,
+        form,
+        [currentField],
+        currentField,
+        { message: '???' },
+        FORM_NAME,
+      );
+
+      expect(result.messages).toHaveLength(1);
     });
   });
 

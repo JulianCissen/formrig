@@ -11,7 +11,7 @@ import { Form } from '../form/entities/form.entity';
 import { ChatTurnRequestDto } from './dto/chat-turn-request.dto';
 import { ChatTurnResponseDto } from './dto/chat-turn-response.dto';
 import { hardValidate } from '../form/hard-validate.util';
-import { isArrayField } from './utils/rule-to-json-schema.util';
+import { isArrayField } from './utils/input-to-json-schema.util';
 
 @Injectable()
 export class FormChatFlowService {
@@ -76,7 +76,8 @@ export class FormChatFlowService {
 
     // Step 3: Branch on intent
     const visibleFieldsForResolve = allFields.filter((f) => this.isVisible(f, form.values));
-    let reply: string;
+    let reply: string | undefined;
+    let replyMessages: string[] | undefined;
     let currentFieldId: string | null = currentField.id;
     let resultStatus: 'COLLECTING' | 'COMPLETED' = 'COLLECTING';
 
@@ -89,30 +90,45 @@ export class FormChatFlowService {
               ? (form.values[currentField.id] as string[])
               : [];
 
-          const extractedItem = await this.nluService.extractValue(
+          // Extract values for the array field; the LLM may return multiple
+          // values at once when the user provides them in a single message.
+          const extractedRaw = await this.nluService.extractValue(
             dto.message!,
             currentField,
             form.values,
             historyMessages,
-            true,
           );
 
-          if (extractedItem === null) {
+          if (extractedRaw === null) {
             reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
           } else {
-            const newArray = [...existingArray, extractedItem as string];
-            form.values = { ...form.values, [currentField.id]: newArray };
-            form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(
-              (id) => id !== currentField!.id,
-            );
-            updatedValuesThisTurn[currentField.id] = newArray;
-            this.em.persist(form);
-            reply = await this.nlgService.arrayAccumulationAskMore(
-              currentField,
-              extractedItem as string,
-              formName,
-              historyMessages,
-            );
+            if (!Array.isArray(extractedRaw)) {
+              reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
+              break;
+            }
+            const extractedItems: string[] = extractedRaw as string[];
+
+            // Merge with existing values, skipping duplicates.
+            const existingSet = new Set(existingArray);
+            const newItems = extractedItems.filter((item) => !existingSet.has(item));
+
+            if (newItems.length === 0) {
+              reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
+            } else {
+              const newArray = [...existingArray, ...newItems];
+              form.values = { ...form.values, [currentField.id]: newArray };
+              form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(
+                (id) => id !== currentField!.id,
+              );
+              updatedValuesThisTurn[currentField.id] = newArray;
+              this.em.persist(form);
+              reply = await this.nlgService.arrayAccumulationAskMore(
+                currentField,
+                newItems.join(', '),
+                formName,
+                historyMessages,
+              );
+            }
           }
           break;
         }
@@ -323,7 +339,7 @@ export class FormChatFlowService {
               historyMessages,
             );
             const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
-            reply = `${confirmMsg}\n\n${resolved.reply}`;
+            replyMessages = [confirmMsg, resolved.reply];
             currentFieldId = resolved.currentFieldId;
             resultStatus = resolved.status;
           }
@@ -355,7 +371,7 @@ export class FormChatFlowService {
           const resolved = await this.resolveSlotResult(
             slotResult, formName, historyMessages, conversation, skippedFieldIds,
           );
-          reply = `${skipMsg}\n\n${resolved.reply}`;
+          replyMessages = [skipMsg, resolved.reply];
           currentFieldId = resolved.currentFieldId;
           resultStatus = resolved.status;
         } else {
@@ -375,7 +391,7 @@ export class FormChatFlowService {
             const resolved = await this.resolveSlotResult(
               slotResult, formName, historyMessages, conversation, skippedFieldIds,
             );
-            reply = `${doneMsg}\n\n${resolved.reply}`;
+            replyMessages = [doneMsg, resolved.reply];
             currentFieldId = resolved.currentFieldId;
             resultStatus = resolved.status;
           }
@@ -393,7 +409,7 @@ export class FormChatFlowService {
         });
         const skipMsg = await this.nlgService.skipAcknowledgement(currentField, currentField.required, formName, historyMessages);
         const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
-        reply = `${skipMsg}\n\n${resolved.reply}`;
+        replyMessages = [skipMsg, resolved.reply];
         currentFieldId = resolved.currentFieldId;
         resultStatus = resolved.status;
         break;
@@ -461,7 +477,7 @@ export class FormChatFlowService {
           historyMessages,
         );
         const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
-        reply = `${confirmMsg}\n\n${resolved.reply}`;
+        replyMessages = [confirmMsg, resolved.reply];
         currentFieldId = resolved.currentFieldId;
         resultStatus = resolved.status;
         break;
@@ -474,10 +490,17 @@ export class FormChatFlowService {
     }
 
     // Step 4: Append assistant reply
-    conversation.messages = [
-      ...conversation.messages,
-      { role: 'assistant', content: reply, timestamp: new Date().toISOString() },
-    ];
+    if (replyMessages !== undefined) {
+      conversation.messages = [
+        ...conversation.messages,
+        ...replyMessages.map((content) => ({ role: 'assistant' as const, content, timestamp: new Date().toISOString() })),
+      ];
+    } else {
+      conversation.messages = [
+        ...conversation.messages,
+        { role: 'assistant', content: reply!, timestamp: new Date().toISOString() },
+      ];
+    }
 
     // Step 5: Update conversation state
     conversation.currentFieldId = currentFieldId;
@@ -488,7 +511,7 @@ export class FormChatFlowService {
     await this.conversationService.save(conversation);
 
     return {
-      messages: [reply],
+      messages: replyMessages ?? [reply!],
       currentFieldId,
       updatedValues: updatedValuesThisTurn,
       status: resultStatus,

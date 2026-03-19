@@ -192,31 +192,4 @@ export function isArrayField(fieldDto: FieldDto): boolean {
   return (buildBaseSchema(fieldDto as ExtractableFieldDto) as { type: string }).type === 'array';
 }
 
-export function buildSingleItemExtractionSchema(
-  fieldDto: FieldDto,
-): Record<string, unknown> | null {
-  if (fieldDto.type === 'file-upload') return null;
-  if (!isArrayField(fieldDto)) return null;
 
-  const base = buildBaseSchema(fieldDto as ExtractableFieldDto) as {
-    type: 'array';
-    items: Record<string, unknown>;
-  };
-  const itemSchema: Record<string, unknown> = { ...base.items };
-
-  const rules = getEffectiveRules(fieldDto, {});
-  for (const rule of rules) {
-    if (rule.type === 'min-length') {
-      itemSchema.minLength = (rule as unknown as { readonly min: number }).min;
-    }
-    if (rule.type === 'max-length') {
-      itemSchema.maxLength = (rule as unknown as { readonly max: number }).max;
-    }
-  }
-
-  return {
-    type: 'object',
-    properties: { value: itemSchema },
-    required: ['value'],
-  };
-}

@@ -10,12 +10,12 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
 
   'nlg.first_ask':
     'Please collect "{{fieldLabel}}" ' +
-    '(type: {{fieldType}}, required: {{required}}).{{hint}}{{info}} ' +
+    '(type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
     'Could you please share that with me?',
 
   'nlg.next_ask':
     'We\'re making great progress on "{{formName}}"! ' +
-    'Next up: "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}} ' +
+    'Next up: "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
     'Could you share that with me?',
 
   'nlg.validation_error':
@@ -105,12 +105,22 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'User: "Frontend"\n' +
     '→ { "intent": "ANSWER" }   (when collecting a multi-select field)\n\n' +
     'Respond with valid JSON only. Required field: intent.',
-  'nlu.value_extraction':             'Extract the value for {{fieldLabel}} from: {{message}}',
+  'nlu.value_extraction':
+    'You are extracting a form field value from a user message.\n\n' +
+    'Field: "{{fieldLabel}}"\n' +
+    'Field type: {{fieldType}}\n' +
+    '{{options}}\n\n' +
+    'Instructions:\n' +
+    '- Extract the value the user is providing for this field from their message.\n' +
+    '- For enum fields (radio, select, multi-select): return values using the EXACT spelling and casing shown in the available options list. Do not invent values not in the list.\n' +
+    '- For multi-select fields: return ALL values mentioned by the user, even if multiple are given in a single message.\n' +
+    '- If no valid value can be extracted from the message, omit the "value" key from your response.\n\n' +
+    'User message: {{message}}',
   'nlu.file_association':             'Which file-upload field does this attachment belong to? Fields: {{fields}}',
 
   'nlg.state_change':
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
-    'The conversation has progressed and you now need to collect the field "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}} ' +
+    'The conversation has progressed and you now need to collect the field "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
     'Acknowledge the user\'s progress so far and ask about this next field in a friendly, natural, conversational tone.',
 
   'nlg.context_compaction':
@@ -127,5 +137,5 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
     'The user has finished providing values for "{{fieldLabel}}". ' +
     'The collected values are: {{accumulatedValues}}. ' +
-    'Confirm the complete list was recorded, then transition naturally to the rest of the conversation.',
+    'Confirm the complete list was recorded and end your reply there — the conversation will continue separately.',
 };

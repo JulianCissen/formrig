@@ -4,7 +4,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { FieldDto } from '@formrig/shared';
 import { LlmService, LlmMessage } from './llm.service';
 import { FormChatPrompt } from './entities/form-chat-prompt.entity';
-import { buildExtractionSchema, buildSingleItemExtractionSchema } from './utils/rule-to-json-schema.util';
+import { buildExtractionSchema } from './utils/input-to-json-schema.util';
 import { renderTemplate } from './utils/render-template.util';
 import { PROMPT_DEFAULTS } from './utils/prompt-defaults';
 import { CONTEXT_WINDOW_SIZE } from './constants';
@@ -111,17 +111,17 @@ export class NluService {
     fieldDto: FieldDto,
     collectedValues: Record<string, unknown>,
     messages: LlmMessage[],
-    singleItem = false,
   ): Promise<unknown> {
-    const schema = singleItem
-      ? buildSingleItemExtractionSchema(fieldDto)
-      : buildExtractionSchema(fieldDto, collectedValues);
+    const schema = buildExtractionSchema(fieldDto, collectedValues);
     if (schema === null) return null;
 
     const prompt = await this.loadPrompt('nlu.value_extraction');
     const effectiveWindowSize = prompt.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
+    const rawOptions = (fieldDto as { options?: string[] }).options?.join(', ') ?? '';
     const systemContent = renderTemplate(prompt.template, {
       fieldLabel: fieldDto.label,
+      fieldType: fieldDto.type,
+      options: rawOptions ? `Available options: ${rawOptions}` : '',
       message: userMessage,
     });
 

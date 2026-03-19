@@ -245,9 +245,31 @@ describe('NluService.extractValue()', () => {
 
     const messages: LlmMessage[] = chatStructuredMock.mock.calls[0][1];
     const systemMsg = messages.find((m) => m.role === 'system');
-    // Default template: 'Extract the value for {{fieldLabel}} from: {{message}}'
+    // Default template uses {{fieldLabel}} and {{message}} variables
     expect(systemMsg?.content).toContain('Name');
     expect(systemMsg?.content).toContain('test');
+  });
+
+  it('passes fieldType and options in the system prompt for an enum field', async () => {
+    const { svc, chatStructuredMock } = makeService(
+      'Field type: {{fieldType}} Options: {{options}} Message: {{message}}',
+      { value: 'JavaScript' },
+    );
+    const field: FieldDto = {
+      id: 'lang-0',
+      label: 'Language',
+      type: 'radio',
+      required: true,
+      disabled: false,
+      options: ['JavaScript', 'Python', 'React'],
+    } as FieldDto;
+
+    await svc.extractValue('javascript', field, {}, []);
+
+    const messages: LlmMessage[] = chatStructuredMock.mock.calls[0][1];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain('radio');
+    expect(systemMsg?.content).toContain('JavaScript, Python, React');
   });
 });
 

@@ -23,6 +23,20 @@ function makeTextField(overrides: Partial<FieldDto> = {}): FieldDto {
   } as FieldDto;
 }
 
+function makeSelectField(overrides: Partial<FieldDto> = {}): FieldDto {
+  return {
+    id: 'colour-0',
+    label: 'Favourite Colour',
+    type: 'select',
+    required: true,
+    disabled: false,
+    hint: '',
+    info: '',
+    options: ['Red', 'Green', 'Blue'],
+    ...overrides,
+  } as FieldDto;
+}
+
 function makeService(
   promptRecord?: { template: string; contextWindowSize: number | null } | null,
   chatResult = 'llm-response',
@@ -139,6 +153,65 @@ describe('NlgService.nextAsk()', () => {
     const messages: LlmMessage[] = chatMock.mock.calls[0][0];
     const systemMsg = messages.find((m) => m.role === 'system');
     expect(systemMsg?.content).toContain('Full Name');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// options rendering — AC-6 & AC-7
+// ---------------------------------------------------------------------------
+
+describe('NlgService options rendering (AC-6, AC-7)', () => {
+  const enumField = makeSelectField();
+  const textField = makeTextField();
+  const history: LlmMessage[] = [];
+  const EXPECTED_BULLET = 'Available options:\n- Red\n- Green\n- Blue';
+
+  it('AC-6: firstAsk includes options bullet list for enum field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.firstAsk(enumField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain(EXPECTED_BULLET);
+  });
+
+  it('AC-6: nextAsk includes options bullet list for enum field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.nextAsk(enumField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain(EXPECTED_BULLET);
+  });
+
+  it('AC-6: stateChange includes options bullet list for enum field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.stateChange(enumField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain(EXPECTED_BULLET);
+  });
+
+  it('AC-7: firstAsk does NOT include "Available options" for text field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.firstAsk(textField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).not.toContain('Available options');
+  });
+
+  it('AC-7: nextAsk does NOT include "Available options" for text field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.nextAsk(textField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).not.toContain('Available options');
+  });
+
+  it('AC-7: stateChange does NOT include "Available options" for text field', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.stateChange(textField, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).not.toContain('Available options');
   });
 });
 
