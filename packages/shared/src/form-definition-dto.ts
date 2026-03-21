@@ -15,6 +15,7 @@ const BaseFieldDtoSchema = z.object({
   rules:       z.array(RuleDtoSchema).optional(),
   hint:        z.string().optional(),
   info:        z.string().optional(),
+  aiContext:   z.string().max(10000).optional(),
 });
 
 const TextFieldDtoSchema = BaseFieldDtoSchema.extend({

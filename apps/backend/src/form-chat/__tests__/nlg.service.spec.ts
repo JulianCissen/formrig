@@ -273,26 +273,28 @@ describe('NlgService.clarificationAnswer()', () => {
   const history: LlmMessage[] = [];
 
   it('returns the LLM response string', async () => {
-    const { svc } = makeService({ template: '{{userQuestion}}', contextWindowSize: null });
+    const { svc } = makeService({ template: 'x', contextWindowSize: null });
     const result = await svc.clarificationAnswer('What does this mean?', field, 'My Form', history);
     expect(result).toBe('llm-response');
   });
 
   it('loads the correct prompt key', async () => {
-    const { svc, promptRepo } = makeService({ template: '{{userQuestion}}', contextWindowSize: null });
+    const { svc, promptRepo } = makeService({ template: 'x', contextWindowSize: null });
     await svc.clarificationAnswer('Q?', field, 'My Form', history);
     expect(promptRepo.findOne).toHaveBeenCalledWith({ key: 'nlg.clarification' });
   });
 
-  it('renders template with fieldLabel and userQuestion', async () => {
+  it('renders template with fieldLabel and appends userQuestion as user message', async () => {
     const { svc, chatMock } = makeService({
-      template: '{{fieldLabel}}: {{userQuestion}}',
+      template: '{{fieldLabel}}',
       contextWindowSize: null,
     });
     await svc.clarificationAnswer('What does this mean?', field, 'My Form', history);
     const messages: LlmMessage[] = chatMock.mock.calls[0][0];
     const systemMsg = messages.find((m) => m.role === 'system');
-    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\nFull Name: What does this mean?`);
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\nFull Name`);
+    const lastMsg = messages[messages.length - 1];
+    expect(lastMsg).toEqual({ role: 'user', content: 'What does this mean?' });
   });
 
   it('includes windowed history in LLM call', async () => {
@@ -864,6 +866,144 @@ describe('NlgService — prepareContextWindow() compaction', () => {
     // (vs. default CONTEXT_WINDOW_SIZE=20 which would pass all 20 unchanged)
     const historyMessages = sentMessages.filter((m) => m.role !== 'system');
     expect(historyMessages.length).toBeLessThanOrEqual(7);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// arrayAccumulationAtMax()
+// ---------------------------------------------------------------------------
+
+describe('NlgService.arrayAccumulationAtMax()', () => {
+  const field = makeSelectField({ id: 'skills-0', label: 'Technical skills', type: 'multi-select' });
+  const accumulatedValues = ['TypeScript', 'Angular'];
+  const history: LlmMessage[] = [{ role: 'assistant', content: 'Got it!' }];
+
+  it('returns the LLM response string', async () => {
+    const { svc } = makeService({ template: '{{fieldLabel}}', contextWindowSize: null });
+    const result = await svc.arrayAccumulationAtMax(field, accumulatedValues, 'My Form', history);
+    expect(result).toBe('llm-response');
+  });
+
+  it('loads the correct prompt key from the repository', async () => {
+    const { svc, promptRepo } = makeService({ template: '{{fieldLabel}}', contextWindowSize: null });
+    await svc.arrayAccumulationAtMax(field, accumulatedValues, 'My Form', history);
+    expect(promptRepo.findOne).toHaveBeenCalledWith({ key: 'nlg.array_accumulation_at_max' });
+  });
+
+  it('renders fieldLabel, formName, and accumulatedValues (joined with ", ") in system message', async () => {
+    const { svc, chatMock } = makeService({
+      template: '{{fieldLabel}} in {{formName}}: {{accumulatedValues}}',
+      contextWindowSize: null,
+    });
+    await svc.arrayAccumulationAtMax(field, accumulatedValues, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\nTechnical skills in My Form: TypeScript, Angular`);
+  });
+
+  it('includes windowed history in LLM call', async () => {
+    const { svc, chatMock } = makeService({ template: 'x', contextWindowSize: null });
+    await svc.arrayAccumulationAtMax(field, accumulatedValues, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    expect(messages.some((m) => m.content === 'Got it!')).toBe(true);
+  });
+
+  it('falls back to PROMPT_DEFAULTS when repository returns null', async () => {
+    const { svc, chatMock } = makeService(null);
+    await svc.arrayAccumulationAtMax(field, accumulatedValues, 'My Form', []);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain('Technical skills');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// aiContext rendering (AC-23)
+// ---------------------------------------------------------------------------
+
+describe('NlgService aiContext rendering (AC-23)', () => {
+  const fieldWithContext = makeTextField({ label: 'Skills', aiContext: 'Select 1 to 3 skills.' });
+  const fieldWithoutContext = makeTextField({ label: 'Full Name' });
+  const history: LlmMessage[] = [];
+
+  it('firstAsk: system message includes aiContext when field has aiContext set', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.firstAsk(fieldWithContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain('Select 1 to 3 skills.');
+  });
+
+  it('firstAsk: system message includes empty string at aiContext position when field has no aiContext', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.firstAsk(fieldWithoutContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\n`);
+  });
+
+  it('nextAsk: system message includes aiContext when field has aiContext set', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.nextAsk(fieldWithContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain('Select 1 to 3 skills.');
+  });
+
+  it('nextAsk: system message includes empty string at aiContext position when field has no aiContext', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.nextAsk(fieldWithoutContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\n`);
+  });
+
+  it('stateChange: system message includes aiContext when field has aiContext set', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.stateChange(fieldWithContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toContain('Select 1 to 3 skills.');
+  });
+
+  it('stateChange: system message includes empty string at aiContext position when field has no aiContext', async () => {
+    const { svc, chatMock } = makeService({ template: '{{aiContext}}', contextWindowSize: null });
+    await svc.stateChange(fieldWithoutContext, 'My Form', history);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\n`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// lastAnsweredFieldLabel rendering (bug-fix #3 — stale-context acknowledgement)
+// ---------------------------------------------------------------------------
+
+describe('NlgService lastAnsweredFieldLabel rendering', () => {
+  const field = makeTextField();
+  const lastAnswered = makeSelectField({ label: 'Favourite Colour' });
+  const history: LlmMessage[] = [];
+
+  it('nextAsk: renders lastAnsweredFieldLabel in system message when lastAnsweredField is provided', async () => {
+    const { svc, chatMock } = makeService({
+      template: 'After {{lastAnsweredFieldLabel}}: {{fieldLabel}}',
+      contextWindowSize: null,
+    });
+    await svc.nextAsk(field, 'My Form', history, lastAnswered);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\nAfter Favourite Colour: Full Name`);
+  });
+
+  it('stateChange: renders lastAnsweredFieldLabel in system message when lastAnsweredField is provided', async () => {
+    const { svc, chatMock } = makeService({
+      template: 'After {{lastAnsweredFieldLabel}}: {{fieldLabel}}',
+      contextWindowSize: null,
+    });
+    await svc.stateChange(field, 'My Form', history, lastAnswered);
+    const messages: LlmMessage[] = chatMock.mock.calls[0][0];
+    const systemMsg = messages.find((m) => m.role === 'system');
+    expect(systemMsg?.content).toBe(`${MOCK_PERSONA}\n\nAfter Favourite Colour: Full Name`);
   });
 });
 

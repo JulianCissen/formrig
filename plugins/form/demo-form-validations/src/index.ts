@@ -55,6 +55,7 @@ const skills = new MultiSelectField({
   autocomplete: true,
   minSelected: 1,
   maxSelected: 3,
+  aiContext: 'Inform the user that they must select between 1 and 3 skills. They can pick from the provided list.',
 });
 
 // Index 5: select — drives conditional rendering for State field
@@ -78,7 +79,7 @@ const stateOrTerritory = new TextField({
 });
 
 // Index 7: textarea — maxCharacters soft validation + character counter
-const bio = new TextareaField({ label: 'Short bio', value: '', rows: 4, maxCharacters: 300 });
+const bio = new TextareaField({ label: 'Short bio', value: '', rows: 4, maxCharacters: 300, aiContext: 'Ask the user for a brief professional biography of 2–3 sentences.' });
 
 // Index 8: checkbox — IsTrueRule: must be checked to submit
 const terms = new CheckboxField({

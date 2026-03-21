@@ -75,6 +75,7 @@ function makeService(overrides: {
   const welcomeMock = jest.fn().mockResolvedValue('Welcome to Demo Form!');
   const arrayAccumulationDoneMock = jest.fn().mockResolvedValue('Great, I have noted all your skills.');
   const arrayAccumulationAskMoreMock = jest.fn().mockResolvedValue('Got it! Would you like to add another?');
+  const arrayAccumulationAtMaxMock = jest.fn().mockResolvedValue('You have reached the maximum number of selections.');
 
   const nlgService = {
     firstAsk: firstAskMock,
@@ -93,6 +94,7 @@ function makeService(overrides: {
     welcome: welcomeMock,
     arrayAccumulationDone: arrayAccumulationDoneMock,
     arrayAccumulationAskMore: arrayAccumulationAskMoreMock,
+    arrayAccumulationAtMax: arrayAccumulationAtMaxMock,
     ...overrides.nlgOverrides,
   };
 
@@ -130,6 +132,7 @@ function makeService(overrides: {
     welcomeMock,
     arrayAccumulationDoneMock,
     arrayAccumulationAskMoreMock,
+    arrayAccumulationAtMaxMock,
     saveMock,
     persistMock,
   };
@@ -1261,7 +1264,7 @@ describe('FormChatFlowService.processTurn()', () => {
 
       await svc.processTurn(conversation, form, allFields, currentField, { message: 'user@example.com' }, FORM_NAME);
 
-      expect(nextAskMock).toHaveBeenCalledWith(nextField, FORM_NAME, expect.any(Array));
+      expect(nextAskMock).toHaveBeenCalledWith(nextField, FORM_NAME, expect.any(Array), currentField);
       expect(firstAskMock).not.toHaveBeenCalled();
     });
 
@@ -1312,6 +1315,74 @@ describe('FormChatFlowService.processTurn()', () => {
       expect(firstAskMock).toHaveBeenCalledWith(currentField, FORM_NAME, expect.any(Array));
       expect(nextAskMock).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('FormChatFlowService — array accumulation maxSelected branching (AC-9, AC-10)', () => {
+  const FORM_NAME = 'Demo Form';
+
+  it('AC-9: calls arrayAccumulationAtMax (not AskMore) when accumulated length >= maxSelected', async () => {
+    // maxSelected = 2; already has 1 item; add 1 more → total = 2 = maxSelected
+    const currentField = makeField({
+      id: 'skills-0',
+      label: 'Technical skills',
+      type: 'multi-select',
+      options: ['TypeScript', 'Angular', 'NestJS'],
+      required: false,
+      maxSelected: 2,
+    } as any);
+    const form = makeForm({ 'skills-0': ['TypeScript'] });
+    const conversation = makeConversation();
+    const { svc, arrayAccumulationAtMaxMock, arrayAccumulationAskMoreMock } = makeService({
+      classifyIntentResult: { intent: 'ANSWER' },
+      extractValueResult: ['Angular'],
+    });
+
+    await svc.processTurn(
+      conversation,
+      form,
+      [currentField],
+      currentField,
+      { message: 'Angular' },
+      FORM_NAME,
+    );
+
+    expect(arrayAccumulationAtMaxMock).toHaveBeenCalledWith(
+      currentField,
+      ['TypeScript', 'Angular'],
+      FORM_NAME,
+      expect.any(Array),
+    );
+    expect(arrayAccumulationAskMoreMock).not.toHaveBeenCalled();
+  });
+
+  it('AC-10: calls arrayAccumulationAskMore (not AtMax) when maxSelected is not defined on the field', async () => {
+    // No maxSelected → always calls AskMore regardless of array length
+    const currentField = makeField({
+      id: 'skills-0',
+      label: 'Technical skills',
+      type: 'multi-select',
+      options: ['TypeScript', 'Angular', 'NestJS'],
+      required: false,
+    });
+    const form = makeForm({ 'skills-0': ['TypeScript', 'Angular'] });
+    const conversation = makeConversation();
+    const { svc, arrayAccumulationAskMoreMock, arrayAccumulationAtMaxMock } = makeService({
+      classifyIntentResult: { intent: 'ANSWER' },
+      extractValueResult: ['NestJS'],
+    });
+
+    await svc.processTurn(
+      conversation,
+      form,
+      [currentField],
+      currentField,
+      { message: 'NestJS' },
+      FORM_NAME,
+    );
+
+    expect(arrayAccumulationAskMoreMock).toHaveBeenCalled();
+    expect(arrayAccumulationAtMaxMock).not.toHaveBeenCalled();
   });
 });
 
@@ -1378,7 +1449,7 @@ describe('FormChatFlowService.processSync()', () => {
 
     const result = await svc.processSync(conversation, form, allFields, FORM_NAME);
 
-    expect(stateChangeMock).toHaveBeenCalledWith(newField, FORM_NAME, expect.any(Array));
+    expect(stateChangeMock).toHaveBeenCalledWith(newField, FORM_NAME, expect.any(Array), null);
     expect(result.messages).toEqual(['State change message.']);
     expect(conversation.currentFieldId).toBe('email-1');
     expect(conversation.status).toBe('COLLECTING');

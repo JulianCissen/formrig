@@ -116,18 +116,29 @@ export class FormChatFlowService {
               reply = await this.nlgService.gibberishReply(currentField, formName, historyMessages);
             } else {
               const newArray = [...existingArray, ...newItems];
-              form.values = { ...form.values, [currentField.id]: newArray };
+              const maxSelected = (currentField as { maxSelected?: number }).maxSelected;
+              const cappedArray = maxSelected !== undefined ? newArray.slice(0, maxSelected) : newArray;
+              form.values = { ...form.values, [currentField.id]: cappedArray };
               form.unconfirmedFieldIds = form.unconfirmedFieldIds.filter(
                 (id) => id !== currentField!.id,
               );
-              updatedValuesThisTurn[currentField.id] = newArray;
+              updatedValuesThisTurn[currentField.id] = cappedArray;
               this.em.persist(form);
-              reply = await this.nlgService.arrayAccumulationAskMore(
-                currentField,
-                newItems.join(', '),
-                formName,
-                historyMessages,
-              );
+              if (maxSelected !== undefined && cappedArray.length >= maxSelected) {
+                reply = await this.nlgService.arrayAccumulationAtMax(
+                  currentField,
+                  cappedArray,
+                  formName,
+                  historyMessages,
+                );
+              } else {
+                reply = await this.nlgService.arrayAccumulationAskMore(
+                  currentField,
+                  newItems.join(', '),
+                  formName,
+                  historyMessages,
+                );
+              }
             }
           }
           break;
@@ -155,7 +166,7 @@ export class FormChatFlowService {
               skippedFieldIds,
               unconfirmedFieldIds: form.unconfirmedFieldIds,
             });
-            const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
+            const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds, currentField);
             reply = resolved.reply;
             currentFieldId = resolved.currentFieldId;
             resultStatus = resolved.status;
@@ -189,7 +200,7 @@ export class FormChatFlowService {
                 skippedFieldIds,
                 unconfirmedFieldIds: form.unconfirmedFieldIds,
               });
-              const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
+              const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds, currentField);
               reply = resolved.reply;
               currentFieldId = resolved.currentFieldId;
               resultStatus = resolved.status;
@@ -294,6 +305,7 @@ export class FormChatFlowService {
                 historyMessages,
                 conversation,
                 skippedFieldIds,
+                currentField,
               );
               reply = resolved.reply;
               currentFieldId = resolved.currentFieldId;
@@ -338,7 +350,7 @@ export class FormChatFlowService {
               formName,
               historyMessages,
             );
-            const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
+            const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds, targetField!);
             replyMessages = [confirmMsg, resolved.reply];
             currentFieldId = resolved.currentFieldId;
             resultStatus = resolved.status;
@@ -369,7 +381,7 @@ export class FormChatFlowService {
             currentField, currentField.required, formName, historyMessages,
           );
           const resolved = await this.resolveSlotResult(
-            slotResult, formName, historyMessages, conversation, skippedFieldIds,
+            slotResult, formName, historyMessages, conversation, skippedFieldIds, null,
           );
           replyMessages = [skipMsg, resolved.reply];
           currentFieldId = resolved.currentFieldId;
@@ -389,7 +401,7 @@ export class FormChatFlowService {
               currentField, existingArray, formName, historyMessages,
             );
             const resolved = await this.resolveSlotResult(
-              slotResult, formName, historyMessages, conversation, skippedFieldIds,
+              slotResult, formName, historyMessages, conversation, skippedFieldIds, currentField,
             );
             replyMessages = [doneMsg, resolved.reply];
             currentFieldId = resolved.currentFieldId;
@@ -408,7 +420,7 @@ export class FormChatFlowService {
           unconfirmedFieldIds: form.unconfirmedFieldIds,
         });
         const skipMsg = await this.nlgService.skipAcknowledgement(currentField, currentField.required, formName, historyMessages);
-        const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
+        const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds, null);
         replyMessages = [skipMsg, resolved.reply];
         currentFieldId = resolved.currentFieldId;
         resultStatus = resolved.status;
@@ -476,7 +488,7 @@ export class FormChatFlowService {
           formName,
           historyMessages,
         );
-        const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds);
+        const resolved = await this.resolveSlotResult(slotResult, formName, historyMessages, conversation, skippedFieldIds, targetField);
         replyMessages = [confirmMsg, resolved.reply];
         currentFieldId = resolved.currentFieldId;
         resultStatus = resolved.status;
@@ -568,6 +580,7 @@ export class FormChatFlowService {
       slotResult.field,
       formName,
       this.toLlmMessages(conversation.messages),
+      null,
     );
     conversation.messages = [
       ...conversation.messages,
@@ -601,6 +614,7 @@ export class FormChatFlowService {
     messages: LlmMessage[],
     conversation: FormConversation,
     skippedFieldIds: string[],
+    lastAnsweredField: FieldDto | null = null,
   ): Promise<{ reply: string; currentFieldId: string | null; status: 'COLLECTING' | 'COMPLETED' }> {
     if (slotResult.kind === 'completed') {
       conversation.status = 'COMPLETED';
@@ -615,7 +629,7 @@ export class FormChatFlowService {
       reply = await this.nlgService.fileUploadReminder(field, formName, messages);
     } else {
       reply = messages.length > 0
-        ? await this.nlgService.nextAsk(field, formName, messages)
+        ? await this.nlgService.nextAsk(field, formName, messages, lastAnsweredField)
         : await this.nlgService.firstAsk(field, formName, messages);
     }
     return { reply, currentFieldId: field.id, status: 'COLLECTING' };

@@ -77,6 +77,7 @@ export class NlgService {
       hint: field.hint ?? '',
       info: field.info ?? '',
       options: this.buildOptionsVar(field),
+      aiContext: field.aiContext ?? '',
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
@@ -87,7 +88,12 @@ export class NlgService {
     return this.llmService.chat(llmMessages);
   }
 
-  async nextAsk(field: FieldDto, formName: string, messages: LlmMessage[]): Promise<string> {
+  async nextAsk(
+    field: FieldDto,
+    formName: string,
+    messages: LlmMessage[],
+    lastAnsweredField: FieldDto | null = null,
+  ): Promise<string> {
     const system = await this.buildSystemContent('nlg.next_ask', {
       fieldLabel: field.label,
       fieldType: field.type,
@@ -96,6 +102,8 @@ export class NlgService {
       hint: field.hint ?? '',
       info: field.info ?? '',
       options: this.buildOptionsVar(field),
+      aiContext: field.aiContext ?? '',
+      lastAnsweredFieldLabel: lastAnsweredField?.label ?? '',
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
@@ -106,7 +114,12 @@ export class NlgService {
     return this.llmService.chat(llmMessages);
   }
 
-  async stateChange(newField: FieldDto, formName: string, messages: LlmMessage[]): Promise<string> {
+  async stateChange(
+    newField: FieldDto,
+    formName: string,
+    messages: LlmMessage[],
+    lastAnsweredField: FieldDto | null = null,
+  ): Promise<string> {
     const system = await this.buildSystemContent('nlg.state_change', {
       fieldLabel: newField.label,
       fieldType: newField.type,
@@ -115,6 +128,8 @@ export class NlgService {
       hint: newField.hint ?? '',
       info: newField.info ?? '',
       options: this.buildOptionsVar(newField),
+      aiContext: newField.aiContext ?? '',
+      lastAnsweredFieldLabel: lastAnsweredField?.label ?? '',
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
     const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
@@ -143,7 +158,6 @@ export class NlgService {
   async clarificationAnswer(userQuestion: string, field: FieldDto, formName: string, messages: LlmMessage[]): Promise<string> {
     const system = await this.buildSystemContent('nlg.clarification', {
       fieldLabel: field.label,
-      userQuestion,
       formName,
     });
     const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
@@ -151,6 +165,7 @@ export class NlgService {
     const llmMessages: LlmMessage[] = [
       { role: 'system', content: system.content },
       ...windowed,
+      { role: 'user', content: userQuestion },
     ];
     return this.llmService.chat(llmMessages);
   }
@@ -314,6 +329,26 @@ export class NlgService {
     messages: LlmMessage[],
   ): Promise<string> {
     const system = await this.buildSystemContent('nlg.array_accumulation_done', {
+      fieldLabel: field.label,
+      accumulatedValues: accumulatedValues.join(', '),
+      formName,
+    });
+    const effectiveWindowSize = system.contextWindowSize ?? CONTEXT_WINDOW_SIZE;
+    const windowed = await this.prepareContextWindow(messages, effectiveWindowSize);
+    const llmMessages: LlmMessage[] = [
+      { role: 'system', content: system.content },
+      ...windowed,
+    ];
+    return this.llmService.chat(llmMessages);
+  }
+
+  async arrayAccumulationAtMax(
+    field: FieldDto,
+    accumulatedValues: string[],
+    formName: string,
+    messages: LlmMessage[],
+  ): Promise<string> {
+    const system = await this.buildSystemContent('nlg.array_accumulation_at_max', {
       fieldLabel: field.label,
       accumulatedValues: accumulatedValues.join(', '),
       formName,

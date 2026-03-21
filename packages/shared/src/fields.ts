@@ -33,6 +33,9 @@ export abstract class BaseField {
    */
   info?: string;
 
+  /** Optional natural-language context string for AI assistants to guide response generation. */
+  aiContext?: string;
+
   public label: string;
   public required: boolean;
   public disabled: boolean;
@@ -52,6 +55,7 @@ export abstract class BaseField {
     disabled = false,
     hint,
     info,
+    aiContext,
     rules,
     visibleWhen,
   }: {
@@ -60,6 +64,7 @@ export abstract class BaseField {
     disabled?: boolean;
     hint?: string;
     info?: string;
+    aiContext?: string;
     rules?: Rule[];
     visibleWhen?: ConditionTree;
   }) {
@@ -68,6 +73,7 @@ export abstract class BaseField {
     this.disabled = disabled;
     this.hint = hint;
     this.info = info;
+    this.aiContext = aiContext;
     this.rules = rules;
     this.visibleWhen = visibleWhen;
   }
@@ -109,14 +115,14 @@ export class TextField extends BaseField {
    */
   constructor({
     label, value = '', required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
     maxCharacters, minCharacters, pattern,
   }: {
     label: string; value?: string; required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
     maxCharacters?: number; minCharacters?: number; pattern?: string;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.value = value;
     this.maxCharacters = maxCharacters;
     this.minCharacters = minCharacters;
@@ -150,13 +156,13 @@ export class RadioField extends BaseField {
    */
   constructor({
     label, options, value = null, required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
   }: {
     label: string; options: string[]; value?: string | null;
     required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.options = options;
     this.value = value;
   }
@@ -190,12 +196,12 @@ export class CheckboxField extends BaseField {
    */
   constructor({
     label, value = false, required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
   }: {
     label: string; value?: boolean; required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.value = value;
   }
 }
@@ -229,13 +235,13 @@ export class SelectField extends BaseField {
   constructor({
     label, options, value = null, autocomplete = false,
     required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
   }: {
     label: string; options: string[]; value?: string | null;
     autocomplete?: boolean; required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.options = options;
     this.value = value;
     this.autocomplete = autocomplete;
@@ -279,15 +285,15 @@ export class MultiSelectField extends BaseField {
   constructor({
     label, options, value = [], autocomplete = false,
     required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
     minSelected, maxSelected,
   }: {
     label: string; options: string[]; value?: string[];
     autocomplete?: boolean; required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
     minSelected?: number; maxSelected?: number;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.options = options;
     this.value = value;
     this.autocomplete = autocomplete;
@@ -330,15 +336,15 @@ export class TextareaField extends BaseField {
    */
   constructor({
     label, value = '', rows = 4, required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
     maxCharacters, minCharacters,
   }: {
     label: string; value?: string; rows?: number;
     required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
     maxCharacters?: number; minCharacters?: number;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.value = value;
     this.rows = rows;
     this.maxCharacters = maxCharacters;
@@ -380,14 +386,14 @@ export class FileUploadField extends BaseField {
     label, multiple = false, accept = '',
     maxFiles, maxSizeBytes, rename,
     required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
   }: {
     label: string; multiple?: boolean; accept?: string;
     maxFiles?: number; maxSizeBytes?: number; rename?: string;
     required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.multiple = multiple;
     this.accept = accept;
     this.maxFiles = maxFiles;
@@ -490,15 +496,15 @@ export class DatePickerField extends BaseField {
    */
   constructor({
     label, value = null, required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
     minDate, maxDate, minAge, maxAge, displayFormat,
   }: {
     label: string; value?: string | null;
     required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
     minDate?: string; maxDate?: string; minAge?: number; maxAge?: number; displayFormat?: string;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.value = value;
     this.minDate = minDate;
     this.maxDate = maxDate;
@@ -541,14 +547,14 @@ export class NumberField extends BaseField {
    */
   constructor({
     label, value = null, required = false, disabled = false,
-    hint, info, rules, visibleWhen,
+    hint, info, aiContext, rules, visibleWhen,
     min, max,
   }: {
     label: string; value?: number | null; required?: boolean; disabled?: boolean;
-    hint?: string; info?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
+    hint?: string; info?: string; aiContext?: string; rules?: Rule[]; visibleWhen?: ConditionTree;
     min?: number; max?: number;
   }) {
-    super({ label, required, disabled, hint, info, rules, visibleWhen });
+    super({ label, required, disabled, hint, info, aiContext, rules, visibleWhen });
     this.value = value;
     this.min = min;
     this.max = max;

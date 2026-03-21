@@ -9,14 +9,24 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'Do not ask any questions yet.',
 
   'nlg.first_ask':
-    'Please collect "{{fieldLabel}}" ' +
-    '(type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
-    'Could you please share that with me?',
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form.\n\n' +
+    'Your task: ask the user for the value of the field "{{fieldLabel}}".{{options}}\n\n' +
+    'Internal context — use this to guide your phrasing, but never quote or expose it to the user:\n' +
+    '- Field type: {{fieldType}}\n' +
+    '- Required: {{required}}\n' +
+    '- Author note: {{aiContext}}\n\n' +
+    'Ask in a friendly, conversational tone. Do not mention the field type or whether the field is required.',
 
   'nlg.next_ask':
-    'We\'re making great progress on "{{formName}}"! ' +
-    'Next up: "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
-    'Could you share that with me?',
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form.\n\n' +
+    'Your task: ask the user for the value of the field "{{fieldLabel}}".{{options}}\n\n' +
+    'Internal context — use this to guide your phrasing, but never quote or expose it to the user:\n' +
+    '- Field type: {{fieldType}}\n' +
+    '- Required: {{required}}\n' +
+    '- Author note: {{aiContext}}\n\n' +
+    'Most recently answered field: "{{lastAnsweredFieldLabel}}".\n' +
+    'If this label is non-empty, open with a brief one-sentence acknowledgement of the user\'s answer for that field, then ask about "{{fieldLabel}}". If it is empty, ask directly without any acknowledgement.\n\n' +
+    'Keep your response concise and conversational. Do not mention the field type or required status to the user.',
 
   'nlg.validation_error':
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
@@ -26,7 +36,7 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
 
   'nlg.clarification':
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
-    'The user has a clarification question about the field "{{fieldLabel}}": "{{userQuestion}}". ' +
+    'The user has a clarification question about the field "{{fieldLabel}}". ' +
     'Answer their question clearly and concisely, then re-ask for the field value.',
 
   'nlg.skip_ack':
@@ -119,9 +129,15 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
   'nlu.file_association':             'Which file-upload field does this attachment belong to? Fields: {{fields}}',
 
   'nlg.state_change':
-    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
-    'The conversation has progressed and you now need to collect the field "{{fieldLabel}}" (type: {{fieldType}}, required: {{required}}).{{hint}}{{info}}{{options}} ' +
-    'Acknowledge the user\'s progress so far and ask about this next field in a friendly, natural, conversational tone.',
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form.\n\n' +
+    'The conversation has advanced and your task is now to collect the field "{{fieldLabel}}".{{options}}\n\n' +
+    'Internal context — use this to guide your phrasing, but never quote or expose it to the user:\n' +
+    '- Field type: {{fieldType}}\n' +
+    '- Required: {{required}}\n' +
+    '- Author note: {{aiContext}}\n\n' +
+    'Most recently answered field: "{{lastAnsweredFieldLabel}}".\n' +
+    'If this label is non-empty, open with a brief one-sentence acknowledgement of the user\'s answer for that field before transitioning to "{{fieldLabel}}". If it is empty, transition directly.\n\n' +
+    'Keep your response friendly and conversational. Do not mention the field type or required status to the user.',
 
   'nlg.context_compaction':
     'You are an AI assistant helping a user fill out a form. Summarise the conversation so far: ' +
@@ -132,6 +148,14 @@ export const PROMPT_DEFAULTS: Record<string, string> = {
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
     'The user just provided "{{newValue}}" for the field "{{fieldLabel}}". ' +
     'Confirm this value has been noted, then ask in a friendly, conversational way whether they would like to add another value or if that is everything.',
+
+  'nlg.array_accumulation_at_max':
+    'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form.\n\n' +
+    'The user has reached the maximum number of allowed selections for the field "{{fieldLabel}}".\n' +
+    'Their current selections are: {{accumulatedValues}}.\n\n' +
+    'Inform the user that the maximum number of selections has been reached and they cannot add more. ' +
+    'Let them know they may correct an earlier selection if they would like to swap an item. ' +
+    'Do not ask whether they want to add more — the limit has been reached. Be concise and friendly.',
 
   'nlg.array_accumulation_done':
     'You are a helpful AI assistant guiding a user through completing the "{{formName}}" form. ' +
